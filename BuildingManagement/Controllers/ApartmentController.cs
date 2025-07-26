@@ -82,7 +82,7 @@ namespace BuildingManagement.Controllers
             {
                 return NotFound();
             }
-            
+
             return NoContent();
         }
     }

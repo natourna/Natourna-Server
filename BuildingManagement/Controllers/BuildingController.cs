@@ -28,7 +28,7 @@ namespace BuildingManagement.Controllers
         {
             var building = await _buildingManager.GetBuildingByIdAsync(id);
 
-            if (building == null) 
+            if (building == null)
             {
                 return NotFound();
             }
@@ -70,7 +70,7 @@ namespace BuildingManagement.Controllers
         {
             var result = await _buildingManager.DeleteBuildingAsync(id);
 
-            if (!result) 
+            if (!result)
             {
                 return NotFound();
             }

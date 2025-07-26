@@ -1,8 +1,7 @@
-using BuildingManagement.Extensions;
 using BuildingManagement.Data;
+using BuildingManagement.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +14,15 @@ var logFile = Path.Combine(logDir, $"{appName}-{DateTime.UtcNow:yyyyMMdd}.log");
 Log.Logger = new LoggerConfiguration()
     .WriteTo.File(logFile, rollingInterval: RollingInterval.Day)
     .CreateLogger();
+
+if (File.Exists("appsettings.local.json"))
+{
+    builder.Configuration.AddJsonFile(
+        "appsettings.local.json",
+        optional: true,
+        reloadOnChange: true
+    );
+}
 
 builder.Host.UseSerilog();
 

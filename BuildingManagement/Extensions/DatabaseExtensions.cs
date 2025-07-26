@@ -1,6 +1,5 @@
 using BuildingManagement.Data;
 using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace BuildingManagement.Extensions;
 
