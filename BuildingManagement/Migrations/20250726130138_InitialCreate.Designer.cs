@@ -20,13 +20,13 @@ namespace BuildingManagement.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.7");
 
-            modelBuilder.Entity("BuildingManagement.Models.Entities.ApartementEntity", b =>
+            modelBuilder.Entity("BuildingManagement.Models.Entities.A44444444Entity", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("AppartementNumber")
+                    b.Property<string>("AppartmentNumber")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -59,7 +59,7 @@ namespace BuildingManagement.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Apartements");
+                    b.ToTable("Apartments");
                 });
 
             modelBuilder.Entity("BuildingManagement.Models.Entities.BillEntity", b =>
@@ -119,7 +119,7 @@ namespace BuildingManagement.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("NumberOfApartements")
+                    b.Property<int>("NumberOfApartments")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTimeOffset>("UpdatededAt")
@@ -138,7 +138,7 @@ namespace BuildingManagement.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ActiveApartements")
+                    b.Property<int>("ActiveApartments")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Address")
@@ -225,7 +225,7 @@ namespace BuildingManagement.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("BuildingManagement.Models.Entities.ApartementEntity", b =>
+            modelBuilder.Entity("BuildingManagement.Models.Entities.ApartmentEntity", b =>
                 {
                     b.HasOne("BuildingManagement.Models.Entities.BuildingEntity", "Building")
                         .WithMany("Apartments")
@@ -234,7 +234,7 @@ namespace BuildingManagement.Migrations
                         .IsRequired();
 
                     b.HasOne("BuildingManagement.Models.Entities.UserEntity", "User")
-                        .WithMany("Apartements")
+                        .WithMany("Apartments")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -268,7 +268,7 @@ namespace BuildingManagement.Migrations
 
             modelBuilder.Entity("BuildingManagement.Models.Entities.PaymentEntity", b =>
                 {
-                    b.HasOne("BuildingManagement.Models.Entities.ApartementEntity", "Apartement")
+                    b.HasOne("BuildingManagement.Models.Entities.ApartmentEntity", "Apartment")
                         .WithMany("Payments")
                         .HasForeignKey("ApartmentId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -280,12 +280,12 @@ namespace BuildingManagement.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Apartement");
+                    b.Navigation("Apartment");
 
                     b.Navigation("Bill");
                 });
 
-            modelBuilder.Entity("BuildingManagement.Models.Entities.ApartementEntity", b =>
+            modelBuilder.Entity("BuildingManagement.Models.Entities.ApartmentEntity", b =>
                 {
                     b.Navigation("Payments");
                 });
@@ -309,7 +309,7 @@ namespace BuildingManagement.Migrations
 
             modelBuilder.Entity("BuildingManagement.Models.Entities.UserEntity", b =>
                 {
-                    b.Navigation("Apartements");
+                    b.Navigation("Apartments");
                 });
 #pragma warning restore 612, 618
         }

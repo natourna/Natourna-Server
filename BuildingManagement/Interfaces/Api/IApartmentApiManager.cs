@@ -4,17 +4,17 @@ namespace BuildingManagement.Interfaces.Api
 {
     public interface IApartmentApiManager
     {
-        Task<List<ApartementEntity>> GetAllApartmentsAsync();
+        Task<List<ApartmentEntity>> GetAllApartmentsAsync();
 
-        Task<ApartementEntity?> GetApartmentByIdAsync(int id);
+        Task<ApartmentEntity?> GetApartmentByIdAsync(int id);
 
-        Task<List<ApartementEntity>> GetApartmentsByBuildingIdAsync(int buildingId);
+        Task<List<ApartmentEntity>> GetApartmentsByBuildingIdAsync(int buildingId);
 
-        Task<List<ApartementEntity>> GetApartmentsByUserIdAsync(int userId);
+        Task<List<ApartmentEntity>> GetApartmentsByUserIdAsync(int userId);
 
-        Task<ApartementEntity> CreateApartmentAsync(ApartementEntity apartment);
+        Task<ApartmentEntity> CreateApartmentAsync(ApartmentEntity apartment);
 
-        Task<ApartementEntity?> UpdateApartmentAsync(int id, ApartementEntity apartment);
+        Task<ApartmentEntity?> UpdateApartmentAsync(int id, ApartmentEntity apartment);
 
         Task<bool> DeleteApartmentAsync(int id);
     }

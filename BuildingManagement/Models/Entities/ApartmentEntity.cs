@@ -4,18 +4,18 @@ using BuildingManagement.Const;
 
 namespace BuildingManagement.Models.Entities
 {
-    public class ApartementEntity : BaseEntity
+    public class ApartmentEntity : BaseEntity
     {
         [Key]
         public int Id { get; set; }
 
-        public string AppartementNumber { get; set; }
+        public string AppartmentNumber { get; set; }
 
         public string Owner { get; set; }
 
         public string Tenant { get; set; }
 
-        public ApartementStatus Status { get; set; }
+        public ApartmentStatus Status { get; set; }
 
         public int BuildingId { get; set; }
 
@@ -29,10 +29,10 @@ namespace BuildingManagement.Models.Entities
 
         public ICollection<PaymentEntity> Payments { get; set; }
 
-        public ApartementEntity(int id, string appartementNumber, string owner, string tenant, ApartementStatus status, int buildingId, int userId)
+        public ApartmentEntity(int id, string appartmentNumber, string owner, string tenant, ApartmentStatus status, int buildingId, int userId)
         {
             Id = id;
-            AppartementNumber = appartementNumber;
+            AppartmentNumber = appartmentNumber;
             Owner = owner;
             Tenant = tenant;
             Status = status;

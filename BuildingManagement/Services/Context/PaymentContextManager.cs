@@ -18,7 +18,7 @@ namespace BuildingManagement.Services.Context
         {
             return await _context.Payments
                 .Include(p => p.Bill)
-                .Include(p => p.Apartement)
+                .Include(p => p.Apartment)
                 .ToListAsync();
         }
 
@@ -26,14 +26,14 @@ namespace BuildingManagement.Services.Context
         {
             return await _context.Payments
                 .Include(p => p.Bill)
-                .Include(p => p.Apartement)
+                .Include(p => p.Apartment)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public async Task<List<PaymentEntity>> GetByBillIdAsync(int billId)
         {
             return await _context.Payments
-                .Include(p => p.Apartement)
+                .Include(p => p.Apartment)
                 .Where(p => p.BillId == billId)
                 .ToListAsync();
         }

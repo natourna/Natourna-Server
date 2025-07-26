@@ -4,17 +4,17 @@ namespace BuildingManagement.Interfaces.Context
 {
     public interface IApartmentContextManager
     {
-        Task<List<ApartementEntity>> GetAllAsync();
+        Task<List<ApartmentEntity>> GetAllAsync();
 
-        Task<ApartementEntity?> GetByIdAsync(int id);
+        Task<ApartmentEntity?> GetByIdAsync(int id);
 
-        Task<List<ApartementEntity>> GetByBuildingIdAsync(int buildingId);
+        Task<List<ApartmentEntity>> GetByBuildingIdAsync(int buildingId);
 
-        Task<List<ApartementEntity>> GetByUserIdAsync(int userId);
+        Task<List<ApartmentEntity>> GetByUserIdAsync(int userId);
 
-        Task<ApartementEntity> CreateAsync(ApartementEntity apartment);
+        Task<ApartmentEntity> CreateAsync(ApartmentEntity apartment);
 
-        Task<ApartementEntity?> UpdateAsync(int id, ApartementEntity apartment);
+        Task<ApartmentEntity?> UpdateAsync(int id, ApartmentEntity apartment);
 
         Task<bool> DeleteAsync(int id);
     }

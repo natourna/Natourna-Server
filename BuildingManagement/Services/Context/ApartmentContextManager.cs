@@ -14,56 +14,56 @@ namespace BuildingManagement.Services.Context
             _context = context;
         }
 
-        public async Task<List<ApartementEntity>> GetAllAsync()
+        public async Task<List<ApartmentEntity>> GetAllAsync()
         {
-            return await _context.Apartements
+            return await _context.Apartments
                 .Include(a => a.Building)
                 .Include(a => a.User)
                 .Include(a => a.Payments)
                 .ToListAsync();
         }
 
-        public async Task<ApartementEntity?> GetByIdAsync(int id)
+        public async Task<ApartmentEntity?> GetByIdAsync(int id)
         {
-            return await _context.Apartements
+            return await _context.Apartments
                 .Include(a => a.Building)
                 .Include(a => a.User)
                 .Include(a => a.Payments)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
-        public async Task<List<ApartementEntity>> GetByBuildingIdAsync(int buildingId)
+        public async Task<List<ApartmentEntity>> GetByBuildingIdAsync(int buildingId)
         {
-            return await _context.Apartements
+            return await _context.Apartments
                 .Include(a => a.User)
                 .Include(a => a.Payments)
                 .Where(a => a.BuildingId == buildingId)
                 .ToListAsync();
         }
 
-        public async Task<List<ApartementEntity>> GetByUserIdAsync(int userId)
+        public async Task<List<ApartmentEntity>> GetByUserIdAsync(int userId)
         {
-            return await _context.Apartements
+            return await _context.Apartments
                 .Include(a => a.Building)
                 .Include(a => a.Payments)
                 .Where(a => a.UserId == userId)
                 .ToListAsync();
         }
 
-        public async Task<ApartementEntity> CreateAsync(ApartementEntity apartment)
+        public async Task<ApartmentEntity> CreateAsync(ApartmentEntity apartment)
         {
-            _context.Apartements.Add(apartment);
+            _context.Apartments.Add(apartment);
             await _context.SaveChangesAsync();
             return apartment;
         }
 
-        public async Task<ApartementEntity?> UpdateAsync(int id, ApartementEntity apartment)
+        public async Task<ApartmentEntity?> UpdateAsync(int id, ApartmentEntity apartment)
         {
-            var existingApartment = await _context.Apartements.FindAsync(id);
+            var existingApartment = await _context.Apartments.FindAsync(id);
             if (existingApartment == null)
                 return null;
 
-            existingApartment.AppartementNumber = apartment.AppartementNumber;
+            existingApartment.AppartmentNumber = apartment.AppartmentNumber;
             existingApartment.Owner = apartment.Owner;
             existingApartment.Tenant = apartment.Tenant;
             existingApartment.Status = apartment.Status;
@@ -77,11 +77,11 @@ namespace BuildingManagement.Services.Context
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var apartment = await _context.Apartements.FindAsync(id);
+            var apartment = await _context.Apartments.FindAsync(id);
             if (apartment == null)
                 return false;
 
-            _context.Apartements.Remove(apartment);
+            _context.Apartments.Remove(apartment);
             await _context.SaveChangesAsync();
             return true;
         }

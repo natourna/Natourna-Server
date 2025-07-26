@@ -5,7 +5,7 @@ namespace BuildingManagement.Data
 {
     public class BuildingManagementContext : DbContext
     {
-        public DbSet<ApartementEntity> Apartements { get; set; }
+        public DbSet<ApartmentEntity> Apartments { get; set; }
 
         public DbSet<BillEntity> Bills { get; set; }
 

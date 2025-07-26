@@ -13,32 +13,32 @@ namespace BuildingManagement.Services.Api
             _contextManager = contextManager;
         }
 
-        public async Task<List<ApartementEntity>> GetAllApartmentsAsync()
+        public async Task<List<ApartmentEntity>> GetAllApartmentsAsync()
         {
             return await _contextManager.GetAllAsync();
         }
 
-        public async Task<ApartementEntity?> GetApartmentByIdAsync(int id)
+        public async Task<ApartmentEntity?> GetApartmentByIdAsync(int id)
         {
             return await _contextManager.GetByIdAsync(id);
         }
 
-        public async Task<List<ApartementEntity>> GetApartmentsByBuildingIdAsync(int buildingId)
+        public async Task<List<ApartmentEntity>> GetApartmentsByBuildingIdAsync(int buildingId)
         {
             return await _contextManager.GetByBuildingIdAsync(buildingId);
         }
 
-        public async Task<List<ApartementEntity>> GetApartmentsByUserIdAsync(int userId)
+        public async Task<List<ApartmentEntity>> GetApartmentsByUserIdAsync(int userId)
         {
             return await _contextManager.GetByUserIdAsync(userId);
         }
 
-        public async Task<ApartementEntity> CreateApartmentAsync(ApartementEntity apartment)
+        public async Task<ApartmentEntity> CreateApartmentAsync(ApartmentEntity apartment)
         {
             return await _contextManager.CreateAsync(apartment);
         }
 
-        public async Task<ApartementEntity?> UpdateApartmentAsync(int id, ApartementEntity apartment)
+        public async Task<ApartmentEntity?> UpdateApartmentAsync(int id, ApartmentEntity apartment)
         {
             return await _contextManager.UpdateAsync(id, apartment);
         }

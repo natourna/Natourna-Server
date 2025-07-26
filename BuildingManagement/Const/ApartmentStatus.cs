@@ -1,6 +1,6 @@
 ﻿namespace BuildingManagement.Const
 {
-    public enum ApartementStatus
+    public enum ApartmentStatus
     {
         Active = 0,
         Inactive = 1,

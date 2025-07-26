@@ -18,7 +18,7 @@ namespace BuildingManagement.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
                     Address = table.Column<string>(type: "TEXT", nullable: false),
-                    ActiveApartements = table.Column<int>(type: "INTEGER", nullable: false),
+                    ActiveApartments = table.Column<int>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
                     UpdatededAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
                 },
@@ -77,7 +77,7 @@ namespace BuildingManagement.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", nullable: false),
-                    NumberOfApartements = table.Column<int>(type: "INTEGER", nullable: false),
+                    NumberOfApartments = table.Column<int>(type: "INTEGER", nullable: false),
                     Floors = table.Column<int>(type: "INTEGER", nullable: false),
                     CompoundId = table.Column<int>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
@@ -95,12 +95,12 @@ namespace BuildingManagement.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Apartements",
+                name: "Apartments",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    AppartementNumber = table.Column<string>(type: "TEXT", nullable: false),
+                    AppartmentNumber = table.Column<string>(type: "TEXT", nullable: false),
                     Owner = table.Column<string>(type: "TEXT", nullable: false),
                     Tenant = table.Column<string>(type: "TEXT", nullable: false),
                     Status = table.Column<int>(type: "INTEGER", nullable: false),
@@ -111,15 +111,15 @@ namespace BuildingManagement.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Apartements", x => x.Id);
+                    table.PrimaryKey("PK_Apartments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Apartements_Buildings_BuildingId",
+                        name: "FK_Apartments_Buildings_BuildingId",
                         column: x => x.BuildingId,
                         principalTable: "Buildings",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Apartements_Users_UserId",
+                        name: "FK_Apartments_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -144,9 +144,9 @@ namespace BuildingManagement.Migrations
                 {
                     table.PrimaryKey("PK_Payments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Payments_Apartements_ApartmentId",
+                        name: "FK_Payments_Apartments_ApartmentId",
                         column: x => x.ApartmentId,
-                        principalTable: "Apartements",
+                        principalTable: "Apartments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -158,13 +158,13 @@ namespace BuildingManagement.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Apartements_BuildingId",
-                table: "Apartements",
+                name: "IX_Apartments_BuildingId",
+                table: "Apartments",
                 column: "BuildingId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Apartements_UserId",
-                table: "Apartements",
+                name: "IX_Apartments_UserId",
+                table: "Apartments",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -195,7 +195,7 @@ namespace BuildingManagement.Migrations
                 name: "Payments");
 
             migrationBuilder.DropTable(
-                name: "Apartements");
+                name: "Apartments");
 
             migrationBuilder.DropTable(
                 name: "Bills");

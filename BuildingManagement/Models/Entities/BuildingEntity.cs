@@ -10,7 +10,7 @@ namespace BuildingManagement.Models.Entities
 
         public string Name { get; set; }
 
-        public int NumberOfApartements { get; set; }
+        public int NumberOfApartments { get; set; }
 
         public int Floors { get; set; }
 
@@ -19,13 +19,13 @@ namespace BuildingManagement.Models.Entities
         [ForeignKey("CompoundId")]
         public CompoundEntity? Compound { get; set; }
 
-        public ICollection<ApartementEntity> Apartments { get; set; }
+        public ICollection<ApartmentEntity> Apartments { get; set; }
 
-        public BuildingEntity(int id, string name, int numberOfApartements, int floors, int compoundId)
+        public BuildingEntity(int id, string name, int numberOfApartments, int floors, int compoundId)
         {
             Id = id;
             Name = name;
-            NumberOfApartements = numberOfApartements;
+            NumberOfApartments = numberOfApartments;
             Floors = floors;
             CompoundId = compoundId;
             Apartments = [];

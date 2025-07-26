@@ -18,7 +18,7 @@ namespace BuildingManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<ApartementEntity>>> GetAllApartments()
+        public async Task<ActionResult<List<ApartmentEntity>>> GetAllApartments()
         {
             var apartments = await _apartmentManager.GetAllApartmentsAsync();
 
@@ -26,7 +26,7 @@ namespace BuildingManagement.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ApartementEntity>> GetApartmentById(int id)
+        public async Task<ActionResult<ApartmentEntity>> GetApartmentById(int id)
         {
             var apartment = await _apartmentManager.GetApartmentByIdAsync(id);
 
@@ -39,7 +39,7 @@ namespace BuildingManagement.Controllers
         }
 
         [HttpGet("building/{buildingId}")]
-        public async Task<ActionResult<List<ApartementEntity>>> GetApartmentsByBuildingId(int buildingId)
+        public async Task<ActionResult<List<ApartmentEntity>>> GetApartmentsByBuildingId(int buildingId)
         {
             var apartments = await _apartmentManager.GetApartmentsByBuildingIdAsync(buildingId);
 
@@ -47,7 +47,7 @@ namespace BuildingManagement.Controllers
         }
 
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<List<ApartementEntity>>> GetApartmentsByUserId(int userId)
+        public async Task<ActionResult<List<ApartmentEntity>>> GetApartmentsByUserId(int userId)
         {
             var apartments = await _apartmentManager.GetApartmentsByUserIdAsync(userId);
 
@@ -55,7 +55,7 @@ namespace BuildingManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<ApartementEntity>> CreateApartment(ApartementEntity apartment)
+        public async Task<ActionResult<ApartmentEntity>> CreateApartment(ApartmentEntity apartment)
         {
             var createdApartment = await _apartmentManager.CreateApartmentAsync(apartment);
 
@@ -63,7 +63,7 @@ namespace BuildingManagement.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<ApartementEntity>> UpdateApartment(int id, ApartementEntity apartment)
+        public async Task<ActionResult<ApartmentEntity>> UpdateApartment(int id, ApartmentEntity apartment)
         {
             var updatedApartment = await _apartmentManager.UpdateApartmentAsync(id, apartment);
 

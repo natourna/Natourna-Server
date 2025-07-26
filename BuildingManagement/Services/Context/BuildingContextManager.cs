@@ -52,7 +52,7 @@ namespace BuildingManagement.Services.Context
                 return null;
 
             existingBuilding.Name = building.Name;
-            existingBuilding.NumberOfApartements = building.NumberOfApartements;
+            existingBuilding.NumberOfApartments = building.NumberOfApartments;
             existingBuilding.Floors = building.Floors;
             existingBuilding.CompoundId = building.CompoundId;
             existingBuilding.UpdatededAt = DateTime.UtcNow;

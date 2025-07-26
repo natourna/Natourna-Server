@@ -13,7 +13,7 @@ namespace BuildingManagement.Models.Entities
 
         public string PhoneNumber { get; set; }
 
-        public ICollection<ApartementEntity> Apartements { get; set; }
+        public ICollection<ApartmentEntity> Apartments { get; set; }
 
         public UserEntity(int id, string email, string password, string phoneNumber)
         {
@@ -21,7 +21,7 @@ namespace BuildingManagement.Models.Entities
             Email = email;
             Password = password;
             PhoneNumber = phoneNumber;
-            Apartements = [];
+            Apartments = [];
             CreatedAt = DateTime.UtcNow;
             UpdatededAt = DateTime.UtcNow;
         }

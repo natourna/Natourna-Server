@@ -22,7 +22,7 @@ namespace BuildingManagement.Models.Entities
         public int ApartmentId { get; set; }
 
         [ForeignKey("ApartmentId")]
-        public ApartementEntity? Apartement { get; set; }
+        public ApartmentEntity? Apartment { get; set; }
 
         public PaymentEntity(int id, bool recurrent, DateTime paymentDate, decimal amount, int billId, int apartmentId)
         {
