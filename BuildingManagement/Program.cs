@@ -2,6 +2,7 @@ using BuildingManagement.Data;
 using BuildingManagement.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,10 @@ builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddControllers();
 
+// Add Basic Authentication
+builder.Services.AddAuthentication("BasicAuthentication")
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+
 // Add services using extensions
 builder.Services
     .AddDatabaseServices(builder.Configuration)
@@ -52,6 +57,7 @@ app.UseSwaggerServices();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication(); // Add this before UseAuthorization
 app.UseAuthorization();
 
 app.MapControllers();

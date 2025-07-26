@@ -1,11 +1,13 @@
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Models.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BuildingManagement.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ApartmentController : ControllerBase
     {
         private readonly IApartmentApiManager _apartmentManager;
