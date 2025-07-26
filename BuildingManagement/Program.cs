@@ -6,15 +6,26 @@ using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Setup Serilog for file logging
-var appName = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
-var logDir = Path.Combine(AppContext.BaseDirectory, "Logs");
-Directory.CreateDirectory(logDir);
-var logFile = Path.Combine(logDir, $"{appName}-{DateTime.UtcNow:yyyyMMdd}.log");
+// Use PORT environment variable if set (for Google Cloud Run)
+var port = Environment.GetEnvironmentVariable("PORT");
+var listenPort = string.IsNullOrEmpty(port) ? 8080 : int.Parse(port);
 
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.File(logFile, rollingInterval: RollingInterval.Day)
-    .CreateLogger();
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(listenPort);
+});
+
+Console.WriteLine($" App is starting on port {listenPort}...");
+
+//// Setup Serilog for file logging
+//var appName = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
+//var logDir = Path.Combine(AppContext.BaseDirectory, "Logs");
+//Directory.CreateDirectory(logDir);
+//var logFile = Path.Combine(logDir, $"{appName}-{DateTime.UtcNow:yyyyMMdd}.log");
+
+//Log.Logger = new LoggerConfiguration()
+//    .WriteTo.File(logFile, rollingInterval: RollingInterval.Day)
+//    .CreateLogger();
 
 if (File.Exists("appsettings.local.json"))
 {
@@ -46,16 +57,22 @@ var app = builder.Build();
 // Ensure database is created and migrations are applied
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<BuildingManagementContext>();
-    dbContext.Database.Migrate();
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<BuildingManagementContext>();
+        dbContext.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Failed to resolve BuildingManagementContext: " + ex.ToString());
+        // Optionally, rethrow or handle as needed
+    }
 }
 
 // Configure the HTTP request pipeline.
 app.UseGlobalExceptionLogging();
 app.UseRequestLogging();
 app.UseSwaggerServices();
-
-app.UseHttpsRedirection();
 
 app.UseAuthentication(); // Add this before UseAuthorization
 app.UseAuthorization();
