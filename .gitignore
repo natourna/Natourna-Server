@@ -1,0 +1,49 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+# Ignore build results
+bin/
+obj/
+out/
+Debug/
+Release/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+.vs/
+
+# Logs
+*.log
+
+# Package outputs
+*.nupkg
+*.snupkg
+
+# NuGet Packages
+*.nupkg
+packages/
+
+# Dotnet CLI
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# ASP.NET secrets
+**/secrets.json
+
+# Docker files
+docker-compose.override.yml
