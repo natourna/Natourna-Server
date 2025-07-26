@@ -48,3 +48,4 @@ Thumbs.db
 # Docker files
 docker-compose.override.yml
 /BuildingManagement/appsettings.local.json
+/Database/BuildingManagement.db
