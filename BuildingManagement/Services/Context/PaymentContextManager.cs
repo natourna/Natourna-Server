@@ -49,6 +49,13 @@ namespace BuildingManagement.Services.Context
         public async Task<PaymentEntity> CreateAsync(PaymentEntity payment)
         {
             _context.Payments.Add(payment);
+            // Update Bill's AmmountPaid
+            var bill = await _context.Bills.FindAsync(payment.BillId);
+            if (bill != null)
+            {
+                bill.AmmountPaid = (bill.AmmountPaid ?? 0) + payment.Amount;
+                bill.UpdatededAt = DateTime.UtcNow;
+            }
             await _context.SaveChangesAsync();
             return payment;
         }
@@ -58,6 +65,25 @@ namespace BuildingManagement.Services.Context
             var existingPayment = await _context.Payments.FindAsync(id);
             if (existingPayment == null)
                 return null;
+
+            // Adjust Bill's AmmountPaid if Amount or BillId changed
+            if (existingPayment.BillId != payment.BillId || existingPayment.Amount != payment.Amount)
+            {
+                // Subtract old amount from old bill
+                var oldBill = await _context.Bills.FindAsync(existingPayment.BillId);
+                if (oldBill != null)
+                {
+                    oldBill.AmmountPaid = (oldBill.AmmountPaid ?? 0) - existingPayment.Amount;
+                    oldBill.UpdatededAt = DateTime.UtcNow;
+                }
+                // Add new amount to new bill
+                var newBill = await _context.Bills.FindAsync(payment.BillId);
+                if (newBill != null)
+                {
+                    newBill.AmmountPaid = (newBill.AmmountPaid ?? 0) + payment.Amount;
+                    newBill.UpdatededAt = DateTime.UtcNow;
+                }
+            }
 
             existingPayment.Recurrent = payment.Recurrent;
             existingPayment.PaymentDate = payment.PaymentDate;

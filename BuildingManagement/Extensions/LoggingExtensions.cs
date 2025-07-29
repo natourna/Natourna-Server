@@ -9,8 +9,11 @@ public static class LoggingExtensions
         app.Use(async (context, next) =>
         {
             var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("RequestLogger");
+
             context.Request.EnableBuffering();
+
             string body = string.Empty;
+
             if (context.Request.ContentLength > 0 && context.Request.Body.CanRead)
             {
                 context.Request.Body.Position = 0;
@@ -18,9 +21,12 @@ public static class LoggingExtensions
                 body = await reader.ReadToEndAsync();
                 context.Request.Body.Position = 0;
             }
+
             logger.LogInformation($"HTTP {context.Request.Method} {context.Request.Path} Body: {body}");
+
             await next();
         });
+
         return app;
     }
 
@@ -37,7 +43,18 @@ public static class LoggingExtensions
             {
                 logger.LogError(ex, "Unhandled exception occurred while processing request");
                 context.Response.StatusCode = 500;
-                await context.Response.WriteAsync("An unexpected error occurred.");
+                context.Response.ContentType = "application/json";
+
+                var errorResponse = new {
+                    error = ex.Message,
+                    innerException = ex.InnerException?.Message,
+#if DEBUG
+                    stackTrace = ex.StackTrace
+#endif
+                };
+
+                var json = System.Text.Json.JsonSerializer.Serialize(errorResponse);
+                await context.Response.WriteAsync(json);
             }
         });
         return app;

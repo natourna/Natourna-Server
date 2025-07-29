@@ -4,6 +4,7 @@ using BuildingManagement.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BuildingManagement.Migrations
 {
     [DbContext(typeof(BuildingManagementContext))]
-    partial class BuildingManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20250729171133_ModifyApartmentEntity")]
+    partial class ModifyApartmentEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -77,7 +80,7 @@ namespace BuildingManagement.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal?>("AmmountPaid")
+                    b.Property<decimal>("AmmountPaid")
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<decimal>("Amount")
@@ -89,11 +92,10 @@ namespace BuildingManagement.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime?>("DueDate")
+                    b.Property<DateTime>("DueDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<bool?>("IsPaid")
-                        .IsRequired()
+                    b.Property<bool>("IsPaid")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Label")
@@ -194,11 +196,10 @@ namespace BuildingManagement.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime?>("PaymentDate")
+                    b.Property<DateTime>("PaymentDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<bool?>("Recurrent")
-                        .IsRequired()
+                    b.Property<bool>("Recurrent")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<DateTimeOffset>("UpdatededAt")

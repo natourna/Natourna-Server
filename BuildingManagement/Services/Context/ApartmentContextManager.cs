@@ -63,11 +63,12 @@ namespace BuildingManagement.Services.Context
             if (existingApartment == null)
                 return null;
 
-            existingApartment.AppartmentNumber = apartment.AppartmentNumber;
+            existingApartment.ApartmentInfo = apartment.ApartmentInfo;
             existingApartment.Owner = apartment.Owner;
             existingApartment.Tenant = apartment.Tenant;
-            existingApartment.Status = apartment.Status;
+            existingApartment.IsActive = apartment.IsActive;
             existingApartment.BuildingId = apartment.BuildingId;
+            existingApartment.Floor = apartment.Floor;
             existingApartment.UserId = apartment.UserId;
             existingApartment.UpdatededAt = DateTime.UtcNow;
 

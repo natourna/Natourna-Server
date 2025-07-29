@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using BuildingManagement.Validation;
 
 namespace BuildingManagement.Models.Entities
 {
@@ -9,17 +11,23 @@ namespace BuildingManagement.Models.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
+        [Required]
         public string Name { get; set; }
 
+        [RequiredInt]
         public int NumberOfApartments { get; set; }
 
+        [RequiredInt]
         public int Floors { get; set; }
 
+        [RequiredInt]
         public int CompoundId { get; set; }
 
         [ForeignKey("CompoundId")]
+        [JsonIgnore]
         public CompoundEntity? Compound { get; set; }
 
+        [JsonIgnore]
         public ICollection<ApartmentEntity> Apartments { get; set; }
 
         public BuildingEntity(int id, string name, int numberOfApartments, int floors, int compoundId)

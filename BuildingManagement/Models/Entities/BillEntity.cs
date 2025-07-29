@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using BuildingManagement.Validation;
 
 namespace BuildingManagement.Models.Entities
 {
@@ -9,31 +11,36 @@ namespace BuildingManagement.Models.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
+        [Required]
         public string Label { get; set; }
 
+        [RequiredDecimal]
         public decimal Amount { get; set; }
 
-        public decimal AmmountPaid { get; set; }
+        public decimal? AmmountPaid { get; set; }
 
-        public DateTime DueDate { get; set; }
+        public DateTime? DueDate { get; set; }
 
-        public bool IsPaid { get; set; }
+        [Required]
+        public bool? IsPaid { get; set; }
 
+        [RequiredInt]
         public int CompoundId { get; set; }
 
         [ForeignKey("CompoundId")]
+        [JsonIgnore]
         public CompoundEntity? Compound { get; set; }
 
+        [JsonIgnore]
         public ICollection<PaymentEntity> Payments { get; set; }
 
-        public BillEntity(int id, string label, decimal amount, decimal ammountPaid, DateTime dueDate, bool isPaid, int compoundId)
+        public BillEntity(int id, string label, decimal amount, bool? isPaid, int compoundId)
         {
             Id = id;
             Label = label;
             Amount = amount;
-            AmmountPaid = ammountPaid;
-            DueDate = dueDate;
-            IsPaid = isPaid;
+            IsPaid = isPaid ?? false;
+            AmmountPaid = 0;
             CompoundId = compoundId;
             Payments = [];
             CreatedAt = DateTime.UtcNow;
