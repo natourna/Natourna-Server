@@ -17,15 +17,15 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 
 Console.WriteLine($" App is starting on port {listenPort}...");
 
-//// Setup Serilog for file logging
-//var appName = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
-//var logDir = Path.Combine(AppContext.BaseDirectory, "Logs");
-//Directory.CreateDirectory(logDir);
-//var logFile = Path.Combine(logDir, $"{appName}-{DateTime.UtcNow:yyyyMMdd}.log");
+// Setup Serilog for file logging
+var appName = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
+var logDir = Path.Combine(AppContext.BaseDirectory, "Logs");
+Directory.CreateDirectory(logDir);
+var logFile = Path.Combine(logDir, $"{appName}-{DateTime.UtcNow:yyyyMMdd}.log");
 
-//Log.Logger = new LoggerConfiguration()
-//    .WriteTo.File(logFile, rollingInterval: RollingInterval.Day)
-//    .CreateLogger();
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.File(logFile, rollingInterval: RollingInterval.Day)
+    .CreateLogger();
 
 if (File.Exists("appsettings.local.json"))
 {

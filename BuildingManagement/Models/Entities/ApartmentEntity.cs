@@ -7,6 +7,7 @@ namespace BuildingManagement.Models.Entities
     public class ApartmentEntity : BaseEntity
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         public string AppartmentNumber { get; set; }

@@ -6,6 +6,7 @@ namespace BuildingManagement.Models.Entities
     public class PaymentEntity : BaseEntity
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         public bool Recurrent { get; set; }

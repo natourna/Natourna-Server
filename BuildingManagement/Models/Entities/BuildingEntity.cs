@@ -6,6 +6,7 @@ namespace BuildingManagement.Models.Entities
     public class BuildingEntity : BaseEntity
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         public string Name { get; set; }
