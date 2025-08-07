@@ -1,8 +1,10 @@
 using BuildingManagement.Data;
 using BuildingManagement.Extensions;
-using Microsoft.EntityFrameworkCore;
-using Serilog;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -52,6 +54,14 @@ builder.Services
     .AddContextManagers()
     .AddSwaggerServices();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost4200",
+        policy => policy.WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
+});
+
 var app = builder.Build();
 
 // Ensure database is created and migrations are applied
@@ -76,6 +86,8 @@ app.UseSwaggerServices();
 
 app.UseAuthentication(); // Add this before UseAuthorization
 app.UseAuthorization();
+
+app.UseCors("AllowLocalhost4200");
 
 app.MapControllers();
 
