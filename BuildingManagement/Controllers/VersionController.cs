@@ -1,7 +1,6 @@
-﻿using BuildingManagement.Models.Entities;
+﻿using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection;
 
 namespace BuildingManagement.Controllers
 {

@@ -45,7 +45,8 @@ public static class LoggingExtensions
                 context.Response.StatusCode = 500;
                 context.Response.ContentType = "application/json";
 
-                var errorResponse = new {
+                var errorResponse = new
+                {
                     error = ex.Message,
                     innerException = ex.InnerException?.Message,
 #if DEBUG
