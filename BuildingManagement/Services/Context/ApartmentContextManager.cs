@@ -18,7 +18,6 @@ namespace BuildingManagement.Services.Context
         {
             return await _context.Apartments
                 .Include(a => a.Building)
-                .Include(a => a.User)
                 .Include(a => a.Payments)
                 .ToListAsync();
         }
@@ -27,7 +26,6 @@ namespace BuildingManagement.Services.Context
         {
             return await _context.Apartments
                 .Include(a => a.Building)
-                .Include(a => a.User)
                 .Include(a => a.Payments)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
@@ -35,18 +33,8 @@ namespace BuildingManagement.Services.Context
         public async Task<List<ApartmentEntity>> GetByBuildingIdAsync(int buildingId)
         {
             return await _context.Apartments
-                .Include(a => a.User)
                 .Include(a => a.Payments)
                 .Where(a => a.BuildingId == buildingId)
-                .ToListAsync();
-        }
-
-        public async Task<List<ApartmentEntity>> GetByUserIdAsync(int userId)
-        {
-            return await _context.Apartments
-                .Include(a => a.Building)
-                .Include(a => a.Payments)
-                .Where(a => a.UserId == userId)
                 .ToListAsync();
         }
 
@@ -69,7 +57,6 @@ namespace BuildingManagement.Services.Context
             existingApartment.IsActive = apartment.IsActive;
             existingApartment.BuildingId = apartment.BuildingId;
             existingApartment.Floor = apartment.Floor;
-            existingApartment.UserId = apartment.UserId;
             existingApartment.UpdatededAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

@@ -10,8 +10,6 @@ namespace BuildingManagement.Interfaces.Api
 
         Task<List<ApartmentEntity>> GetApartmentsByBuildingIdAsync(int buildingId);
 
-        Task<List<ApartmentEntity>> GetApartmentsByUserIdAsync(int userId);
-
         Task<ApartmentEntity> CreateApartmentAsync(ApartmentEntity apartment);
 
         Task<ApartmentEntity?> UpdateApartmentAsync(int id, ApartmentEntity apartment);

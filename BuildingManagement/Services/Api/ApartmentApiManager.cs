@@ -28,11 +28,6 @@ namespace BuildingManagement.Services.Api
             return await _contextManager.GetByBuildingIdAsync(buildingId);
         }
 
-        public async Task<List<ApartmentEntity>> GetApartmentsByUserIdAsync(int userId)
-        {
-            return await _contextManager.GetByUserIdAsync(userId);
-        }
-
         public async Task<ApartmentEntity> CreateApartmentAsync(ApartmentEntity apartment)
         {
             return await _contextManager.CreateAsync(apartment);

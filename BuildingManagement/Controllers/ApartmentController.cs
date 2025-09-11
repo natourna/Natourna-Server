@@ -46,14 +46,6 @@ namespace BuildingManagement.Controllers
             return Ok(apartments);
         }
 
-        [HttpGet("user/{userId}")]
-        public async Task<ActionResult<List<ApartmentEntity>>> GetApartmentsByUserId(int userId)
-        {
-            var apartments = await _apartmentManager.GetApartmentsByUserIdAsync(userId);
-
-            return Ok(apartments);
-        }
-
         [HttpPost]
         public async Task<ActionResult<ApartmentEntity>> CreateApartment(ApartmentEntity apartment)
         {

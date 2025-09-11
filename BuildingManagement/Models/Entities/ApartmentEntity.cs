@@ -15,15 +15,13 @@ namespace BuildingManagement.Models.Entities
         [Required]
         public string ApartmentInfo { get; set; }
 
-        [Required]
-        public string Owner { get; set; }
+        public string? Owner { get; set; }
 
         public string? Tenant { get; set; }
 
         [Required]
         public bool? IsActive { get; set; }
 
-        [RequiredInt]
         public int Floor { get; set; }
 
         [RequiredInt]
@@ -33,25 +31,16 @@ namespace BuildingManagement.Models.Entities
         [JsonIgnore]
         public BuildingEntity? Building { get; set; }
 
-        [RequiredInt]
-        public int UserId { get; set; }
-
-        [ForeignKey("UserId")]
-        [JsonIgnore]
-        public UserEntity? User { get; set; }
-
         [JsonIgnore]
         public ICollection<PaymentEntity> Payments { get; set; }
 
-        public ApartmentEntity(int id, string apartmentInfo, string owner, int floor, bool? isActive, int buildingId, int userId)
+        public ApartmentEntity(int id, string apartmentInfo, int floor, bool? isActive, int buildingId)
         {
             Id = id;
             ApartmentInfo = apartmentInfo;
-            Owner = owner;
             Floor = floor;
             IsActive = isActive;
             BuildingId = buildingId;
-            UserId = userId;
             Payments = [];
             CreatedAt = DateTime.UtcNow;
             UpdatededAt = DateTime.UtcNow;
