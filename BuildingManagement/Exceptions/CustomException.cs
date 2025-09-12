@@ -1,4 +1,4 @@
-﻿ namespace BuildingManagement.Exceptions
+﻿namespace BuildingManagement.Exceptions
 {
     public class CustomException : Exception
     {

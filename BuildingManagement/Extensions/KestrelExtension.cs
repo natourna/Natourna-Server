@@ -1,6 +1,5 @@
 ﻿using BuildingManagement.Configurations;
 using BuildingManagement.Exceptions;
-using Microsoft.Extensions.Configuration;
 
 namespace BuildingManagement.Extensions
 {
