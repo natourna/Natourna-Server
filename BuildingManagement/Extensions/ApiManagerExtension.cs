@@ -3,7 +3,7 @@ using BuildingManagement.Services.Api;
 
 namespace BuildingManagement.Extensions;
 
-public static class ApiManagerExtensions
+public static class ApiManagerExtension
 {
     public static IServiceCollection AddApiManagers(this IServiceCollection services)
     {

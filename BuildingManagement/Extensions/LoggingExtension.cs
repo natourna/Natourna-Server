@@ -2,7 +2,7 @@ using System.Text;
 
 namespace BuildingManagement.Extensions;
 
-public static class LoggingExtensions
+public static class LoggingExtension
 {
     public static IApplicationBuilder UseRequestLogging(this IApplicationBuilder app)
     {

@@ -1,6 +1,6 @@
 namespace BuildingManagement.Extensions;
 
-public static class SwaggerExtensions
+public static class SwaggerExtension
 {
     public static IServiceCollection AddSwaggerServices(this IServiceCollection services)
     {
