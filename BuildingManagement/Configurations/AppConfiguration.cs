@@ -4,11 +4,6 @@ namespace BuildingManagement.Configurations
 {
     public class AppConfiguration
     {
-        public BuildingManagementConfiguration BuildingManagement { get; set; }
-
-        public AppConfiguration(BuildingManagementConfiguration buildingManagement)
-        {
-            BuildingManagement = buildingManagement;
-        }
+        public BuildingManagementConfiguration BuildingManagement { get; set; } = new();
     }
 }

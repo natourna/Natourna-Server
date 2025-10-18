@@ -1,4 +1,5 @@
 using BuildingManagement.Extensions;
+using Microsoft.AspNetCore.Authentication;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,17 +15,6 @@ try
     builder.Services.AddSwaggerServices();
     builder.Services.AddAuthenticationService();
     builder.WebHost.AddListenPort(builder.Configuration);
-
-// Add Basic Authentication
-builder.Services.AddAuthentication("BasicAuthentication")
-    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
-
-// Add services using extensions
-builder.Services
-    .AddDatabaseServices(builder.Configuration)
-    .AddApiManagers()
-    .AddContextManagers()
-    .AddSwaggerServices();
 
 var app = builder.Build();
 
