@@ -1,0 +1,839 @@
+{
+	"info": {
+		"_postman_id": "building-management-api",
+		"name": "Building Management API",
+		"description": "Complete API collection for Building Management System - .NET 8",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "basic",
+		"basic": [
+			{
+				"key": "username",
+				"value": "admin",
+				"type": "string"
+			},
+			{
+				"key": "password",
+				"value": "password",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Payment",
+			"item": [
+				{
+					"name": "Get All Payments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/payment",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "payment"]
+						}
+					}
+				},
+				{
+					"name": "Get Payment By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/payment/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "payment", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Payments By Apartment",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/payment/apartment/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "payment", "apartment", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Payments By Cycle",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/payment/cycle/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "payment", "cycle", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"apartmentId\": 1,\n  \"amount\": 1000.00,\n  \"dueDate\": \"2024-04-01T00:00:00Z\",  // optional\n  \"paymentDate\": \"2024-03-15T14:30:00Z\",  // optional\n  \"isPaid\": false,  // optional (default: false)\n  \"allocations\": [  // required - must sum to 100%\n    {\n      \"balanceId\": 1,\n      \"percentage\": 20\n    },\n    {\n      \"balanceId\": 2,\n      \"percentage\": 80\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/payment",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "payment"]
+						}
+					}
+				},
+				{
+					"name": "Update Payment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"apartmentId\": 1,\n  \"amount\": 1200.00,\n  \"dueDate\": \"2024-04-01T00:00:00Z\",  // optional\n  \"isPaid\": false\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/payment/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "payment", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Payment",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/payment/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "payment", "1"]
+						}
+					}
+				},
+				{
+					"name": "Mark Payment As Paid",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/payment/1/mark-as-paid",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "payment", "1", "mark-as-paid"]
+						},
+						"description": "Marks payment as paid and ADDS allocated amounts to balances. Sets PaymentDate to current UTC time."
+					}
+				},
+				{
+					"name": "Mark Payment As Unpaid",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/payment/1/mark-as-unpaid",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "payment", "1", "mark-as-unpaid"]
+						},
+						"description": "Marks payment as unpaid and DEDUCTS allocated amounts from balances. Clears PaymentDate to null."
+					}
+				}
+			]
+		},
+		{
+			"name": "Bill",
+			"item": [
+				{
+					"name": "Get All Bills",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/bill",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bill"]
+						}
+					}
+				},
+				{
+					"name": "Get Bill By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/bill/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bill", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Bills By Compound",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/bill/compound/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bill", "compound", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create Bill",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"label\": \"Electricity Bill\",\n  \"amount\": 150.00,\n  \"balanceId\": 1,\n  \"dueDate\": \"2024-03-31T00:00:00Z\"  // optional\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/bill",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bill"]
+						}
+					}
+				},
+				{
+					"name": "Update Bill",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"label\": \"Electricity Bill - Updated\",\n  \"amount\": 175.00,\n  \"balanceId\": 1,\n  \"dueDate\": \"2024-03-31T00:00:00Z\"  // optional\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/bill/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bill", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Bill",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/bill/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bill", "1"]
+						}
+					}
+				},
+				{
+					"name": "Mark Bill As Paid",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/bill/1/mark-as-paid",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bill", "1", "mark-as-paid"]
+						},
+						"description": "Marks bill as paid and DEDUCTS amount from balance. Sets PaymentDate to current UTC time."
+					}
+				},
+				{
+					"name": "Mark Bill As Unpaid",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/bill/1/mark-as-unpaid",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "bill", "1", "mark-as-unpaid"]
+						},
+						"description": "Marks bill as unpaid and ADDS amount back to balance. Clears PaymentDate to null."
+					}
+				}
+			]
+		},
+		{
+			"name": "Balance",
+			"item": [
+				{
+					"name": "Get All Balances",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/balance",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "balance"]
+						}
+					}
+				},
+				{
+					"name": "Get Balance By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/balance/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "balance", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Balances By Compound",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/balance/compound/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "balance", "compound", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create Balance",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"label\": \"Maintenance Fund\",\n  \"currentAmount\": 5000.00,  // optional (default: 0)\n  \"compoundId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/balance",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "balance"]
+						}
+					}
+				},
+				{
+					"name": "Update Balance",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"label\": \"Maintenance Fund - Updated\",\n  \"currentAmount\": 5500.00,\n  \"compoundId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/balance/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "balance", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Balance",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/balance/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "balance", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Cycle",
+			"item": [
+				{
+					"name": "Get All Cycles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/cycle",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cycle"]
+						}
+					}
+				},
+				{
+					"name": "Get Cycle By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/cycle/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cycle", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create Cycle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"label\": \"Monthly Building Fees\",\n  \"description\": \"Regular monthly fees for building maintenance\",  // optional\n  \"cycle\": 0,  // 0=Monthly, 1=Quarterly, 2=SemiAnnual, 3=Annual, 4=Weekly, 5=OneTime\n  \"startDate\": \"2024-01-01T00:00:00Z\",\n  \"endDate\": \"2024-12-31T23:59:59Z\",\n  \"apartmentIds\": [1, 2, 3],  // optional - null/empty means all apartments\n  \"amount\": 100.00,\n  \"dueDate\": \"2024-01-05T00:00:00Z\",  // optional - defaults to payment date\n  \"balanceAllocations\": [  // optional - must sum to 100% if provided\n    {\n      \"balanceId\": 1,\n      \"percentage\": 60\n    },\n    {\n      \"balanceId\": 2,\n      \"percentage\": 40\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/cycle",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cycle"]
+						}
+					}
+				},
+				{
+					"name": "Deactivate Cycle",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/cycle/1/deactivate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cycle", "1", "deactivate"]
+						},
+						"description": "Deactivates cycle and removes all unpaid payments. Reverses balance allocations for removed payments."
+					}
+				},
+				{
+					"name": "Reactivate Cycle",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/cycle/1/reactivate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cycle", "1", "reactivate"]
+						},
+						"description": "Reactivates cycle and recreates missing payments for the cycle period."
+					}
+				},
+				{
+					"name": "Delete Upcoming Payments",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/cycle/1/delete-upcoming",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cycle", "1", "delete-upcoming"]
+						},
+						"description": "Deletes all unpaid payments for this cycle. Reverses balance allocations."
+					}
+				},
+				{
+					"name": "Recreate Missing Payments",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/cycle/1/recreate-missing",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "cycle", "1", "recreate-missing"]
+						},
+						"description": "Recreates any missing payments for this cycle based on the cycle schedule."
+					}
+				}
+			]
+		},
+		{
+			"name": "Compound",
+			"item": [
+				{
+					"name": "Get All Compounds",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/compound",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "compound"]
+						}
+					}
+				},
+				{
+					"name": "Get Compound By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/compound/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "compound", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create Compound",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Sunset Towers\",\n  \"address\": \"123 Main Street\",  // optional\n  \"city\": \"Beirut\",  // optional\n  \"country\": \"Lebanon\"  // optional\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/compound",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "compound"]
+						}
+					}
+				},
+				{
+					"name": "Update Compound",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"name\": \"Sunset Towers - Updated\",\n  \"address\": \"123 Main Street\",  // optional\n  \"city\": \"Beirut\",  // optional\n  \"country\": \"Lebanon\"  // optional\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/compound/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "compound", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Compound",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/compound/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "compound", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Building",
+			"item": [
+				{
+					"name": "Get All Buildings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/building",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "building"]
+						}
+					}
+				},
+				{
+					"name": "Get Building By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/building/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "building", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Buildings By Compound",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/building/compound/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "building", "compound", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create Building",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"buildingInfo\": \"Building A\",\n  \"compoundId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/building",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "building"]
+						}
+					}
+				},
+				{
+					"name": "Update Building",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"buildingInfo\": \"Building A - Updated\",\n  \"compoundId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/building/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "building", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Building",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/building/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "building", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Apartment",
+			"item": [
+				{
+					"name": "Get All Apartments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/apartment",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "apartment"]
+						}
+					}
+				},
+				{
+					"name": "Get Apartment By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/apartment/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "apartment", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Apartments By Building",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/apartment/building/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "apartment", "building", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create Apartment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"apartmentInfo\": \"Apt 101\",\n  \"floor\": 1,\n  \"isActive\": true,  // optional (default: true)\n  \"buildingId\": 1,\n  \"owner\": \"John Doe\",  // optional\n  \"tenant\": \"Jane Smith\"  // optional\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/apartment",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "apartment"]
+						}
+					}
+				},
+				{
+					"name": "Update Apartment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"apartmentInfo\": \"Apt 101 - Updated\",\n  \"floor\": 1,\n  \"isActive\": true,\n  \"buildingId\": 1,\n  \"owner\": \"John Doe\",  // optional\n  \"tenant\": \"Jane Smith\"  // optional\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/apartment/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "apartment", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Apartment",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/apartment/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "apartment", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user"]
+						}
+					}
+				},
+				{
+					"name": "Get User By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "1"]
+						}
+					}
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"newuser\",\n  \"password\": \"password123\",\n  \"email\": \"user@example.com\"  // optional\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/user",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user"]
+						}
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"username\": \"updateduser\",\n  \"email\": \"updated@example.com\"  // optional\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/user/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/user/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "user", "1"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}

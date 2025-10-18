@@ -135,6 +135,7 @@ namespace BuildingManagement.Services.Context
 
                 existingBill.Label = bill.Label;
                 existingBill.IsPaid = bill.IsPaid;
+                existingBill.PaymentDate = bill.PaymentDate;
                 existingBill.Amount = bill.Amount;
                 existingBill.DueDate = bill.DueDate;
                 existingBill.UpdatededAt = DateTime.UtcNow;
@@ -149,8 +150,8 @@ namespace BuildingManagement.Services.Context
             {
                 var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.UpdateFailed(id, bill);
 
-                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_UPDATE_ERROR, userMessage); 
-                
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_UPDATE_ERROR, userMessage);
+
                 throw new ContextException(ErrorCodes.BILL_UPDATE_ERROR, userMessage, technicalDetails, ex);
             }
         }
@@ -179,8 +180,8 @@ namespace BuildingManagement.Services.Context
             {
                 var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.DeleteFailed(id);
 
-                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_DELETE_ERROR, userMessage); 
-                
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_DELETE_ERROR, userMessage);
+
                 throw new ContextException(ErrorCodes.BILL_DELETE_ERROR, userMessage, technicalDetails, ex);
             }
         }

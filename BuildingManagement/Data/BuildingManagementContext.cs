@@ -18,6 +18,9 @@ namespace BuildingManagement.Data
         public DbSet<UserEntity> Users { get; set; }
 
         public DbSet<BalanceEntity> Balances { get; set; }
+
+        public DbSet<PaymentAllocationEntity> PaymentAllocations { get; set; }
+
         public BuildingManagementContext(DbContextOptions<BuildingManagementContext> options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

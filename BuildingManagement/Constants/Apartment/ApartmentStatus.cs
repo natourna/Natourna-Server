@@ -1,4 +1,4 @@
-﻿namespace BuildingManagement.Const.Apartment
+﻿namespace BuildingManagement.Constants.Apartment
 {
     public enum ApartmentStatus
     {

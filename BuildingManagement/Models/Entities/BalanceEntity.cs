@@ -24,7 +24,7 @@ namespace BuildingManagement.Models.Entities
         public CompoundEntity? Compound { get; set; }
 
         [JsonIgnore]
-        public ICollection<PaymentBalanceEntity> PaymentBalances { get; set; }
+        public ICollection<PaymentAllocationEntity> PaymentAllocations { get; set; }
 
         [JsonIgnore]
         public ICollection<BillEntity> Bills { get; set; }
@@ -33,7 +33,7 @@ namespace BuildingManagement.Models.Entities
         {
             CompoundId = compoundId;
             Label = label;
-            PaymentBalances = [];
+            PaymentAllocations = [];
             Bills = [];
             CreatedAt = DateTime.UtcNow;
             UpdatededAt = DateTime.UtcNow;

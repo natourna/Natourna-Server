@@ -12,7 +12,9 @@ public static class ContextManagerExtensions
         services.AddScoped<IApartmentContextManager, ApartmentContextManager>();
         services.AddScoped<IBillContextManager, BillContextManager>();
         services.AddScoped<IPaymentContextManager, PaymentContextManager>();
+        services.AddScoped<IPaymentAllocationContextManager, PaymentAllocationContextManager>();
         services.AddScoped<IUserContextManager, UserContextManager>();
+        services.AddScoped<IBalanceContextManager, BalanceContextManager>();
 
         return services;
     }

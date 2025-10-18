@@ -34,6 +34,15 @@ namespace BuildingManagement.Constants
         public const string PAYMENT_UPDATE_ERROR = "PAY-004";
         public const string PAYMENT_DELETE_ERROR = "PAY-005";
 
+        // Payment API Manager Error Codes (PAY-API-xxx)
+        public const string PAYMENT_INVALID_ALLOCATIONS_ERROR = "PAY-API-001";
+        public const string PAYMENT_CREATE_WITH_BALANCES_ERROR = "PAY-API-002";
+        public const string PAYMENT_MARK_AS_PAID_ERROR = "PAY-API-003";
+        public const string PAYMENT_MARK_AS_UNPAID_ERROR = "PAY-API-004";
+        public const string PAYMENT_NOT_FOUND_ERROR = "PAY-API-005";
+        public const string PAYMENT_ALREADY_PAID_ERROR = "PAY-API-006";
+        public const string PAYMENT_ALREADY_UNPAID_ERROR = "PAY-API-007";
+
         // Apartment Context Manager Error Codes (APT-xxx)
         public const string APARTMENT_GET_ALL_ERROR = "APT-001";
         public const string APARTMENT_GET_BY_ID_ERROR = "APT-002";

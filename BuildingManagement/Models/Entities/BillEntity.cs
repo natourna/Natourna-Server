@@ -19,7 +19,9 @@ namespace BuildingManagement.Models.Entities
 
         public DateTime? DueDate { get; set; }
 
-        public bool? IsPaid { get; set; } = false;
+        public bool IsPaid { get; set; } = false;
+
+        public DateTime? PaymentDate { get; set; }
 
         [RequiredInt]
         public int BalanceId { get; set; }

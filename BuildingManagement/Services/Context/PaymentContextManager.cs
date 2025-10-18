@@ -1,4 +1,6 @@
+using BuildingManagement.Constants;
 using BuildingManagement.Data;
+using BuildingManagement.Exceptions;
 using BuildingManagement.Interfaces.Context;
 using BuildingManagement.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,103 +10,145 @@ namespace BuildingManagement.Services.Context
     public class PaymentContextManager : IPaymentContextManager
     {
         private readonly BuildingManagementContext _context;
+        private readonly ILogger<PaymentContextManager> _logger;
 
-        public PaymentContextManager(BuildingManagementContext context)
+        public PaymentContextManager(BuildingManagementContext context, ILogger<PaymentContextManager> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
-        public async Task<List<PaymentEntity>> GetAllAsync()
+        public async Task<List<PaymentEntity>> GetAllAsync(int? paymentId = null, int? apartmentId = null, int? cycleId = null, bool? isPaid = null)
         {
-            return await _context.Payments
-                .Include(p => p.Bill)
-                .Include(p => p.Apartment)
-                .ToListAsync();
-        }
+            try
+            {
+                _logger.LogInformation("Getting all payments with filters - PaymentId: {PaymentId}, ApartmentId: {ApartmentId}, CycleId: {CycleId}, IsPaid: {IsPaid}",
+                    paymentId, apartmentId, cycleId, isPaid);
 
-        public async Task<PaymentEntity?> GetByIdAsync(int id)
-        {
-            return await _context.Payments
-                .Include(p => p.Bill)
-                .Include(p => p.Apartment)
-                .FirstOrDefaultAsync(p => p.Id == id);
-        }
+                var query = _context.Payments.Include(p => p.Apartment).Include(p => p.Cycle).Include(p => p.PaymentAllocations).AsQueryable();
 
-        public async Task<List<PaymentEntity>> GetByBillIdAsync(int billId)
-        {
-            return await _context.Payments
-                .Include(p => p.Apartment)
-                .Where(p => p.BillId == billId)
-                .ToListAsync();
-        }
+                // Apply filters
+                if (paymentId.HasValue)
+                {
+                    query = query.Where(p => p.Id == paymentId.Value);
+                }
 
-        public async Task<List<PaymentEntity>> GetByApartmentIdAsync(int apartmentId)
-        {
-            return await _context.Payments
-                .Include(p => p.Bill)
-                .Where(p => p.ApartmentId == apartmentId)
-                .ToListAsync();
+                if (apartmentId.HasValue)
+                {
+                    query = query.Where(p => p.ApartmentId == apartmentId.Value);
+                }
+
+                if (cycleId.HasValue)
+                {
+                    query = query.Where(p => p.CycleId == cycleId.Value);
+                }
+
+                if (isPaid.HasValue)
+                {
+                    query = query.Where(p => p.IsPaid == isPaid.Value);
+                }
+
+                return await query.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.GetAllFailed(paymentId, apartmentId, cycleId, isPaid);
+
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}. {TechnicalDetails}", ErrorCodes.PAYMENT_GET_ALL_ERROR, userMessage, technicalDetails);
+
+                throw new ContextException(ErrorCodes.PAYMENT_GET_ALL_ERROR, userMessage, technicalDetails, ex);
+            }
         }
 
         public async Task<PaymentEntity> CreateAsync(PaymentEntity payment)
         {
-            _context.Payments.Add(payment);
-            // Update Bill's AmmountPaid
-            var bill = await _context.Bills.FindAsync(payment.BillId);
-            if (bill != null)
+            try
             {
-                bill.AmmountPaid = (bill.AmmountPaid ?? 0) + payment.Amount;
-                bill.UpdatededAt = DateTime.UtcNow;
+                _logger.LogInformation("Creating new payment - Amount: {Amount}, ApartmentId: {ApartmentId}, CycleId: {CycleId}", payment.Amount, payment.ApartmentId, payment.CycleId);
+
+                _context.Payments.Add(payment);
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully created payment with ID {PaymentId}", payment.Id);
+
+                return payment;
             }
-            await _context.SaveChangesAsync();
-            return payment;
+            catch (Exception ex)
+            {
+                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.CreateFailed(payment);
+
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_CREATE_ERROR, userMessage);
+
+                throw new ContextException(ErrorCodes.PAYMENT_CREATE_ERROR, userMessage, technicalDetails, ex);
+            }
         }
 
         public async Task<PaymentEntity?> UpdateAsync(int id, PaymentEntity payment)
         {
-            var existingPayment = await _context.Payments.FindAsync(id);
-            if (existingPayment == null)
-                return null;
-
-            // Adjust Bill's AmmountPaid if Amount or BillId changed
-            if (existingPayment.BillId != payment.BillId || existingPayment.Amount != payment.Amount)
+            try
             {
-                // Subtract old amount from old bill
-                var oldBill = await _context.Bills.FindAsync(existingPayment.BillId);
-                if (oldBill != null)
+                _logger.LogInformation("Updating payment with ID: {PaymentId}", id);
+
+                var existingPayment = await _context.Payments.FindAsync(id);
+                if (existingPayment == null)
                 {
-                    oldBill.AmmountPaid = (oldBill.AmmountPaid ?? 0) - existingPayment.Amount;
-                    oldBill.UpdatededAt = DateTime.UtcNow;
+                    _logger.LogWarning("Cannot update - Payment with ID {PaymentId} not found", id);
+                    return null;
                 }
-                // Add new amount to new bill
-                var newBill = await _context.Bills.FindAsync(payment.BillId);
-                if (newBill != null)
-                {
-                    newBill.AmmountPaid = (newBill.AmmountPaid ?? 0) + payment.Amount;
-                    newBill.UpdatededAt = DateTime.UtcNow;
-                }
+
+                existingPayment.PaymentDate = payment.PaymentDate;
+                existingPayment.Amount = payment.Amount;
+                existingPayment.ApartmentId = payment.ApartmentId;
+                existingPayment.DueDate = payment.DueDate;
+                existingPayment.IsPaid = payment.IsPaid;
+                existingPayment.CycleId = payment.CycleId;
+                existingPayment.UpdatededAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully updated payment with ID {PaymentId}", id);
+
+                return existingPayment;
             }
+            catch (Exception ex)
+            {
+                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.UpdateFailed(id, payment);
 
-            existingPayment.Recurrent = payment.Recurrent;
-            existingPayment.PaymentDate = payment.PaymentDate;
-            existingPayment.Amount = payment.Amount;
-            existingPayment.BillId = payment.BillId;
-            existingPayment.ApartmentId = payment.ApartmentId;
-            existingPayment.UpdatededAt = DateTime.UtcNow;
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_UPDATE_ERROR, userMessage);
 
-            await _context.SaveChangesAsync();
-            return existingPayment;
+                throw new ContextException(ErrorCodes.PAYMENT_UPDATE_ERROR, userMessage, technicalDetails, ex);
+            }
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var payment = await _context.Payments.FindAsync(id);
-            if (payment == null)
-                return false;
+            try
+            {
+                _logger.LogInformation("Deleting payment with ID: {PaymentId}", id);
 
-            _context.Payments.Remove(payment);
-            await _context.SaveChangesAsync();
-            return true;
+                var payment = await _context.Payments.FindAsync(id);
+                if (payment == null)
+                {
+                    _logger.LogWarning("Cannot delete - Payment with ID {PaymentId} not found", id);
+                    return false;
+                }
+
+                _context.Payments.Remove(payment);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation("Successfully deleted payment with ID {PaymentId}", id);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.DeleteFailed(id);
+
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_DELETE_ERROR, userMessage);
+
+                throw new ContextException(ErrorCodes.PAYMENT_DELETE_ERROR, userMessage, technicalDetails, ex);
+            }
         }
     }
 }

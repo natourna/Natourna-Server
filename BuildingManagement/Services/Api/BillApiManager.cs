@@ -3,7 +3,6 @@ using BuildingManagement.Exceptions;
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Interfaces.Context;
 using BuildingManagement.Models.Entities;
-using Microsoft.Extensions.Logging;
 
 namespace BuildingManagement.Services.Api
 {
@@ -13,10 +12,7 @@ namespace BuildingManagement.Services.Api
         private readonly IBalanceContextManager _balanceContextManager;
         private readonly ILogger<BillApiManager> _logger;
 
-        public BillApiManager(
-            IBillContextManager billContextManager, 
-            IBalanceContextManager balanceContextManager,
-            ILogger<BillApiManager> logger)
+        public BillApiManager(IBillContextManager billContextManager, IBalanceContextManager balanceContextManager, ILogger<BillApiManager> logger)
         {
             _billContextManager = billContextManager;
             _balanceContextManager = balanceContextManager;
@@ -31,22 +27,6 @@ namespace BuildingManagement.Services.Api
         public async Task<BillEntity?> GetBillByIdAsync(int id)
         {
             return await _billContextManager.GetByIdAsync(id);
-        }
-
-        public async Task<List<BillEntity>> GetBillsByCompoundIdAsync(int compoundId)
-        {
-            // Get all balances for the compound
-            var balances = await _balanceContextManager.GetAllAsync(compoundId: compoundId);
-            
-            // Get all bills for those balances
-            var bills = new List<BillEntity>();
-            foreach (var balance in balances)
-            {
-                var balanceBills = await _billContextManager.GetByBalanceIdAsync(balance.Id);
-                bills.AddRange(balanceBills);
-            }
-            
-            return bills;
         }
 
         public async Task<BillEntity> CreateBillAsync(BillEntity bill)
@@ -64,10 +44,6 @@ namespace BuildingManagement.Services.Api
             return await _billContextManager.DeleteAsync(id);
         }
 
-        /// <summary>
-        /// Mark a bill as paid and deduct the amount from the balance.
-        /// This operation is atomic - if balance update fails, bill won't be marked as paid.
-        /// </summary>
         public async Task<BillEntity> MarkBillAsPaidAsync(int billId)
         {
             try
@@ -75,7 +51,7 @@ namespace BuildingManagement.Services.Api
                 _logger.LogInformation("Marking bill {BillId} as paid", billId);
 
                 // Get the bill
-                var bill = await _billContextManager.GetByIdAsync(billId);
+                var bill = await GetBillByIdAsync(billId);
                 if (bill == null)
                 {
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.BillNotFound(billId);
@@ -94,7 +70,7 @@ namespace BuildingManagement.Services.Api
                 // Get the balance
                 var balances = await _balanceContextManager.GetAllAsync(balanceId: bill.BalanceId);
                 var balance = balances.FirstOrDefault();
-                
+
                 if (balance == null)
                 {
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.NotFound(bill.BalanceId);
@@ -123,10 +99,11 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
                 }
 
-                // Mark bill as paid
+                // Mark bill as paid with payment date
                 bill.IsPaid = true;
+                bill.PaymentDate = DateTime.UtcNow;
                 bill.UpdatededAt = DateTime.UtcNow;
-                var updatedBill = await _billContextManager.UpdateAsync(billId, bill);
+                var updatedBill = await UpdateBillAsync(billId, bill);
 
                 if (updatedBill == null)
                 {
@@ -139,8 +116,8 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage, technicalDetails);
                 }
 
-                _logger.LogInformation("Successfully marked bill {BillId} as paid and deducted {Amount:C} from balance {BalanceId}", 
-                    billId, bill.Amount, balance.Id);
+                _logger.LogInformation("Successfully marked bill {BillId} as paid on {PaymentDate} and deducted {Amount:C} from balance {BalanceId}",
+                    billId, bill.PaymentDate, bill.Amount, balance.Id);
 
                 return updatedBill;
             }
@@ -158,6 +135,7 @@ namespace BuildingManagement.Services.Api
 
         /// <summary>
         /// Mark a bill as unpaid and add the amount back to the balance.
+        /// Clears the PaymentDate.
         /// This allows users to correct mistakes when they accidentally mark a bill as paid.
         /// </summary>
         public async Task<BillEntity> MarkBillAsUnpaidAsync(int billId)
@@ -167,7 +145,7 @@ namespace BuildingManagement.Services.Api
                 _logger.LogInformation("Marking bill {BillId} as unpaid", billId);
 
                 // Get the bill
-                var bill = await _billContextManager.GetByIdAsync(billId);
+                var bill = await GetBillByIdAsync(billId);
                 if (bill == null)
                 {
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.BillNotFound(billId);
@@ -176,7 +154,7 @@ namespace BuildingManagement.Services.Api
                 }
 
                 // Check if already unpaid
-                if (bill.IsPaid == false || bill.IsPaid == null)
+                if (bill.IsPaid == false)
                 {
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.AlreadyUnpaid(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_ALREADY_UNPAID_ERROR, userMessage);
@@ -186,7 +164,7 @@ namespace BuildingManagement.Services.Api
                 // Get the balance
                 var balances = await _balanceContextManager.GetAllAsync(balanceId: bill.BalanceId);
                 var balance = balances.FirstOrDefault();
-                
+
                 if (balance == null)
                 {
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.NotFound(bill.BalanceId);
@@ -206,10 +184,11 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
                 }
 
-                // Mark bill as unpaid
+                // Mark bill as unpaid and clear payment date
                 bill.IsPaid = false;
+                bill.PaymentDate = null;
                 bill.UpdatededAt = DateTime.UtcNow;
-                var updatedBill = await _billContextManager.UpdateAsync(billId, bill);
+                var updatedBill = await UpdateBillAsync(billId, bill);
 
                 if (updatedBill == null)
                 {
@@ -222,7 +201,7 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails);
                 }
 
-                _logger.LogInformation("Successfully marked bill {BillId} as unpaid and added {Amount:C} back to balance {BalanceId}", 
+                _logger.LogInformation("Successfully marked bill {BillId} as unpaid and added {Amount:C} back to balance {BalanceId}",
                     billId, bill.Amount, balance.Id);
 
                 return updatedBill;

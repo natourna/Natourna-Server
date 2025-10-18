@@ -21,10 +21,10 @@ namespace BuildingManagement.Exceptions
         public string TechnicalDetails { get; }
 
         public ContextException(
-            string errorCode, 
-            string userMessage, 
-            string technicalDetails, 
-            Exception? innerException = null) 
+            string errorCode,
+            string userMessage,
+            string technicalDetails,
+            Exception? innerException = null)
             : base($"[{errorCode}] {userMessage}", innerException)
         {
             ErrorCode = errorCode;

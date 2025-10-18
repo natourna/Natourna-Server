@@ -25,7 +25,7 @@ namespace BuildingManagement.Services.Context
                 _logger.LogInformation("Getting all balances with filters - BalanceId: {BalanceId}, CompoundId: {CompoundId}", balanceId, compoundId);
 
                 var query = _context.Balances
-                    .Include(b => b.PaymentBalances)
+                    .Include(b => b.PaymentAllocations)
                     .Include(b => b.Bills)
                     .AsQueryable();
 

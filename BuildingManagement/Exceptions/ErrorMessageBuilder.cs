@@ -1,4 +1,5 @@
 using BuildingManagement.Models.Entities;
+using BuildingManagement.Models.Requests.Payment;
 
 namespace BuildingManagement.Exceptions
 {
@@ -171,6 +172,104 @@ namespace BuildingManagement.Exceptions
                 return (
                     $"Balance with ID {balanceId} was not found",
                     $"BalanceId: {balanceId}"
+                );
+            }
+        }
+
+        public static class Payment
+        {
+            public static (string userMessage, string technicalDetails) GetAllFailed(
+                int? paymentId = null, int? apartmentId = null, int? cycleId = null, bool? isPaid = null)
+            {
+                return (
+                    "Failed to retrieve payments with the specified filters",
+                    $"Filters - PaymentId: {paymentId?.ToString() ?? "null"}, " +
+                    $"ApartmentId: {apartmentId?.ToString() ?? "null"}, " +
+                    $"CycleId: {cycleId?.ToString() ?? "null"}, " +
+                    $"IsPaid: {isPaid?.ToString() ?? "null"}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) CreateFailed(PaymentEntity payment)
+            {
+                return (
+                    $"Failed to create payment",
+                    $"Amount: {payment.Amount:C}, ApartmentId: {payment.ApartmentId}, " +
+                    $"CycleId: {payment.CycleId?.ToString() ?? "null"}, IsPaid: {payment.IsPaid}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) UpdateFailed(int id, PaymentEntity payment)
+            {
+                return (
+                    $"Failed to update payment with ID {id}",
+                    $"PaymentId: {id}, New Amount: {payment.Amount:C}, " +
+                    $"IsPaid: {payment.IsPaid}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) DeleteFailed(int id)
+            {
+                return (
+                    $"Failed to delete payment with ID {id}",
+                    $"PaymentId: {id}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) InvalidBalanceAllocations(decimal totalPercentage)
+            {
+                return (
+                    $"Balance allocations must sum to exactly 100%. Current sum: {totalPercentage}%",
+                    $"TotalPercentage: {totalPercentage}%, Expected: 100%"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) CreateWithBalancesFailed(PaymentRequest request)
+            {
+                return (
+                    $"Failed to create payment with balance allocations",
+                    $"Amount: {request.Amount:C}, ApartmentId: {request.ApartmentId}, " +
+                    $"AllocationCount: {request.Allocations?.Count ?? 0}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) MarkAsPaidFailed(int paymentId)
+            {
+                return (
+                    $"Failed to mark payment {paymentId} as paid",
+                    $"PaymentId: {paymentId}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) MarkAsUnpaidFailed(int paymentId)
+            {
+                return (
+                    $"Failed to mark payment {paymentId} as unpaid",
+                    $"PaymentId: {paymentId}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) PaymentNotFound(int paymentId)
+            {
+                return (
+                    $"Payment with ID {paymentId} was not found",
+                    $"PaymentId: {paymentId}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) AlreadyPaid(int paymentId)
+            {
+                return (
+                    $"Payment {paymentId} is already marked as paid",
+                    $"PaymentId: {paymentId}, IsPaid: true"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) AlreadyUnpaid(int paymentId)
+            {
+                return (
+                    $"Payment {paymentId} is already marked as unpaid",
+                    $"PaymentId: {paymentId}, IsPaid: false"
                 );
             }
         }

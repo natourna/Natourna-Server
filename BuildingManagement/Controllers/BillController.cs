@@ -38,14 +38,6 @@ namespace BuildingManagement.Controllers
             return Ok(bill);
         }
 
-        [HttpGet("compound/{compoundId}")]
-        public async Task<ActionResult<List<BillEntity>>> GetBillsByCompoundId(int compoundId)
-        {
-            var bills = await _billManager.GetBillsByCompoundIdAsync(compoundId);
-
-            return Ok(bills);
-        }
-
         [HttpPost]
         public async Task<ActionResult<BillEntity>> CreateBill(BillEntity bill)
         {
@@ -80,11 +72,6 @@ namespace BuildingManagement.Controllers
             return NoContent();
         }
 
-        /// <summary>
-        /// Mark a bill as paid. This will deduct the bill amount from the associated balance.
-        /// </summary>
-        /// <param name="id">The ID of the bill to mark as paid</param>
-        /// <returns>The updated bill entity</returns>
         [HttpPost("{id}/mark-as-paid")]
         public async Task<ActionResult<BillEntity>> MarkBillAsPaid(int id)
         {
@@ -93,12 +80,6 @@ namespace BuildingManagement.Controllers
             return Ok(updatedBill);
         }
 
-        /// <summary>
-        /// Mark a bill as unpaid. This will add the bill amount back to the associated balance.
-        /// Use this to correct mistakes when a bill was accidentally marked as paid.
-        /// </summary>
-        /// <param name="id">The ID of the bill to mark as unpaid</param>
-        /// <returns>The updated bill entity</returns>
         [HttpPost("{id}/mark-as-unpaid")]
         public async Task<ActionResult<BillEntity>> MarkBillAsUnpaid(int id)
         {
