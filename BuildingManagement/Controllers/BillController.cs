@@ -38,14 +38,6 @@ namespace BuildingManagement.Controllers
             return Ok(bill);
         }
 
-        [HttpGet("compound/{compoundId}")]
-        public async Task<ActionResult<List<BillEntity>>> GetBillsByCompoundId(int compoundId)
-        {
-            var bills = await _billManager.GetBillsByCompoundIdAsync(compoundId);
-
-            return Ok(bills);
-        }
-
         [HttpPost]
         public async Task<ActionResult<BillEntity>> CreateBill(BillEntity bill)
         {
@@ -78,6 +70,22 @@ namespace BuildingManagement.Controllers
             }
 
             return NoContent();
+        }
+
+        [HttpPost("{id}/mark-as-paid")]
+        public async Task<ActionResult<BillEntity>> MarkBillAsPaid(int id)
+        {
+            var updatedBill = await _billManager.MarkBillAsPaidAsync(id);
+
+            return Ok(updatedBill);
+        }
+
+        [HttpPost("{id}/mark-as-unpaid")]
+        public async Task<ActionResult<BillEntity>> MarkBillAsUnpaid(int id)
+        {
+            var updatedBill = await _billManager.MarkBillAsUnpaidAsync(id);
+
+            return Ok(updatedBill);
         }
     }
 }

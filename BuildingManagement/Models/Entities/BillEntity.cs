@@ -17,32 +17,24 @@ namespace BuildingManagement.Models.Entities
         [RequiredDecimal]
         public decimal Amount { get; set; }
 
-        public decimal? AmmountPaid { get; set; }
-
         public DateTime? DueDate { get; set; }
 
-        [Required]
-        public bool? IsPaid { get; set; }
+        public bool IsPaid { get; set; } = false;
+
+        public DateTime? PaymentDate { get; set; }
 
         [RequiredInt]
-        public int CompoundId { get; set; }
+        public int BalanceId { get; set; }
 
-        [ForeignKey("CompoundId")]
+        [ForeignKey("BalanceId")]
         [JsonIgnore]
-        public CompoundEntity? Compound { get; set; }
+        public BalanceEntity? Balance { get; set; }
 
-        [JsonIgnore]
-        public ICollection<PaymentEntity> Payments { get; set; }
-
-        public BillEntity(int id, string label, decimal amount, bool? isPaid, int compoundId)
+        public BillEntity(string label, decimal amount, int balanceId)
         {
-            Id = id;
             Label = label;
             Amount = amount;
-            IsPaid = isPaid ?? false;
-            AmmountPaid = 0;
-            CompoundId = compoundId;
-            Payments = [];
+            BalanceId = balanceId;
             CreatedAt = DateTime.UtcNow;
             UpdatededAt = DateTime.UtcNow;
         }

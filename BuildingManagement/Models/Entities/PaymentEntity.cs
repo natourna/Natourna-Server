@@ -7,24 +7,20 @@ namespace BuildingManagement.Models.Entities
 {
     public class PaymentEntity : BaseEntity
     {
+        private int? _cycleId;
+
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required]
-        public bool? Recurrent { get; set; }
-
-        public DateTime? PaymentDate { get; set; }
-
-        [RequiredInt]
-        public int BillId { get; set; }
-
         [RequiredDecimal]
         public decimal Amount { get; set; }
 
-        [ForeignKey("BillId")]
-        [JsonIgnore]
-        public BillEntity? Bill { get; set; }
+        public DateTime? PaymentDate { get; set; }
+
+        public DateTime? DueDate { get; set; }
+
+        public bool IsPaid { get; set; } = false;
 
         [RequiredInt]
         public int ApartmentId { get; set; }
@@ -33,14 +29,27 @@ namespace BuildingManagement.Models.Entities
         [JsonIgnore]
         public ApartmentEntity? Apartment { get; set; }
 
-        public PaymentEntity(int id, bool? recurrent, DateTime? paymentDate, decimal amount, int billId, int apartmentId)
+        public int? CycleId
         {
-            Id = id;
-            Recurrent = recurrent ?? false;
-            BillId = billId;
-            PaymentDate = paymentDate ?? DateTime.UtcNow;
+            get => _cycleId;
+            set => _cycleId = value;
+        }
+
+        [ForeignKey("CycleId")]
+        [JsonIgnore]
+        public CycleEntity? Cycle { get; set; }
+
+        [NotMapped]
+        public bool Recurrent => CycleId.HasValue && CycleId.Value > 0;
+
+        [JsonIgnore]
+        public ICollection<PaymentAllocationEntity> PaymentAllocations { get; set; }
+
+        public PaymentEntity(decimal amount, int apartmentId)
+        {
             Amount = amount;
             ApartmentId = apartmentId;
+            PaymentAllocations = [];
             CreatedAt = DateTime.UtcNow;
             UpdatededAt = DateTime.UtcNow;
         }

@@ -50,3 +50,5 @@ docker-compose.override.yml
 /BuildingManagement/appsettings.local.json
 /Database/BuildingManagement.db
 /BuildingManagement/docker-compose.yml
+/BuildingManagement/BuildingManagement_API.postman_collection.json
+/BuildingManagement/Documentation/DatabaseSchema.md

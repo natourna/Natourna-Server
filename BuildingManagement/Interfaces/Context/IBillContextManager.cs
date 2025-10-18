@@ -4,11 +4,11 @@ namespace BuildingManagement.Interfaces.Context
 {
     public interface IBillContextManager
     {
-        Task<List<BillEntity>> GetAllAsync();
+        Task<List<BillEntity>> GetAllAsync(int? billId = null, int? balanceId = null, bool? isPaid = null, DateTime? dueDateFrom = null, DateTime? dueDateTo = null);
 
         Task<BillEntity?> GetByIdAsync(int id);
 
-        Task<List<BillEntity>> GetByCompoundIdAsync(int compoundId);
+        Task<List<BillEntity>> GetByBalanceIdAsync(int balanceId);
 
         Task<BillEntity> CreateAsync(BillEntity bill);
 

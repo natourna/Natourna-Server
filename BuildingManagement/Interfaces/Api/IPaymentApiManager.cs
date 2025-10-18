@@ -1,4 +1,5 @@
 using BuildingManagement.Models.Entities;
+using BuildingManagement.Models.Requests.Payment;
 
 namespace BuildingManagement.Interfaces.Api
 {
@@ -8,14 +9,16 @@ namespace BuildingManagement.Interfaces.Api
 
         Task<PaymentEntity?> GetPaymentByIdAsync(int id);
 
-        Task<List<PaymentEntity>> GetPaymentsByBillIdAsync(int billId);
-
         Task<List<PaymentEntity>> GetPaymentsByApartmentIdAsync(int apartmentId);
 
-        Task<PaymentEntity> CreatePaymentAsync(PaymentEntity payment);
+        Task<PaymentEntity> CreatePaymentAsync(PaymentRequest request);
 
         Task<PaymentEntity?> UpdatePaymentAsync(int id, PaymentEntity payment);
 
         Task<bool> DeletePaymentAsync(int id);
+
+        Task<PaymentEntity> MarkPaymentAsPaidAsync(int paymentId);
+
+        Task<PaymentEntity> MarkPaymentAsUnpaidAsync(int paymentId);
     }
 }
