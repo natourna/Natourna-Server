@@ -1,12 +1,9 @@
-using System.Text.Json;
 using BuildingManagement.Constants;
-using BuildingManagement.Constants.Cycle;
 using BuildingManagement.Data;
 using BuildingManagement.Exceptions;
 using BuildingManagement.Interfaces.Context;
 using BuildingManagement.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace BuildingManagement.Services.Context
 {
@@ -22,7 +19,7 @@ namespace BuildingManagement.Services.Context
         {
             try
             {
-                _logger.LogInformation("Getting all cycles with filters - CycleId: {CycleId}, IsActive: {IsActive}", 
+                _logger.LogInformation("Getting all cycles with filters - CycleId: {CycleId}, IsActive: {IsActive}",
                     cycleId, isActive);
 
                 var query = _context.Cycles
@@ -45,9 +42,9 @@ namespace BuildingManagement.Services.Context
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[{ErrorCode}] Failed to retrieve cycles", ErrorCodes.CYCLE_GET_ALL_ERROR);
-                throw new ContextException(ErrorCodes.CYCLE_GET_ALL_ERROR, 
-                    "Failed to retrieve cycles", 
-                    $"Filters - CycleId: {cycleId}, IsActive: {isActive}", 
+                throw new ContextException(ErrorCodes.CYCLE_GET_ALL_ERROR,
+                    "Failed to retrieve cycles",
+                    $"Filters - CycleId: {cycleId}, IsActive: {isActive}",
                     ex);
             }
         }
@@ -64,11 +61,11 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[{ErrorCode}] Failed to retrieve cycle with ID {CycleId}", 
+                _logger.LogError(ex, "[{ErrorCode}] Failed to retrieve cycle with ID {CycleId}",
                     ErrorCodes.CYCLE_GET_BY_ID_ERROR, id);
-                throw new ContextException(ErrorCodes.CYCLE_GET_BY_ID_ERROR, 
-                    $"Failed to retrieve cycle with ID {id}", 
-                    $"CycleId: {id}", 
+                throw new ContextException(ErrorCodes.CYCLE_GET_BY_ID_ERROR,
+                    $"Failed to retrieve cycle with ID {id}",
+                    $"CycleId: {id}",
                     ex);
             }
         }
@@ -77,7 +74,7 @@ namespace BuildingManagement.Services.Context
         {
             try
             {
-                _logger.LogInformation("Creating new cycle - Label: {Label}, Cycle: {CycleType}, StartDate: {StartDate}, EndDate: {EndDate}", 
+                _logger.LogInformation("Creating new cycle - Label: {Label}, Cycle: {CycleType}, StartDate: {StartDate}, EndDate: {EndDate}",
                     cycle.Label, cycle.Cycle, cycle.StartDate, cycle.EndDate);
 
                 _context.Cycles.Add(cycle);
@@ -90,9 +87,9 @@ namespace BuildingManagement.Services.Context
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[{ErrorCode}] Failed to create cycle", ErrorCodes.CYCLE_CREATE_ERROR);
-                throw new ContextException(ErrorCodes.CYCLE_CREATE_ERROR, 
-                    "Failed to create cycle", 
-                    $"Label: {cycle.Label}, Cycle: {cycle.Cycle}, Amount: {cycle.Amount}", 
+                throw new ContextException(ErrorCodes.CYCLE_CREATE_ERROR,
+                    "Failed to create cycle",
+                    $"Label: {cycle.Label}, Cycle: {cycle.Cycle}, Amount: {cycle.Amount}",
                     ex);
             }
         }
@@ -129,11 +126,11 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[{ErrorCode}] Failed to update cycle with ID {CycleId}", 
+                _logger.LogError(ex, "[{ErrorCode}] Failed to update cycle with ID {CycleId}",
                     ErrorCodes.CYCLE_UPDATE_ERROR, id);
-                throw new ContextException(ErrorCodes.CYCLE_UPDATE_ERROR, 
-                    $"Failed to update cycle with ID {id}", 
-                    $"CycleId: {id}", 
+                throw new ContextException(ErrorCodes.CYCLE_UPDATE_ERROR,
+                    $"Failed to update cycle with ID {id}",
+                    $"CycleId: {id}",
                     ex);
             }
         }
@@ -160,11 +157,11 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[{ErrorCode}] Failed to delete cycle with ID {CycleId}", 
+                _logger.LogError(ex, "[{ErrorCode}] Failed to delete cycle with ID {CycleId}",
                     ErrorCodes.CYCLE_DELETE_ERROR, id);
-                throw new ContextException(ErrorCodes.CYCLE_DELETE_ERROR, 
-                    $"Failed to delete cycle with ID {id}", 
-                    $"CycleId: {id}", 
+                throw new ContextException(ErrorCodes.CYCLE_DELETE_ERROR,
+                    $"Failed to delete cycle with ID {id}",
+                    $"CycleId: {id}",
                     ex);
             }
         }
