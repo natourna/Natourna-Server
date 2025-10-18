@@ -273,5 +273,73 @@ namespace BuildingManagement.Exceptions
                 );
             }
         }
+
+        public static class Cycle
+        {
+            public static (string userMessage, string technicalDetails) GetAllFailed(int? cycleId = null, bool? isActive = null)
+            {
+                return (
+                    "Failed to retrieve cycles with the specified filters",
+                    $"Filters - CycleId: {cycleId?.ToString() ?? "null"}, IsActive: {isActive?.ToString() ?? "null"}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) GetByIdFailed(int id)
+            {
+                return (
+                    $"Failed to retrieve cycle with ID {id}",
+                    $"CycleId: {id}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) CreateFailed(CycleEntity cycle)
+            {
+                return (
+                    $"Failed to create cycle '{cycle.Label}'",
+                    $"Label: '{cycle.Label}', Cycle: {cycle.Cycle}, Amount: {cycle.Amount:C}, " +
+                    $"StartDate: {cycle.StartDate:yyyy-MM-dd}, EndDate: {cycle.EndDate:yyyy-MM-dd}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) UpdateFailed(int id, CycleEntity cycle)
+            {
+                return (
+                    $"Failed to update cycle with ID {id}",
+                    $"CycleId: {id}, Label: '{cycle.Label}'"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) DeleteFailed(int id)
+            {
+                return (
+                    $"Failed to delete cycle with ID {id}",
+                    $"CycleId: {id}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) CycleNotFound(int cycleId)
+            {
+                return (
+                    $"Cycle with ID {cycleId} was not found",
+                    $"CycleId: {cycleId}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) InvalidDateRange(DateTime startDate, DateTime endDate)
+            {
+                return (
+                    $"Invalid date range: Start date ({startDate:yyyy-MM-dd}) must be before end date ({endDate:yyyy-MM-dd})",
+                    $"StartDate: {startDate:yyyy-MM-dd}, EndDate: {endDate:yyyy-MM-dd}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) InvalidBalanceAllocations(decimal totalPercentage)
+            {
+                return (
+                    $"Balance allocations must sum to exactly 100%. Current sum: {totalPercentage}%",
+                    $"TotalPercentage: {totalPercentage}%, Expected: 100%"
+                );
+            }
+        }
     }
 }

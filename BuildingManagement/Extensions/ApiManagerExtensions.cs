@@ -13,6 +13,7 @@ public static class ApiManagerExtensions
         services.AddScoped<IBillApiManager, BillApiManager>();
         services.AddScoped<IPaymentApiManager, PaymentApiManager>();
         services.AddScoped<IUserApiManager, UserApiManager>();
+        services.AddScoped<ICycleApiManager, CycleApiManager>();
         services.AddScoped<IBalanceApiManager, BalanceApiManager>();
 
         return services;

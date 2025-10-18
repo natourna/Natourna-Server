@@ -409,13 +409,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"label\": \"Monthly Building Fees\",\n  \"description\": \"Regular monthly fees for building maintenance\",  // optional\n  \"cycle\": 0,  // 0=Monthly, 1=Quarterly, 2=SemiAnnual, 3=Annual, 4=Weekly, 5=OneTime\n  \"startDate\": \"2024-01-01T00:00:00Z\",\n  \"endDate\": \"2024-12-31T23:59:59Z\",\n  \"apartmentIds\": [1, 2, 3],  // optional - null/empty means all apartments\n  \"amount\": 100.00,\n  \"dueDate\": \"2024-01-05T00:00:00Z\",  // optional - defaults to payment date\n  \"balanceAllocations\": [  // optional - must sum to 100% if provided\n    {\n      \"balanceId\": 1,\n      \"percentage\": 60\n    },\n    {\n      \"balanceId\": 2,\n      \"percentage\": 40\n    }\n  ]\n}"
+							"raw": "{\n  \"label\": \"Monthly Building Fees\",\n  \"description\": \"Regular monthly fees for building maintenance\",  // optional\n  \"cycle\": 0,  // 0=Monthly, 1=Quarterly, 2=SemiAnnual, 3=Annual, 4=Weekly, 5=OneTime\n  \"startDate\": \"2024-01-01T00:00:00Z\",\n  \"endDate\": \"2024-12-31T23:59:59Z\",\n  \"apartmentIds\": [1, 2, 3],  // optional - null/empty means all apartments\n  \"amount\": 100.00,\n  \"balanceAllocations\": [  // REQUIRED - must sum to 100%\n    {\n      \"balanceId\": 1,\n      \"percentage\": 60\n    },\n    {\n      \"balanceId\": 2,\n      \"percentage\": 40\n    }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/cycle",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "cycle"]
-						}
+						},
+						"description": "Creates a payment cycle and generates all payments for the specified period. Payments will use their occurrence date as the due date. Balance allocations are REQUIRED - all payments must be allocated to balances."
 					}
 				},
 				{
