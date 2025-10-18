@@ -6,6 +6,7 @@ using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Interfaces.Context;
 using BuildingManagement.Models.Entities;
 using BuildingManagement.Models.Requests.Cycle;
+using Microsoft.Extensions.Logging;
 
 namespace BuildingManagement.Services.Api
 {
@@ -47,7 +48,7 @@ namespace BuildingManagement.Services.Api
         {
             try
             {
-                _logger.LogInformation("Creating cycle - Label: {Label}, Cycle: {CycleType}, Amount: {Amount}",
+                _logger.LogInformation("Creating cycle - Label: {Label}, Cycle: {CycleType}, Amount: {Amount}", 
                     request.Label, request.Cycle, request.Amount);
 
                 // Validate date range
@@ -168,7 +169,7 @@ namespace BuildingManagement.Services.Api
                 // Calculate payment occurrences based on cycle type
                 var occurrences = CalculatePaymentOccurrences(cycle);
 
-                _logger.LogInformation("Creating {OccurrenceCount} payment occurrences for {ApartmentCount} apartments",
+                _logger.LogInformation("Creating {OccurrenceCount} payment occurrences for {ApartmentCount} apartments", 
                     occurrences.Count, apartmentIds.Count);
 
                 // Deserialize allocations once

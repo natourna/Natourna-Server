@@ -15,7 +15,18 @@ try
     builder.Services.AddAuthenticationService();
     builder.WebHost.AddListenPort(builder.Configuration);
 
-    var app = builder.Build();
+// Add Basic Authentication
+builder.Services.AddAuthentication("BasicAuthentication")
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+
+// Add services using extensions
+builder.Services
+    .AddDatabaseServices(builder.Configuration)
+    .AddApiManagers()
+    .AddContextManagers()
+    .AddSwaggerServices();
+
+var app = builder.Build();
 
     await app.Services.AddContextService(app.Environment.IsDevelopment());
 
