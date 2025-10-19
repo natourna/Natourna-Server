@@ -1,5 +1,5 @@
-﻿using BuildingManagement.Configurations;
-using BuildingManagement.Exceptions;
+﻿using BuildingManagement.Exceptions;
+using BuildingManagement.Models.Configurations;
 
 namespace BuildingManagement.Extensions
 {

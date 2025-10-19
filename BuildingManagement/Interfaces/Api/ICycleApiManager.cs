@@ -1,5 +1,5 @@
+using BuildingManagement.Models.Api.Requests.Cycle;
 using BuildingManagement.Models.Entities;
-using BuildingManagement.Models.Requests.Cycle;
 
 namespace BuildingManagement.Interfaces.Api
 {

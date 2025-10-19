@@ -1,5 +1,7 @@
+using BuildingManagement.Constants.Log;
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Interfaces.Context;
+using BuildingManagement.Interfaces.Services;
 using BuildingManagement.Models.Entities;
 
 namespace BuildingManagement.Services.Api
@@ -7,10 +9,12 @@ namespace BuildingManagement.Services.Api
     public class BalanceApiManager : IBalanceApiManager
     {
         private readonly IBalanceContextManager _balanceContextManager;
+        private readonly IAuditService _auditService;
 
-        public BalanceApiManager(IBalanceContextManager balanceContextManager)
+        public BalanceApiManager(IBalanceContextManager balanceContextManager, IAuditService auditService)
         {
             _balanceContextManager = balanceContextManager;
+            _auditService = auditService;
         }
 
         public async Task<List<BalanceEntity>> GetAllBalancesAsync()
@@ -31,16 +35,60 @@ namespace BuildingManagement.Services.Api
 
         public async Task<BalanceEntity> CreateBalanceAsync(BalanceEntity balance)
         {
-            return await _balanceContextManager.CreateAsync(balance);
+            var created = await _balanceContextManager.CreateAsync(balance);
+
+            await _auditService.LogAsync(LogAction.Create, "Balance", created.Id, null, new
+            {
+                created.CompoundId,
+                created.CurrentAmount,
+                created.Label
+            });
+
+            return created;
         }
 
         public async Task<BalanceEntity?> UpdateBalanceAsync(int id, BalanceEntity balance)
         {
-            return await _balanceContextManager.UpdateAsync(id, balance);
+            var existing = await GetBalanceByIdAsync(id);
+            if (existing == null)
+                return null;
+
+            var oldValues = new
+            {
+                existing.CompoundId,
+                existing.CurrentAmount,
+                existing.Label
+            };
+
+            var updated = await _balanceContextManager.UpdateAsync(id, balance);
+
+            if (updated != null)
+            {
+                await _auditService.LogAsync(LogAction.Update, "Balance", id, oldValues, new
+                {
+                    updated.CompoundId,
+                    updated.CurrentAmount,
+                    updated.Label
+                });
+            }
+
+            return updated;
         }
 
         public async Task<bool> DeleteBalanceAsync(int id)
         {
+            var existing = await GetBalanceByIdAsync(id);
+            if (existing == null)
+            {
+                return false;
+            }
+
+            await _auditService.LogAsync(LogAction.Delete, "Balance", id, new
+            {
+                existing.CompoundId,
+                existing.CurrentAmount
+            }, null);
+
             return await _balanceContextManager.DeleteAsync(id);
         }
     }

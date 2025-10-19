@@ -1,4 +1,4 @@
-﻿namespace BuildingManagement.Configurations.BuildingManagement
+﻿namespace BuildingManagement.Models.Configurations.BuildingManagement
 {
     public class BuildingManagementConfiguration
     {

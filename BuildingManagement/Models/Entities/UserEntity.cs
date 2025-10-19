@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using BuildingManagement.Constants.User;
 
 namespace BuildingManagement.Models.Entities
 {
@@ -14,20 +15,28 @@ namespace BuildingManagement.Models.Entities
         public string Email { get; set; }
 
         [Required]
+        [JsonIgnore]  // Never expose password in API responses
         public string Password { get; set; }
 
         [Required]
         public string PhoneNumber { get; set; }
 
+        [Required]
+        public UserRole Role { get; set; } = UserRole.User;
+
+        public bool IsActive { get; set; } = true;
+
         [JsonIgnore]
         public ICollection<ApartmentEntity> Apartments { get; set; }
 
-        public UserEntity(int id, string email, string password, string phoneNumber)
+        public UserEntity(int id, string email, string password, string phoneNumber, UserRole role = UserRole.User)
         {
             Id = id;
             Email = email;
             Password = password;
             PhoneNumber = phoneNumber;
+            Role = role;
+            IsActive = true;
             Apartments = [];
             CreatedAt = DateTime.UtcNow;
             UpdatededAt = DateTime.UtcNow;

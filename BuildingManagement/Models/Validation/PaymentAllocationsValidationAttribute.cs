@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BuildingManagement.Validation
+namespace BuildingManagement.Models.Validation
 {
     /// <summary>
     /// Validates that payment allocations sum to exactly 100%

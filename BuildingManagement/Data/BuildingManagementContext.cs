@@ -9,22 +9,26 @@ namespace BuildingManagement.Data
     /// </summary>
     public class BuildingManagementContext : DbContext
     {
-        // Core Building Structure
+
         public DbSet<CompoundEntity> Compounds { get; set; }
+
         public DbSet<BuildingEntity> Buildings { get; set; }
+
         public DbSet<ApartmentEntity> Apartments { get; set; }
 
-        // Financial Management
         public DbSet<BalanceEntity> Balances { get; set; }
+
         public DbSet<BillEntity> Bills { get; set; }
 
-        // Payment Management
         public DbSet<PaymentEntity> Payments { get; set; }
+
         public DbSet<CycleEntity> Cycles { get; set; }
+
         public DbSet<PaymentAllocationEntity> PaymentAllocations { get; set; }
 
-        // User Management
         public DbSet<UserEntity> Users { get; set; }
+
+        public DbSet<LogEntity> Logs { get; set; }
 
         public BuildingManagementContext(DbContextOptions<BuildingManagementContext> options) : base(options) { }
 
@@ -170,6 +174,22 @@ namespace BuildingManagement.Data
 
             modelBuilder.Entity<CycleEntity>()
                 .HasIndex(c => c.EndDate);
+
+            // Log indexes
+            modelBuilder.Entity<LogEntity>()
+                .HasIndex(l => l.UserId);
+
+            modelBuilder.Entity<LogEntity>()
+                .HasIndex(l => l.UserEmail);
+
+            modelBuilder.Entity<LogEntity>()
+                .HasIndex(l => l.Action);
+
+            modelBuilder.Entity<LogEntity>()
+                .HasIndex(l => l.EntityType);
+
+            modelBuilder.Entity<LogEntity>()
+                .HasIndex(l => l.CreatedAt);
 
             // ========================================
             // DECIMAL PRECISION CONFIGURATION

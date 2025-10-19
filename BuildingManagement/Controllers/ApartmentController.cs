@@ -17,14 +17,19 @@ namespace BuildingManagement.Controllers
             _apartmentManager = apartmentManager;
         }
 
+        /// <summary>
+        /// Get all apartments - Any authenticated user
+        /// </summary>
         [HttpGet]
         public async Task<ActionResult<List<ApartmentEntity>>> GetAllApartments()
         {
             var apartments = await _apartmentManager.GetAllApartmentsAsync();
-
             return Ok(apartments);
         }
 
+        /// <summary>
+        /// Get apartment by ID - Any authenticated user
+        /// </summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<ApartmentEntity>> GetApartmentById(int id)
         {
@@ -38,23 +43,32 @@ namespace BuildingManagement.Controllers
             return Ok(apartment);
         }
 
+        /// <summary>
+        /// Get apartments by building ID - Any authenticated user
+        /// </summary>
         [HttpGet("building/{buildingId}")]
         public async Task<ActionResult<List<ApartmentEntity>>> GetApartmentsByBuildingId(int buildingId)
         {
             var apartments = await _apartmentManager.GetApartmentsByBuildingIdAsync(buildingId);
-
             return Ok(apartments);
         }
 
+        /// <summary>
+        /// Create apartment - Admin only
+        /// </summary>
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApartmentEntity>> CreateApartment(ApartmentEntity apartment)
         {
             var createdApartment = await _apartmentManager.CreateApartmentAsync(apartment);
-
             return CreatedAtAction(nameof(GetApartmentById), new { id = createdApartment.Id }, createdApartment);
         }
 
+        /// <summary>
+        /// Update apartment - Admin only
+        /// </summary>
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApartmentEntity>> UpdateApartment(int id, ApartmentEntity apartment)
         {
             var updatedApartment = await _apartmentManager.UpdateApartmentAsync(id, apartment);
@@ -67,7 +81,11 @@ namespace BuildingManagement.Controllers
             return Ok(updatedApartment);
         }
 
+        /// <summary>
+        /// Delete apartment - Admin only
+        /// </summary>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteApartment(int id)
         {
             var result = await _apartmentManager.DeleteApartmentAsync(id);
@@ -80,7 +98,11 @@ namespace BuildingManagement.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Set apartment active status - Admin only
+        /// </summary>
         [HttpPatch("{id}/active")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApartmentEntity>> SetApartmentActive(int id, [FromBody] bool isActive)
         {
             var apartment = await _apartmentManager.SetApartmentActiveAsync(id, isActive);

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BuildingManagement.Models.Requests.Payment
+namespace BuildingManagement.Models.Api.Requests.Payment
 {
     public class PaymentAllocationRequest
     {

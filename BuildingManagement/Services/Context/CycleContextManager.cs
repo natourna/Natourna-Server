@@ -1,4 +1,4 @@
-using BuildingManagement.Constants;
+using BuildingManagement.Constants.Error;
 using BuildingManagement.Data;
 using BuildingManagement.Exceptions;
 using BuildingManagement.Interfaces.Context;

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BuildingManagement.Validation
+namespace BuildingManagement.Models.Validation
 {
     public class RequiredDecimalAttribute : ValidationAttribute
     {

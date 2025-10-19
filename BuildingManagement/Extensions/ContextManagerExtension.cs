@@ -19,6 +19,7 @@ public static class ContextManagerExtension
         services.AddScoped<IUserContextManager, UserContextManager>();
         services.AddScoped<IBalanceContextManager, BalanceContextManager>();
         services.AddScoped<ICycleContextManager, CycleContextManager>();
+        services.AddScoped<ILogContextManager, AuditContextManager>();
 
         return services;
     }

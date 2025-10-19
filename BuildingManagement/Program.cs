@@ -1,5 +1,4 @@
 using BuildingManagement.Extensions;
-using Microsoft.AspNetCore.Authentication;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,14 +8,15 @@ try
     // Add services using extensions
     builder.Host.AddSeriLog();
     builder.Services.AddControllers();
+    builder.Services.AddHttpContextAccessor(); // Required for AuditService
     builder.Services.AddMySqlService(builder.Configuration);
     builder.Services.AddApiManagers();
     builder.Services.AddContextManagers();
     builder.Services.AddSwaggerServices();
-    builder.Services.AddAuthenticationService();
+    builder.Services.AddAuthenticationService(builder.Configuration);
     builder.WebHost.AddListenPort(builder.Configuration);
 
-var app = builder.Build();
+    var app = builder.Build();
 
     await app.Services.AddContextService(app.Environment.IsDevelopment());
 

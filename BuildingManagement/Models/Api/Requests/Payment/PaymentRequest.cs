@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using BuildingManagement.Validation;
+using BuildingManagement.Models.Validation;
 
-namespace BuildingManagement.Models.Requests.Payment
+namespace BuildingManagement.Models.Api.Requests.Payment
 {
     public class PaymentRequest
     {

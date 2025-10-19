@@ -1,4 +1,4 @@
-namespace BuildingManagement.Constants
+namespace BuildingManagement.Constants.Error
 {
     public static class ErrorCodes
     {
