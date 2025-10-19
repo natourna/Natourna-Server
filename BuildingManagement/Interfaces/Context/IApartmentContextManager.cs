@@ -10,5 +10,6 @@ namespace BuildingManagement.Interfaces.Context
         Task<ApartmentEntity> CreateAsync(ApartmentEntity apartment);
         Task<ApartmentEntity?> UpdateAsync(int id, ApartmentEntity apartment);
         Task<bool> DeleteAsync(int id);
+        Task<ApartmentEntity?> SetActiveAsync(int id, bool isActive);
     }
 }

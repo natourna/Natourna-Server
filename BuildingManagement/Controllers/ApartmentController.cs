@@ -79,5 +79,18 @@ namespace BuildingManagement.Controllers
 
             return NoContent();
         }
+
+        [HttpPatch("{id}/active")]
+        public async Task<ActionResult<ApartmentEntity>> SetApartmentActive(int id, [FromBody] bool isActive)
+        {
+            var apartment = await _apartmentManager.SetApartmentActiveAsync(id, isActive);
+
+            if (apartment == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(apartment);
+        }
     }
 }

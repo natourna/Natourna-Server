@@ -133,10 +133,7 @@ namespace BuildingManagement.Services.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[{ErrorCode}] Failed to create cycle", ErrorCodes.CYCLE_CREATE_ERROR);
-                throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR,
-                    "Failed to create cycle",
-                    $"Label: {request.Label}",
-                    ex);
+                throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR, "Failed to create cycle", $"Label: {request.Label}", ex);
             }
         }
 

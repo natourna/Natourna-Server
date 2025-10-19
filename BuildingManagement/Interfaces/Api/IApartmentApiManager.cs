@@ -15,5 +15,7 @@ namespace BuildingManagement.Interfaces.Api
         Task<ApartmentEntity?> UpdateApartmentAsync(int id, ApartmentEntity apartment);
 
         Task<bool> DeleteApartmentAsync(int id);
+
+        Task<ApartmentEntity?> SetApartmentActiveAsync(int id, bool isActive);
     }
 }

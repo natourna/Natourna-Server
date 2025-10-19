@@ -42,5 +42,10 @@ namespace BuildingManagement.Services.Api
         {
             return await _contextManager.DeleteAsync(id);
         }
+
+        public async Task<ApartmentEntity?> SetApartmentActiveAsync(int id, bool isActive)
+        {
+            return await _contextManager.SetActiveAsync(id, isActive);
+        }
     }
 }
