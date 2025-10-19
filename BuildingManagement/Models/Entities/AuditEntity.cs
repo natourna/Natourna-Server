@@ -4,7 +4,7 @@ using BuildingManagement.Constants.Log;
 
 namespace BuildingManagement.Models.Entities
 {
-    public class LogEntity : BaseEntity
+    public class AuditEntity : BaseEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -36,7 +36,7 @@ namespace BuildingManagement.Models.Entities
 
         public string? UserAgent { get; set; }
 
-        public LogEntity(int? userId, string userEmail, LogAction action, string entityType, int? entityId = null)
+        public AuditEntity(int? userId, string userEmail, LogAction action, string entityType, int? entityId = null)
         {
             UserId = userId;
             UserEmail = userEmail;
