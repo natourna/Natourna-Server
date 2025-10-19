@@ -52,3 +52,10 @@ docker-compose.override.yml
 /BuildingManagement/docker-compose.yml
 /BuildingManagement/BuildingManagement_API.postman_collection.json
 /BuildingManagement/Documentation/DatabaseSchema.md
+/BuildingManagement/deployment/server-setup.sh
+/BuildingManagement/deployment/docker-compose.server.yml
+/BuildingManagement/deployment/docker-build-push.sh
+/BuildingManagement/deployment/docker-build-push.ps1
+/BuildingManagement/deployment/deploy.sh
+/BuildingManagement/deployment/deploy.ps1
+/BuildingManagement/deployment/.env.example
