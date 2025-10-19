@@ -26,6 +26,12 @@ namespace BuildingManagement.Services.Context
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
+        public async Task<UserEntity?> GetByEmailAsync(string email)
+        {
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
+        }
+
         public async Task<UserEntity> CreateAsync(UserEntity user)
         {
             _context.Users.Add(user);
@@ -40,9 +46,17 @@ namespace BuildingManagement.Services.Context
                 return null;
 
             existingUser.Email = user.Email;
-            existingUser.Password = user.Password;
             existingUser.PhoneNumber = user.PhoneNumber;
+            existingUser.Role = user.Role;
+            existingUser.IsActive = user.IsActive;
             existingUser.UpdatededAt = DateTime.UtcNow;
+
+            // Only update password if it's provided and different
+            if (!string.IsNullOrEmpty(user.Password) && user.Password != existingUser.Password)
+            {
+                // In production, you should hash the password here
+                existingUser.Password = user.Password;
+            }
 
             await _context.SaveChangesAsync();
             return existingUser;

@@ -1,9 +1,11 @@
-using BuildingManagement.Constants;
+using BuildingManagement.Constants.Error;
+using BuildingManagement.Constants.Log;
 using BuildingManagement.Exceptions;
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Interfaces.Context;
+using BuildingManagement.Interfaces.Services;
+using BuildingManagement.Models.Api.Requests.Payment;
 using BuildingManagement.Models.Entities;
-using BuildingManagement.Models.Requests.Payment;
 
 namespace BuildingManagement.Services.Api
 {
@@ -12,13 +14,15 @@ namespace BuildingManagement.Services.Api
         private readonly IPaymentContextManager _paymentContextManager;
         private readonly IPaymentAllocationContextManager _paymentAllocationContextManager;
         private readonly IBalanceContextManager _balanceContextManager;
+        private readonly IAuditService _auditService;
         private readonly ILogger<PaymentApiManager> _logger;
 
-        public PaymentApiManager(IPaymentContextManager paymentContextManager, IPaymentAllocationContextManager paymentAllocationContextManager, IBalanceContextManager balanceContextManager, ILogger<PaymentApiManager> logger)
+        public PaymentApiManager(IPaymentContextManager paymentContextManager, IPaymentAllocationContextManager paymentAllocationContextManager, IBalanceContextManager balanceContextManager, IAuditService auditService, ILogger<PaymentApiManager> logger)
         {
             _paymentContextManager = paymentContextManager;
             _paymentAllocationContextManager = paymentAllocationContextManager;
             _balanceContextManager = balanceContextManager;
+            _auditService = auditService;
             _logger = logger;
         }
 
@@ -49,7 +53,6 @@ namespace BuildingManagement.Services.Api
             {
                 _logger.LogInformation("Creating payment with balance allocations - Amount: {Amount}, ApartmentId: {ApartmentId}", request.Amount, request.ApartmentId);
 
-                // Validate balance allocations sum to 100% (already validated by attribute, but double-check)
                 var totalPercentage = request.Allocations.Sum(a => a.Percentage);
                 if (totalPercentage != 100)
                 {
@@ -58,7 +61,6 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.PAYMENT_INVALID_ALLOCATIONS_ERROR, userMessage, technicalDetails);
                 }
 
-                // Validate all balances exist
                 foreach (var allocation in request.Allocations)
                 {
                     var balances = await _balanceContextManager.GetAllAsync(balanceId: allocation.BalanceId);
@@ -70,7 +72,6 @@ namespace BuildingManagement.Services.Api
                     }
                 }
 
-                // Create the payment (standalone, not part of a cycle)
                 var payment = new PaymentEntity(request.Amount, request.ApartmentId)
                 {
                     DueDate = request.DueDate,
@@ -81,7 +82,6 @@ namespace BuildingManagement.Services.Api
 
                 var createdPayment = await _paymentContextManager.CreateAsync(payment);
 
-                // Create balance allocations
                 var paymentAllocations = new List<PaymentAllocationEntity>();
                 foreach (var allocation in request.Allocations)
                 {
@@ -103,6 +103,14 @@ namespace BuildingManagement.Services.Api
                 _logger.LogInformation("Successfully saved {AllocationCount} payment allocations", paymentAllocations.Count);
 
                 await UpdateBalancesForPayment(paymentAllocations);
+
+                await _auditService.LogAsync(LogAction.Create, "Payment", createdPayment.Id, null, new
+                {
+                    createdPayment.Amount,
+                    createdPayment.ApartmentId,
+                    createdPayment.IsPaid,
+                    AllocationCount = request.Allocations.Count
+                });
 
                 _logger.LogInformation("Successfully created payment {PaymentId} with {AllocationCount} balance allocations", createdPayment.Id, request.Allocations.Count);
 
@@ -140,11 +148,51 @@ namespace BuildingManagement.Services.Api
 
         public async Task<PaymentEntity?> UpdatePaymentAsync(int id, PaymentEntity payment)
         {
-            return await _paymentContextManager.UpdateAsync(id, payment);
+            var existing = await GetPaymentByIdAsync(id);
+            if (existing == null)
+            {
+                return null;
+            }
+
+            var oldValues = new
+            {
+                existing.Amount,
+                existing.ApartmentId,
+                existing.IsPaid,
+                existing.DueDate
+            };
+
+            var updated = await _paymentContextManager.UpdateAsync(id, payment);
+
+            if (updated != null)
+            {
+                await _auditService.LogAsync(LogAction.Update, "Payment", id, oldValues, new
+                {
+                    updated.Amount,
+                    updated.ApartmentId,
+                    updated.IsPaid,
+                    updated.DueDate
+                });
+            }
+
+            return updated;
         }
 
         public async Task<bool> DeletePaymentAsync(int id)
         {
+            var existing = await GetPaymentByIdAsync(id);
+            if (existing == null)
+            {
+                return false;
+            }
+
+            await _auditService.LogAsync(LogAction.Delete, "Payment", id, new
+            {
+                existing.Amount,
+                existing.ApartmentId,
+                existing.IsPaid
+            }, null);
+
             return await _paymentContextManager.DeleteAsync(id);
         }
 
@@ -154,7 +202,6 @@ namespace BuildingManagement.Services.Api
             {
                 _logger.LogInformation("Marking payment {PaymentId} as paid", paymentId);
 
-                // Get the payment
                 var payment = await GetPaymentByIdAsync(paymentId);
 
                 if (payment == null)
@@ -164,7 +211,6 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage, technicalDetails);
                 }
 
-                // Check if already paid
                 if (payment.IsPaid == true)
                 {
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.AlreadyPaid(paymentId);
@@ -172,7 +218,6 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.PAYMENT_ALREADY_PAID_ERROR, userMessage, technicalDetails);
                 }
 
-                // Get payment allocations
                 var allocations = await _paymentAllocationContextManager.GetAllAsync(paymentId: paymentId);
                 if (!allocations.Any())
                 {
@@ -181,7 +226,6 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, $"{technicalDetails}, No allocations found");
                 }
 
-                // Add allocated amounts to balances
                 var balanceUpdates = new List<(int balanceId, decimal amount)>();
                 foreach (var allocation in allocations)
                 {
@@ -195,14 +239,12 @@ namespace BuildingManagement.Services.Api
                         throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
                     }
 
-                    // Add amount to balance (positive operation)
                     balance.CurrentAmount += allocation.AllocatedAmount;
                     balance.UpdatededAt = DateTime.UtcNow;
                     var updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                     if (updatedBalance == null)
                     {
-                        // Rollback previous balance updates
                         await RollbackBalanceUpdates(balanceUpdates, subtract: true);
 
                         var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
@@ -212,11 +254,9 @@ namespace BuildingManagement.Services.Api
 
                     balanceUpdates.Add((balance.Id, allocation.AllocatedAmount));
 
-                    _logger.LogInformation("Added {Amount:C} to balance {BalanceId} (Payment {PaymentId})",
-                        allocation.AllocatedAmount, balance.Id, paymentId);
+                    _logger.LogInformation("Added {Amount:C} to balance {BalanceId} (Payment {PaymentId})", allocation.AllocatedAmount, balance.Id, paymentId);
                 }
 
-                // Mark payment as paid with payment date
                 payment.IsPaid = true;
                 payment.PaymentDate = DateTime.UtcNow;
                 payment.UpdatededAt = DateTime.UtcNow;
@@ -224,7 +264,6 @@ namespace BuildingManagement.Services.Api
 
                 if (updatedPayment == null)
                 {
-                    // Rollback: Remove amounts from balances
                     await RollbackBalanceUpdates(balanceUpdates, subtract: true);
 
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.MarkAsPaidFailed(paymentId);
@@ -232,8 +271,11 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, technicalDetails);
                 }
 
-                _logger.LogInformation("Successfully marked payment {PaymentId} as paid on {PaymentDate} and added funds to {BalanceCount} balances",
-                    paymentId, payment.PaymentDate, allocations.Count);
+                await _auditService.LogAsync(LogAction.Update, "Payment", paymentId,
+                    new { IsPaid = false, PaymentDate = (DateTime?)null },
+                    new { IsPaid = true, payment.PaymentDate });
+
+                _logger.LogInformation("Successfully marked payment {PaymentId} as paid on {PaymentDate} and added funds to {BalanceCount} balances", paymentId, payment.PaymentDate, allocations.Count);
 
                 return updatedPayment;
             }
@@ -263,7 +305,6 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage, technicalDetails);
                 }
 
-                // Check if already unpaid
                 if (payment.IsPaid == false)
                 {
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.AlreadyUnpaid(paymentId);
@@ -271,7 +312,6 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.PAYMENT_ALREADY_UNPAID_ERROR, userMessage, technicalDetails);
                 }
 
-                // Get payment allocations
                 var allocations = await _paymentAllocationContextManager.GetAllAsync(paymentId: paymentId);
                 if (!allocations.Any())
                 {
@@ -280,7 +320,6 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, $"{technicalDetails}, No allocations found");
                 }
 
-                // Deduct allocated amounts from balances
                 var balanceUpdates = new List<(int balanceId, decimal amount)>();
                 foreach (var allocation in allocations)
                 {
@@ -294,14 +333,12 @@ namespace BuildingManagement.Services.Api
                         throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
                     }
 
-                    // Deduct amount from balance (reverse the payment)
                     balance.CurrentAmount -= allocation.AllocatedAmount;
                     balance.UpdatededAt = DateTime.UtcNow;
                     var updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                     if (updatedBalance == null)
                     {
-                        // Rollback previous balance updates
                         await RollbackBalanceUpdates(balanceUpdates, subtract: false);
 
                         var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
@@ -311,11 +348,9 @@ namespace BuildingManagement.Services.Api
 
                     balanceUpdates.Add((balance.Id, allocation.AllocatedAmount));
 
-                    _logger.LogInformation("Deducted {Amount:C} from balance {BalanceId} (Payment {PaymentId})",
-                        allocation.AllocatedAmount, balance.Id, paymentId);
+                    _logger.LogInformation("Deducted {Amount:C} from balance {BalanceId} (Payment {PaymentId})", allocation.AllocatedAmount, balance.Id, paymentId);
                 }
 
-                // Mark payment as unpaid and clear payment date
                 payment.IsPaid = false;
                 payment.PaymentDate = null;
                 payment.UpdatededAt = DateTime.UtcNow;
@@ -323,13 +358,16 @@ namespace BuildingManagement.Services.Api
 
                 if (updatedPayment == null)
                 {
-                    // Rollback: Add amounts back to balances
                     await RollbackBalanceUpdates(balanceUpdates, subtract: false);
 
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails);
                 }
+
+                await _auditService.LogAsync(LogAction.Update, "Payment", paymentId,
+                    new { IsPaid = true, PaymentDate = payment.PaymentDate },
+                    new { IsPaid = false, PaymentDate = (DateTime?)null });
 
                 _logger.LogInformation("Successfully marked payment {PaymentId} as unpaid and deducted funds from {BalanceCount} balances",
                     paymentId, allocations.Count);

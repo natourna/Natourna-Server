@@ -8,9 +8,11 @@ namespace BuildingManagement.Interfaces.Context
 
         Task<UserEntity?> GetByIdAsync(int id);
 
-        Task<UserEntity> CreateAsync(UserEntity payment);
+        Task<UserEntity?> GetByEmailAsync(string email);
 
-        Task<UserEntity?> UpdateAsync(int id, UserEntity payment);
+        Task<UserEntity> CreateAsync(UserEntity user);
+
+        Task<UserEntity?> UpdateAsync(int id, UserEntity user);
 
         Task<bool> DeleteAsync(int id);
     }

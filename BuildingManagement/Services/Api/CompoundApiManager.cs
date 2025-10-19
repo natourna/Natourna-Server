@@ -1,5 +1,7 @@
+using BuildingManagement.Constants.Log;
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Interfaces.Context;
+using BuildingManagement.Interfaces.Services;
 using BuildingManagement.Models.Entities;
 
 namespace BuildingManagement.Services.Api
@@ -7,10 +9,12 @@ namespace BuildingManagement.Services.Api
     public class CompoundApiManager : ICompoundApiManager
     {
         private readonly ICompoundContextManager _contextManager;
+        private readonly IAuditService _auditService;
 
-        public CompoundApiManager(ICompoundContextManager contextManager)
+        public CompoundApiManager(ICompoundContextManager contextManager, IAuditService auditService)
         {
             _contextManager = contextManager;
+            _auditService = auditService;
         }
 
         public async Task<List<CompoundEntity>> GetAllCompoundsAsync()
@@ -25,16 +29,58 @@ namespace BuildingManagement.Services.Api
 
         public async Task<CompoundEntity> CreateCompoundAsync(CompoundEntity compound)
         {
-            return await _contextManager.CreateAsync(compound);
+            var created = await _contextManager.CreateAsync(compound);
+
+            await _auditService.LogAsync(LogAction.Create, "Compound", created.Id, null, new
+            {
+                created.Name,
+                created.Address
+            });
+
+            return created;
         }
 
         public async Task<CompoundEntity?> UpdateCompoundAsync(int id, CompoundEntity compound)
         {
-            return await _contextManager.UpdateAsync(id, compound);
+            var existing = await GetCompoundByIdAsync(id);
+            if (existing == null)
+            {
+                return null;
+            }
+
+            var oldValues = new
+            {
+                existing.Name,
+                existing.Address
+            };
+
+            var updated = await _contextManager.UpdateAsync(id, compound);
+
+            if (updated != null)
+            {
+                await _auditService.LogAsync(LogAction.Update, "Compound", id, oldValues, new
+                {
+                    updated.Name,
+                    updated.Address
+                });
+            }
+
+            return updated;
         }
 
         public async Task<bool> DeleteCompoundAsync(int id)
         {
+            var existing = await GetCompoundByIdAsync(id);
+            if (existing == null)
+            {
+                return false;
+            }
+
+            await _auditService.LogAsync(LogAction.Delete, "Compound", id, new
+            {
+                existing.Name
+            }, null);
+
             return await _contextManager.DeleteAsync(id);
         }
     }

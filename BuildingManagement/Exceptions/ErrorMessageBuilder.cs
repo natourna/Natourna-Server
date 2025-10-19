@@ -1,5 +1,5 @@
+using BuildingManagement.Models.Api.Requests.Payment;
 using BuildingManagement.Models.Entities;
-using BuildingManagement.Models.Requests.Payment;
 
 namespace BuildingManagement.Exceptions
 {

@@ -91,5 +91,18 @@ namespace BuildingManagement.Services.Context
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<ApartmentEntity?> SetActiveAsync(int id, bool isActive)
+        {
+            var apartment = await _context.Apartments.FindAsync(id);
+            if (apartment == null)
+                return null;
+
+            apartment.IsActive = isActive;
+            apartment.UpdatededAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+            return apartment;
+        }
     }
 }

@@ -1,13 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using BuildingManagement.Constants.Cycle;
-using BuildingManagement.Models.Requests.Payment;
-using BuildingManagement.Validation;
+using BuildingManagement.Models.Api.Requests.Payment;
+using BuildingManagement.Models.Validation;
 
-namespace BuildingManagement.Models.Requests.Cycle
+namespace BuildingManagement.Models.Api.Requests.Cycle
 {
-    /// <summary>
-    /// Request model for creating a payment cycle
-    /// </summary>
     public class CycleRequest
     {
         [Required]
@@ -24,21 +21,12 @@ namespace BuildingManagement.Models.Requests.Cycle
         [Required]
         public DateTime EndDate { get; set; }
 
-        /// <summary>
-        /// List of apartment IDs to include in this cycle.
-        /// If null or empty, cycle applies to ALL apartments in the compound.
-        /// </summary>
         public List<int>? ApartmentIds { get; set; }
 
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]
         public decimal Amount { get; set; }
 
-        /// <summary>
-        /// Balance allocations for payments created by this cycle.
-        /// Percentages must sum to 100%.
-        /// REQUIRED - All payments must have balance allocations.
-        /// </summary>
         [Required]
         [PaymentAllocationsValidation(ErrorMessage = "Balance allocations must sum to exactly 100%")]
         public List<PaymentAllocationRequest> BalanceAllocations { get; set; } = new();

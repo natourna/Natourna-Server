@@ -1,12 +1,14 @@
 using System.Text.Json;
-using BuildingManagement.Constants;
 using BuildingManagement.Constants.Cycle;
+using BuildingManagement.Constants.Error;
+using BuildingManagement.Constants.Log;
 using BuildingManagement.Exceptions;
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Interfaces.Context;
+using BuildingManagement.Interfaces.Services;
+using BuildingManagement.Models.Api.Requests.Cycle;
+using BuildingManagement.Models.Api.Requests.Payment;
 using BuildingManagement.Models.Entities;
-using BuildingManagement.Models.Requests.Cycle;
-using Microsoft.Extensions.Logging;
 
 namespace BuildingManagement.Services.Api
 {
@@ -17,15 +19,17 @@ namespace BuildingManagement.Services.Api
         private readonly IPaymentAllocationContextManager _paymentAllocationContextManager;
         private readonly IBalanceContextManager _balanceContextManager;
         private readonly IApartmentContextManager _apartmentContextManager;
+        private readonly IAuditService _auditService;
         private readonly ILogger<CycleApiManager> _logger;
 
-        public CycleApiManager(ICycleContextManager cycleContextManager, IPaymentContextManager paymentContextManager, IPaymentAllocationContextManager paymentAllocationContextManager, IBalanceContextManager balanceContextManager, IApartmentContextManager apartmentContextManager, ILogger<CycleApiManager> logger)
+        public CycleApiManager(ICycleContextManager cycleContextManager, IPaymentContextManager paymentContextManager, IPaymentAllocationContextManager paymentAllocationContextManager, IBalanceContextManager balanceContextManager, IApartmentContextManager apartmentContextManager, IAuditService auditService, ILogger<CycleApiManager> logger)
         {
             _cycleContextManager = cycleContextManager;
             _paymentContextManager = paymentContextManager;
             _paymentAllocationContextManager = paymentAllocationContextManager;
             _balanceContextManager = balanceContextManager;
             _apartmentContextManager = apartmentContextManager;
+            _auditService = auditService;
             _logger = logger;
         }
 
@@ -39,19 +43,13 @@ namespace BuildingManagement.Services.Api
             return await _cycleContextManager.GetByIdAsync(id);
         }
 
-        /// <summary>
-        /// Creates a payment cycle and generates all payments for the specified period and apartments.
-        /// If no apartments specified, generates payments for ALL active apartments.
-        /// All payments will have balance allocations as specified in the request.
-        /// </summary>
         public async Task<CycleEntity> CreateCycleAsync(CycleRequest request)
         {
             try
             {
-                _logger.LogInformation("Creating cycle - Label: {Label}, Cycle: {CycleType}, Amount: {Amount}", 
+                _logger.LogInformation("Creating cycle - Label: {Label}, Cycle: {CycleType}, Amount: {Amount}",
                     request.Label, request.Cycle, request.Amount);
 
-                // Validate date range
                 if (request.StartDate.Date > request.EndDate.Date)
                 {
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Cycle.InvalidDateRange(request.StartDate, request.EndDate);
@@ -59,13 +57,10 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR, userMessage, technicalDetails);
                 }
 
-                // Validate balance allocations (required - should already be validated by model but double-check)
                 if (request.BalanceAllocations == null || !request.BalanceAllocations.Any())
                 {
                     _logger.LogWarning("[{ErrorCode}] Balance allocations are required", ErrorCodes.CYCLE_CREATE_ERROR);
-                    throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR,
-                        "Balance allocations are required for all payments",
-                        "BalanceAllocations: null or empty");
+                    throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR, "Balance allocations are required for all payments", "BalanceAllocations: null or empty");
                 }
 
                 var totalPercentage = request.BalanceAllocations.Sum(a => a.Percentage);
@@ -76,7 +71,6 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR, userMessage, technicalDetails);
                 }
 
-                // Validate all balances exist
                 foreach (var allocation in request.BalanceAllocations)
                 {
                     var balances = await _balanceContextManager.GetAllAsync(balanceId: allocation.BalanceId);
@@ -88,7 +82,6 @@ namespace BuildingManagement.Services.Api
                     }
                 }
 
-                // Serialize allocations to JSON
                 var allocations = request.BalanceAllocations.Select(a => new
                 {
                     balanceId = a.BalanceId,
@@ -97,32 +90,31 @@ namespace BuildingManagement.Services.Api
 
                 var balanceAllocationsJson = JsonSerializer.Serialize(allocations);
 
-                // Create cycle entity
-                var cycle = new CycleEntity
+                var cycle = new CycleEntity(request.Label, request.Cycle, request.StartDate.Date, request.EndDate.Date, request.Amount)
                 {
-                    Label = request.Label,
                     Description = request.Description,
-                    Cycle = request.Cycle,
-                    StartDate = request.StartDate.Date,
-                    EndDate = request.EndDate.Date,
-                    ApartmentIdsCsv = request.ApartmentIds == null || !request.ApartmentIds.Any()
-                        ? null
-                        : string.Join(',', request.ApartmentIds),
-                    Amount = request.Amount,
+                    ApartmentIdsCsv = request.ApartmentIds == null || request.ApartmentIds.Count == 0 ? null : string.Join(',', request.ApartmentIds),
                     IsActive = true,
                     BalanceAllocationsJson = balanceAllocationsJson
                 };
 
-                // Create cycle in database
+
                 var createdCycle = await _cycleContextManager.CreateAsync(cycle);
 
-                // Generate payments for the cycle (with allocations)
-                await GeneratePaymentsForCycle(createdCycle);
+                await GeneratePaymentsForCycle(createdCycle.Id, request);
 
-                _logger.LogInformation("Successfully created cycle {CycleId} with label '{Label}' and {AllocationCount} balance allocations",
-                    createdCycle.Id, createdCycle.Label, request.BalanceAllocations.Count);
+                await _auditService.LogAsync(LogAction.Create, "Cycle", createdCycle.Id, null, new
+                {
+                    createdCycle.Label,
+                    createdCycle.Cycle,
+                    createdCycle.Amount,
+                    createdCycle.StartDate,
+                    createdCycle.EndDate,
+                    ApartmentCount = request.ApartmentIds?.Count ?? 0
+                });
 
-                // Return cycle with generated payments
+                _logger.LogInformation("Successfully created cycle {CycleId} with label '{Label}' and {AllocationCount} balance allocations", createdCycle.Id, createdCycle.Label, request.BalanceAllocations.Count);
+
                 return await _cycleContextManager.GetByIdAsync(createdCycle.Id) ?? createdCycle;
             }
             catch (ApiException)
@@ -132,90 +124,65 @@ namespace BuildingManagement.Services.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "[{ErrorCode}] Failed to create cycle", ErrorCodes.CYCLE_CREATE_ERROR);
-                throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR,
-                    "Failed to create cycle",
-                    $"Label: {request.Label}",
-                    ex);
+                throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR, "Failed to create cycle", $"Label: {request.Label}", ex);
             }
         }
 
-        /// <summary>
-        /// Generates payments for all occurrences of the cycle period.
-        /// All payments will have balance allocations applied.
-        /// Uses PaymentContextManager to maintain proper separation of concerns.
-        /// </summary>
-        private async Task GeneratePaymentsForCycle(CycleEntity cycle)
+        private async Task GeneratePaymentsForCycle(int cycleId, CycleRequest request)
         {
             try
             {
-                _logger.LogInformation("Generating payments for cycle {CycleId}", cycle.Id);
+                _logger.LogInformation("Generating payments for cycle {CycleId}", cycleId);
 
-                // Determine apartments for the cycle
                 List<int> apartmentIds;
-                if (!string.IsNullOrWhiteSpace(cycle.ApartmentIdsCsv))
+                if (request.ApartmentIds != null && request.ApartmentIds.Any())
                 {
-                    apartmentIds = cycle.ApartmentIdsCsv
-                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(s => int.Parse(s))
-                        .ToList();
+                    apartmentIds = request.ApartmentIds;
                 }
                 else
                 {
-                    // Get all active apartments using ApartmentContextManager
                     var apartments = await _apartmentContextManager.GetAllAsync(isActive: true);
                     apartmentIds = apartments.Select(a => a.Id).ToList();
                 }
 
-                // Calculate payment occurrences based on cycle type
-                var occurrences = CalculatePaymentOccurrences(cycle);
+                var occurrences = CalculatePaymentOccurrences(request.Cycle, request.StartDate, request.EndDate);
 
-                _logger.LogInformation("Creating {OccurrenceCount} payment occurrences for {ApartmentCount} apartments", 
-                    occurrences.Count, apartmentIds.Count);
+                _logger.LogInformation("Creating {OccurrenceCount} payment occurrences for {ApartmentCount} apartments", occurrences.Count, apartmentIds.Count);
 
-                // Deserialize allocations once
-                var allocations = DeserializeBalanceAllocations(cycle.BalanceAllocationsJson);
-
-                // Create payments for each apartment and occurrence using PaymentContextManager
                 foreach (var aptId in apartmentIds)
                 {
                     foreach (var occurrence in occurrences)
                     {
-                        var payment = new PaymentEntity(cycle.Amount, aptId)
+                        var payment = new PaymentEntity(request.Amount, aptId)
                         {
                             PaymentDate = null,
                             DueDate = occurrence,
                             IsPaid = false,
-                            CycleId = cycle.Id
+                            CycleId = cycleId
                         };
 
-                        // Create payment using context manager
                         var createdPayment = await _paymentContextManager.CreateAsync(payment);
 
-                        // Apply balance allocations to this payment
-                        await ApplyBalanceAllocationsToPayment(createdPayment, allocations);
+                        await ApplyBalanceAllocationsToPayment(createdPayment, request.BalanceAllocations);
                     }
                 }
 
-                _logger.LogInformation("Successfully created {PaymentCount} payments with allocations for cycle {CycleId}",
-                    occurrences.Count * apartmentIds.Count, cycle.Id);
+                _logger.LogInformation("Successfully created {PaymentCount} payments with allocations for cycle {CycleId}", occurrences.Count * apartmentIds.Count, cycleId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to generate payments for cycle {CycleId}", cycle.Id);
+                _logger.LogError(ex, "Failed to generate payments for cycle {CycleId}", cycleId);
                 throw;
             }
         }
 
-        /// <summary>
-        /// Calculates all payment dates based on cycle type and date range
-        /// </summary>
-        private List<DateTime> CalculatePaymentOccurrences(CycleEntity cycle)
+        private List<DateTime> CalculatePaymentOccurrences(PaymentCycle cycleType, DateTime startDate, DateTime endDate)
         {
             var occurrences = new List<DateTime>();
-            var current = cycle.StartDate.Date;
-            var end = cycle.EndDate.Date;
+            var current = startDate.Date;
+            var end = endDate.Date;
 
-            switch (cycle.Cycle)
+            switch (cycleType)
             {
                 case PaymentCycle.Monthly:
                     while (current <= end)
@@ -268,40 +235,8 @@ namespace BuildingManagement.Services.Api
             return occurrences;
         }
 
-        /// <summary>
-        /// Deserializes balance allocations from JSON
-        /// </summary>
-        private List<BalanceAllocationDto> DeserializeBalanceAllocations(string balanceAllocationsJson)
-        {
-            if (string.IsNullOrWhiteSpace(balanceAllocationsJson))
-            {
-                _logger.LogError("Balance allocations JSON is null or empty - this should never happen");
-                throw new InvalidOperationException("Cycle is missing required balance allocations");
-            }
 
-            try
-            {
-                var allocations = JsonSerializer.Deserialize<List<BalanceAllocationDto>>(balanceAllocationsJson);
-                if (allocations == null || !allocations.Any())
-                {
-                    _logger.LogError("Deserialized balance allocations are null or empty");
-                    throw new InvalidOperationException("Balance allocations are required but were not found");
-                }
-
-                return allocations;
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Invalid balance allocations JSON format");
-                throw new InvalidOperationException("Invalid balance allocations JSON format", ex);
-            }
-        }
-
-        /// <summary>
-        /// Applies balance allocations to a single payment.
-        /// Uses PaymentAllocationContextManager to create allocations.
-        /// </summary>
-        private async Task ApplyBalanceAllocationsToPayment(PaymentEntity payment, List<BalanceAllocationDto> allocations)
+        private async Task ApplyBalanceAllocationsToPayment(PaymentEntity payment, List<PaymentAllocationRequest> allocations)
         {
             try
             {
@@ -322,7 +257,6 @@ namespace BuildingManagement.Services.Api
                     paymentAllocations.Add(paymentAllocation);
                 }
 
-                // Save payment allocations using PaymentAllocationContextManager
                 await _paymentAllocationContextManager.CreateRangeAsync(paymentAllocations);
             }
             catch (Exception ex)
@@ -334,19 +268,49 @@ namespace BuildingManagement.Services.Api
 
         public async Task<CycleEntity?> UpdateCycleAsync(int id, CycleEntity cycle)
         {
-            return await _cycleContextManager.UpdateAsync(id, cycle);
+            var existing = await GetCycleByIdAsync(id);
+            if (existing == null)
+            {
+                return null;
+            }
+
+            var oldValues = new
+            {
+                existing.Label,
+                existing.Amount,
+                existing.IsActive
+            };
+
+            var updated = await _cycleContextManager.UpdateAsync(id, cycle);
+
+            if (updated != null)
+            {
+                await _auditService.LogAsync(LogAction.Update, "Cycle", id, oldValues, new
+                {
+                    updated.Label,
+                    updated.Amount,
+                    updated.IsActive
+                });
+            }
+
+            return updated;
         }
 
         public async Task<bool> DeleteCycleAsync(int id)
         {
-            return await _cycleContextManager.DeleteAsync(id);
-        }
+            var existing = await GetCycleByIdAsync(id);
+            if (existing == null)
+            {
+                return false;
+            }
 
-        // DTO for deserializing balance allocations
-        private class BalanceAllocationDto
-        {
-            public int BalanceId { get; set; }
-            public decimal Percentage { get; set; }
+            await _auditService.LogAsync(LogAction.Delete, "Cycle", id, new
+            {
+                existing.Label,
+                existing.Amount
+            }, null);
+
+            return await _cycleContextManager.DeleteAsync(id);
         }
     }
 }
