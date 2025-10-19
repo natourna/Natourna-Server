@@ -5,16 +5,16 @@ namespace BuildingManagement.Interfaces.Context
 {
     public interface ILogContextManager
     {
-        Task<LogEntity> CreateAsync(LogEntity log);
+        Task<AuditEntity> CreateAsync(AuditEntity log);
 
-        Task<List<LogEntity>> GetAllAsync();
+        Task<List<AuditEntity>> GetAllAsync();
 
-        Task<List<LogEntity>> GetByUserIdAsync(int userId);
+        Task<List<AuditEntity>> GetByUserIdAsync(int userId);
 
-        Task<List<LogEntity>> GetByEntityTypeAsync(string entityType);
+        Task<List<AuditEntity>> GetByEntityTypeAsync(string entityType);
 
-        Task<List<LogEntity>> GetByActionAsync(LogAction action);
+        Task<List<AuditEntity>> GetByActionAsync(LogAction action);
 
-        Task<List<LogEntity>> GetRecentAsync(int count = 100);
+        Task<List<AuditEntity>> GetRecentAsync(int count = 100);
     }
 }

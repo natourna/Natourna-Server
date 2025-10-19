@@ -42,7 +42,7 @@ namespace BuildingManagement.Services.Audit
                 var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
                 var userAgent = httpContext.Request.Headers["User-Agent"].ToString();
 
-                var log = new LogEntity(userId, userEmail, action, entityType, entityId)
+                var log = new AuditEntity(userId, userEmail, action, entityType, entityId)
                 {
                     OldValues = oldValues != null ? JsonSerializer.Serialize(oldValues) : null,
                     NewValues = newValues != null ? JsonSerializer.Serialize(newValues) : null,

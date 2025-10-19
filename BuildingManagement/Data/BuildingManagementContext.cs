@@ -28,7 +28,7 @@ namespace BuildingManagement.Data
 
         public DbSet<UserEntity> Users { get; set; }
 
-        public DbSet<LogEntity> Logs { get; set; }
+        public DbSet<AuditEntity> Audits { get; set; }
 
         public BuildingManagementContext(DbContextOptions<BuildingManagementContext> options) : base(options) { }
 
@@ -175,20 +175,20 @@ namespace BuildingManagement.Data
             modelBuilder.Entity<CycleEntity>()
                 .HasIndex(c => c.EndDate);
 
-            // Log indexes
-            modelBuilder.Entity<LogEntity>()
+            // Audit indexes
+            modelBuilder.Entity<AuditEntity>()
                 .HasIndex(l => l.UserId);
 
-            modelBuilder.Entity<LogEntity>()
+            modelBuilder.Entity<AuditEntity>()
                 .HasIndex(l => l.UserEmail);
 
-            modelBuilder.Entity<LogEntity>()
+            modelBuilder.Entity<AuditEntity>()
                 .HasIndex(l => l.Action);
 
-            modelBuilder.Entity<LogEntity>()
+            modelBuilder.Entity<AuditEntity>()
                 .HasIndex(l => l.EntityType);
 
-            modelBuilder.Entity<LogEntity>()
+            modelBuilder.Entity<AuditEntity>()
                 .HasIndex(l => l.CreatedAt);
 
             // ========================================
