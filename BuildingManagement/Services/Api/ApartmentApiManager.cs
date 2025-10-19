@@ -2,6 +2,7 @@ using BuildingManagement.Constants.Log;
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Interfaces.Context;
 using BuildingManagement.Interfaces.Services;
+using BuildingManagement.Models.Api.Response.Apartment;
 using BuildingManagement.Models.Entities;
 
 namespace BuildingManagement.Services.Api
@@ -17,22 +18,25 @@ namespace BuildingManagement.Services.Api
             _auditService = auditService;
         }
 
-        public async Task<List<ApartmentEntity>> GetAllApartmentsAsync()
+        public async Task<List<ApartmentResponse>> GetAllApartmentsAsync()
         {
-            return await _contextManager.GetAllAsync();
+            var apartments = await _contextManager.GetAllAsync();
+            return apartments.Select(MapToResponse).ToList();
         }
 
-        public async Task<ApartmentEntity?> GetApartmentByIdAsync(int id)
+        public async Task<ApartmentResponse?> GetApartmentByIdAsync(int id)
         {
-            return await _contextManager.GetByIdAsync(id);
+            var apartment = await _contextManager.GetByIdAsync(id);
+            return apartment == null ? null : MapToResponse(apartment);
         }
 
-        public async Task<List<ApartmentEntity>> GetApartmentsByBuildingIdAsync(int buildingId)
+        public async Task<List<ApartmentResponse>> GetApartmentsByBuildingIdAsync(int buildingId)
         {
-            return await _contextManager.GetByBuildingIdAsync(buildingId);
+            var apartments = await _contextManager.GetByBuildingIdAsync(buildingId);
+            return apartments.Select(MapToResponse).ToList();
         }
 
-        public async Task<ApartmentEntity> CreateApartmentAsync(ApartmentEntity apartment)
+        public async Task<ApartmentResponse> CreateApartmentAsync(ApartmentEntity apartment)
         {
             var created = await _contextManager.CreateAsync(apartment);
 
@@ -43,10 +47,10 @@ namespace BuildingManagement.Services.Api
                 created.IsActive
             });
 
-            return created;
+            return MapToResponse(created);
         }
 
-        public async Task<ApartmentEntity?> UpdateApartmentAsync(int id, ApartmentEntity apartment)
+        public async Task<ApartmentResponse?> UpdateApartmentAsync(int id, ApartmentEntity apartment)
         {
             var existing = await _contextManager.GetByIdAsync(id);
             if (existing == null)
@@ -71,9 +75,11 @@ namespace BuildingManagement.Services.Api
                     updated.ApartmentInfo,
                     updated.IsActive
                 });
+
+                return MapToResponse(updated);
             }
 
-            return updated;
+            return null;
         }
 
         public async Task<bool> DeleteApartmentAsync(int id)
@@ -93,7 +99,7 @@ namespace BuildingManagement.Services.Api
             return await _contextManager.DeleteAsync(id);
         }
 
-        public async Task<ApartmentEntity?> SetApartmentActiveAsync(int id, bool isActive)
+        public async Task<ApartmentResponse?> SetApartmentActiveAsync(int id, bool isActive)
         {
             var existing = await _contextManager.GetByIdAsync(id);
             if (existing == null)
@@ -109,9 +115,31 @@ namespace BuildingManagement.Services.Api
                 await _auditService.LogAsync(action, "Apartment", id,
                     new { IsActive = existing.IsActive },
                     new { IsActive = isActive });
+
+                return MapToResponse(result);
             }
 
-            return result;
+            return null;
+        }
+
+        /// <summary>
+        /// Maps ApartmentEntity to ApartmentResponse DTO
+        /// </summary>
+        private static ApartmentResponse MapToResponse(ApartmentEntity apartment)
+        {
+            return new ApartmentResponse
+            {
+                Id = apartment.Id,
+                ApartmentInfo = apartment.ApartmentInfo,
+                Owner = apartment.Owner,
+                Tenant = apartment.Tenant,
+                IsActive = apartment.IsActive,
+                Floor = apartment.Floor,
+                BuildingId = apartment.BuildingId,
+                BuildingName = apartment.Building?.Name,
+                CreatedAt = apartment.CreatedAt,
+                UpdatededAt = apartment.UpdatededAt
+            };
         }
     }
 }

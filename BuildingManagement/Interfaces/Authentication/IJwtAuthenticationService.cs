@@ -4,7 +4,7 @@ namespace BuildingManagement.Interfaces.Authentication
 {
     public interface IJwtAuthenticationService
     {
-        string GenerateToken(string username, string role = "Admin");
+        string GenerateToken(string username, string userId, string role = "Admin");
         ClaimsPrincipal? ValidateToken(string token);
     }
 }

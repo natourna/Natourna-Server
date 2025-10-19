@@ -10,7 +10,7 @@ namespace BuildingManagement.Models.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required]
+        // UserId is optional - some actions might not have an authenticated user
         public int? UserId { get; set; }
 
         [Required]

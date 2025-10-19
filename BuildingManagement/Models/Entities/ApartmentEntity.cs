@@ -27,7 +27,7 @@ namespace BuildingManagement.Models.Entities
         public int BuildingId { get; set; }
 
         [ForeignKey("BuildingId")]
-        [JsonIgnore]
+        [JsonIgnore]  // Added back - prevents circular reference
         public BuildingEntity? Building { get; set; }
 
         [JsonIgnore]

@@ -1,21 +1,22 @@
+using BuildingManagement.Models.Api.Response.Apartment;
 using BuildingManagement.Models.Entities;
 
 namespace BuildingManagement.Interfaces.Api
 {
     public interface IApartmentApiManager
     {
-        Task<List<ApartmentEntity>> GetAllApartmentsAsync();
+        Task<List<ApartmentResponse>> GetAllApartmentsAsync();
 
-        Task<ApartmentEntity?> GetApartmentByIdAsync(int id);
+        Task<ApartmentResponse?> GetApartmentByIdAsync(int id);
 
-        Task<List<ApartmentEntity>> GetApartmentsByBuildingIdAsync(int buildingId);
+        Task<List<ApartmentResponse>> GetApartmentsByBuildingIdAsync(int buildingId);
 
-        Task<ApartmentEntity> CreateApartmentAsync(ApartmentEntity apartment);
+        Task<ApartmentResponse> CreateApartmentAsync(ApartmentEntity apartment);
 
-        Task<ApartmentEntity?> UpdateApartmentAsync(int id, ApartmentEntity apartment);
+        Task<ApartmentResponse?> UpdateApartmentAsync(int id, ApartmentEntity apartment);
 
         Task<bool> DeleteApartmentAsync(int id);
 
-        Task<ApartmentEntity?> SetApartmentActiveAsync(int id, bool isActive);
+        Task<ApartmentResponse?> SetApartmentActiveAsync(int id, bool isActive);
     }
 }
