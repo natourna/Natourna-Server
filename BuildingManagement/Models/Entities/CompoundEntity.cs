@@ -24,7 +24,7 @@ namespace BuildingManagement.Models.Entities
         public ICollection<BuildingEntity> Buildings { get; set; }
 
         [JsonIgnore]
-        public ICollection<BillEntity> Bills { get; set; }
+        public ICollection<BalanceEntity> Balances { get; set; }
 
         public CompoundEntity(int id, string name, string address, int activeApartments)
         {
@@ -33,7 +33,7 @@ namespace BuildingManagement.Models.Entities
             Address = address;
             ActiveApartments = activeApartments;
             Buildings = [];
-            Bills = [];
+            Balances = [];
             CreatedAt = DateTime.UtcNow;
             UpdatededAt = DateTime.UtcNow;
         }

@@ -26,9 +26,6 @@ namespace BuildingManagement.Models.Entities
 
         public bool IsActive { get; set; } = true;
 
-        [JsonIgnore]
-        public ICollection<ApartmentEntity> Apartments { get; set; }
-
         public UserEntity(int id, string email, string password, string phoneNumber, UserRole role = UserRole.User)
         {
             Id = id;
@@ -37,7 +34,6 @@ namespace BuildingManagement.Models.Entities
             PhoneNumber = phoneNumber;
             Role = role;
             IsActive = true;
-            Apartments = [];
             CreatedAt = DateTime.UtcNow;
             UpdatededAt = DateTime.UtcNow;
         }

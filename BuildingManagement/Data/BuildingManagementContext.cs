@@ -67,10 +67,10 @@ namespace BuildingManagement.Data
 
             // Compound -> Balances (One-to-Many)
             modelBuilder.Entity<CompoundEntity>()
-                .HasMany(c => c.Bills)
-                .WithOne()
-                .HasForeignKey("CompoundId")
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasMany(c => c.Balances)
+                .WithOne(bal => bal.Compound)
+                .HasForeignKey(bal => bal.CompoundId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Balance -> Bills (One-to-Many)
             modelBuilder.Entity<BalanceEntity>()

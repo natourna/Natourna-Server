@@ -18,7 +18,6 @@ namespace BuildingManagement.Services.Context
         {
             return await _context.Compounds
                 .Include(c => c.Buildings)
-                .Include(c => c.Bills)
                 .ToListAsync();
         }
 
@@ -26,7 +25,6 @@ namespace BuildingManagement.Services.Context
         {
             return await _context.Compounds
                 .Include(c => c.Buildings)
-                .Include(c => c.Bills)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 

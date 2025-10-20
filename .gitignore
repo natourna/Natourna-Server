@@ -59,3 +59,8 @@ docker-compose.override.yml
 /BuildingManagement/deployment/deploy.sh
 /BuildingManagement/deployment/deploy.ps1
 /BuildingManagement/deployment/.env.example
+/BuildingManagement/deployment/development/development.env
+/BuildingManagement/deployment/development/docker-compose.yml
+/BuildingManagement/deployment/local-testing/run-local.ps1
+/BuildingManagement/deployment/production/docker-compose.yml
+/BuildingManagement/deployment/production/production.env
