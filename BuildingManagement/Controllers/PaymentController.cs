@@ -23,7 +23,7 @@ namespace BuildingManagement.Controllers
         /// Get all payments - Any authenticated user
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<PaymentEntity>>> GetAllPayments()
+        public async Task<ActionResult<List<PaymentResponse>>> GetAllPayments()
         {
             var payments = await _paymentApiManager.GetAllPaymentsAsync();
             return Ok(payments);
@@ -33,7 +33,7 @@ namespace BuildingManagement.Controllers
         /// Get payment by ID - Any authenticated user
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<PaymentEntity>> GetPaymentById(int id)
+        public async Task<ActionResult<PaymentResponse>> GetPaymentById(int id)
         {
             var payment = await _paymentApiManager.GetPaymentByIdAsync(id);
             if (payment == null)
