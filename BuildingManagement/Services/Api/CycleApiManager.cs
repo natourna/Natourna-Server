@@ -7,6 +7,7 @@ using BuildingManagement.Interfaces.Context;
 using BuildingManagement.Interfaces.Services;
 using BuildingManagement.Models.Api.Requests.Cycle;
 using BuildingManagement.Models.Api.Requests.Payment;
+using BuildingManagement.Models.Api.Response.Cycle;
 using BuildingManagement.Models.Entities;
 using System.Text.Json;
 
@@ -33,14 +34,16 @@ namespace BuildingManagement.Services.Api
             _logger = logger;
         }
 
-        public async Task<List<CycleEntity>> GetAllCyclesAsync()
+        public async Task<List<CycleResponse>> GetAllCyclesAsync()
         {
-            return await _cycleContextManager.GetAllAsync();
+            List<CycleEntity> cycles = await _cycleContextManager.GetAllAsync();
+            return cycles.Select(MapToResponse).ToList();
         }
 
-        public async Task<CycleEntity?> GetCycleByIdAsync(int id)
+        public async Task<CycleResponse?> GetCycleByIdAsync(int id)
         {
-            return await _cycleContextManager.GetByIdAsync(id);
+            CycleEntity? cycle = await _cycleContextManager.GetByIdAsync(id);
+            return cycle != null ? MapToResponse(cycle) : null;
         }
 
         public async Task<CycleEntity> CreateCycleAsync(CycleRequest request)
@@ -63,7 +66,8 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR, "Balance allocations are required for all payments", "BalanceAllocations: null or empty");
                 }
 
-                var totalPercentage = request.BalanceAllocations.Sum(a => a.Percentage);
+                decimal totalPercentage = request.BalanceAllocations.Sum(a => a.Percentage);
+
                 if (totalPercentage != 100)
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Cycle.InvalidBalanceAllocations(totalPercentage);
@@ -71,10 +75,10 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR, userMessage, technicalDetails);
                 }
 
-                foreach (var balanceId in request.BalanceAllocations.Select(x => x.BalanceId))
+                foreach (int balanceId in request.BalanceAllocations.Select(x => x.BalanceId))
                 {
-                    var balances = await _balanceContextManager.GetAllAsync(balanceId: balanceId);
-                    if (balances.Count == 0)
+                    BalanceEntity? balance = await _balanceContextManager.GetByIdAsync(balanceId);
+                    if (balance == null)
                     {
                         (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(balanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
@@ -82,15 +86,11 @@ namespace BuildingManagement.Services.Api
                     }
                 }
 
-                var allocations = request.BalanceAllocations.Select(a => new
-                {
-                    balanceId = a.BalanceId,
-                    percentage = a.Percentage
-                }).ToList();
+                var allocations = request.BalanceAllocations.Select(a => new { balanceId = a.BalanceId, percentage = a.Percentage }).ToList();
 
-                var balanceAllocationsJson = JsonSerializer.Serialize(allocations);
+                string balanceAllocationsJson = JsonSerializer.Serialize(allocations);
 
-                var cycle = new CycleEntity(request.Label, request.Cycle, request.StartDate.Date, request.EndDate.Date, request.Amount)
+                CycleEntity cycle = new (request.Label, request.Cycle, request.StartDate.Date, request.EndDate.Date, request.Amount)
                 {
                     Description = request.Description,
                     ApartmentIdsCsv = request.ApartmentIds == null || request.ApartmentIds.Count == 0 ? null : string.Join(',', request.ApartmentIds),
@@ -99,7 +99,7 @@ namespace BuildingManagement.Services.Api
                 };
 
 
-                var createdCycle = await _cycleContextManager.CreateAsync(cycle);
+                CycleEntity createdCycle = await _cycleContextManager.CreateAsync(cycle);
 
                 await GeneratePaymentsForCycle(createdCycle.Id, request);
 
@@ -133,7 +133,7 @@ namespace BuildingManagement.Services.Api
                 }
                 else
                 {
-                    var apartments = await _apartmentContextManager.GetAllAsync(isActive: true);
+                    List<ApartmentEntity> apartments = await _apartmentContextManager.GetAllAsync(isActive: true);
                     apartmentIds = apartments.Select(a => a.Id).ToList();
                 }
 
@@ -141,12 +141,12 @@ namespace BuildingManagement.Services.Api
 
                 _logger.LogInformation("Creating {OccurrenceCount} payment occurrences for {ApartmentCount} apartments", occurrences.Count, apartmentIds.Count);
 
-                foreach (var aptId in apartmentIds)
+                foreach (int aptId in apartmentIds)
                 {
-                    foreach (var occurrence in occurrences)
+                    foreach (DateTime occurrence in occurrences)
                     {
                         string label = $"{request.Label} - {occurrence:MMMM yyyy}";
-                        var payment = new PaymentEntity(label, request.Amount, aptId)
+                        PaymentEntity payment = new (label, request.Amount, aptId)
                         {
                             PaymentDate = null,
                             DueDate = occurrence,
@@ -154,7 +154,7 @@ namespace BuildingManagement.Services.Api
                             CycleId = cycleId
                         };
 
-                        var createdPayment = await _paymentContextManager.CreateAsync(payment);
+                        PaymentEntity createdPayment = await _paymentContextManager.CreateAsync(payment);
 
                         await ApplyBalanceAllocationsToPayment(createdPayment, request.BalanceAllocations);
                     }
@@ -171,9 +171,9 @@ namespace BuildingManagement.Services.Api
 
         private static List<DateTime> CalculatePaymentOccurrences(PaymentCycle cycleType, DateTime startDate, DateTime endDate)
         {
-            var occurrences = new List<DateTime>();
-            var current = startDate.Date;
-            var end = endDate.Date;
+            List<DateTime> occurrences = new ();
+            DateTime current = startDate.Date;
+            DateTime end = endDate.Date;
 
             switch (cycleType)
             {
@@ -233,13 +233,13 @@ namespace BuildingManagement.Services.Api
         {
             try
             {
-                var paymentAllocations = new List<PaymentAllocationEntity>();
+                List<PaymentAllocationEntity> paymentAllocations = new();
 
-                foreach (var allocation in allocations)
+                foreach (PaymentAllocationRequest allocation in allocations)
                 {
-                    var allocatedAmount = payment.Amount * (allocation.Percentage / 100m);
+                    decimal allocatedAmount = payment.Amount * (allocation.Percentage / 100m);
 
-                    var paymentAllocation = new PaymentAllocationEntity
+                    PaymentAllocationEntity paymentAllocation = new ()
                     {
                         PaymentId = payment.Id,
                         BalanceId = allocation.BalanceId,
@@ -261,7 +261,8 @@ namespace BuildingManagement.Services.Api
 
         public async Task<CycleEntity?> UpdateCycleAsync(int id, CycleEntity cycle)
         {
-            var existing = await GetCycleByIdAsync(id);
+            CycleEntity? existing = await _cycleContextManager.GetByIdAsync(id);
+
             if (existing == null)
             {
                 return null;
@@ -274,7 +275,7 @@ namespace BuildingManagement.Services.Api
                 existing.IsActive
             };
 
-            var updated = await _cycleContextManager.UpdateAsync(id, cycle);
+            CycleEntity? updated = await _cycleContextManager.UpdateAsync(id, cycle);
 
             if (updated != null)
             {
@@ -286,7 +287,7 @@ namespace BuildingManagement.Services.Api
 
         public async Task<bool> DeleteCycleAsync(int id)
         {
-            var existing = await GetCycleByIdAsync(id);
+            CycleEntity? existing = await _cycleContextManager.GetByIdAsync(id);
 
             if (existing == null)
             {
@@ -296,6 +297,23 @@ namespace BuildingManagement.Services.Api
             await _auditService.LogAsync(LogAction.Delete, "Cycle", id, new { existing.Label, existing.Amount }, null);
 
             return await _cycleContextManager.DeleteAsync(id);
+        }
+
+        private static CycleResponse MapToResponse(CycleEntity cycle)
+        {
+            return new CycleResponse
+            {
+                Id = cycle.Id,
+                Label = cycle.Label,
+                Description = cycle.Description,
+                PaymentCycle = cycle.Cycle.ToString(),
+                StartDate = cycle.StartDate,
+                EndDate = cycle.EndDate,
+                ApartmentIds = cycle.ApartmentIdsCsv,
+                Amount = cycle.Amount,
+                IsActive = cycle.IsActive,
+                BalanceAllocations = cycle.BalanceAllocationsJson
+            };
         }
     }
 }

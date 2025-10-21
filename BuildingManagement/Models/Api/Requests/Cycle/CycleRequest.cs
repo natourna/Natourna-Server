@@ -31,8 +31,6 @@ namespace BuildingManagement.Models.Api.Requests.Cycle
         [PaymentAllocationsValidation(ErrorMessage = "Balance allocations must sum to exactly 100%")]
         public List<PaymentAllocationRequest> BalanceAllocations { get; set; } = new();
 
-        public CycleRequest() { }
-
         public CycleRequest(string label, PaymentCycle cycle, DateTime startDate, DateTime endDate, decimal amount, List<PaymentAllocationRequest> balanceAllocations, string? description = null, List<int>? apartmentIds = null)
         {
             Label = label;
