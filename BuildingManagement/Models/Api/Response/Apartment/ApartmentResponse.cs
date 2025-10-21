@@ -20,6 +20,6 @@ namespace BuildingManagement.Models.Api.Response.Apartment
         
         public DateTimeOffset CreatedAt { get; set; }
         
-        public DateTimeOffset UpdatededAt { get; set; }
+        public DateTimeOffset UpdatedAt { get; set; }
     }
 }

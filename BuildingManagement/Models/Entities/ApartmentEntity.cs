@@ -42,7 +42,7 @@ namespace BuildingManagement.Models.Entities
             BuildingId = buildingId;
             Payments = [];
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

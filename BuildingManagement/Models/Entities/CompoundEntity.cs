@@ -35,7 +35,7 @@ namespace BuildingManagement.Models.Entities
             Buildings = [];
             Balances = [];
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

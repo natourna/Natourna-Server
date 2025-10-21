@@ -90,7 +90,7 @@ namespace BuildingManagement.Services.Context
 
                 existingBalance.Label = balance.Label;
                 existingBalance.CurrentAmount = balance.CurrentAmount;
-                existingBalance.UpdatededAt = DateTime.UtcNow;
+                existingBalance.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 

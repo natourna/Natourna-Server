@@ -44,7 +44,7 @@ namespace BuildingManagement.Services.Context
             existingCompound.Name = compound.Name;
             existingCompound.Address = compound.Address;
             existingCompound.ActiveApartments = compound.ActiveApartments;
-            existingCompound.UpdatededAt = DateTime.UtcNow;
+            existingCompound.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return existingCompound;

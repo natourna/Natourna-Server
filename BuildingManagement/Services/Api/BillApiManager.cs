@@ -4,6 +4,7 @@ using BuildingManagement.Exceptions;
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Interfaces.Context;
 using BuildingManagement.Interfaces.Services;
+using BuildingManagement.Models.Api.Requests.Bill;
 using BuildingManagement.Models.Entities;
 
 namespace BuildingManagement.Services.Api
@@ -33,9 +34,15 @@ namespace BuildingManagement.Services.Api
             return await _billContextManager.GetByIdAsync(id);
         }
 
-        public async Task<BillEntity> CreateBillAsync(BillEntity bill)
+        public async Task<BillEntity> CreateBillAsync(BillRequest bill)
         {
-            var created = await _billContextManager.CreateAsync(bill);
+            BillEntity billEntity = new(bill.Label, bill.Amount, bill.BalanceId)
+            {
+                DueDate = bill.DueDate,
+                IsPaid = false
+            };
+
+            var created = await _billContextManager.CreateAsync(billEntity);
 
             await _auditService.LogAsync(LogAction.Create, "Bill", created.Id, null, new
             {
@@ -104,7 +111,7 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage, technicalDetails);
                 }
 
-                if (bill.IsPaid == true)
+                if (bill.IsPaid)
                 {
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.AlreadyPaid(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_ALREADY_PAID_ERROR, userMessage);
@@ -123,14 +130,13 @@ namespace BuildingManagement.Services.Api
 
                 if (balance.CurrentAmount < bill.Amount)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.InsufficientBalance(
-                        billId, balance.Id, bill.Amount, balance.CurrentAmount);
+                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.InsufficientBalance(billId, balance.Id, bill.Amount, balance.CurrentAmount);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_INSUFFICIENT_BALANCE_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BILL_INSUFFICIENT_BALANCE_ERROR, userMessage, technicalDetails);
                 }
 
                 balance.CurrentAmount -= bill.Amount;
-                balance.UpdatededAt = DateTime.UtcNow;
+                balance.UpdatedAt = DateTime.UtcNow;
                 var updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                 if (updatedBalance == null)
@@ -142,7 +148,7 @@ namespace BuildingManagement.Services.Api
 
                 bill.IsPaid = true;
                 bill.PaymentDate = DateTime.UtcNow;
-                bill.UpdatededAt = DateTime.UtcNow;
+                bill.UpdatedAt = DateTime.UtcNow;
                 var updatedBill = await _billContextManager.UpdateAsync(billId, bill);
 
                 if (updatedBill == null)
@@ -176,7 +182,6 @@ namespace BuildingManagement.Services.Api
             }
         }
 
-
         public async Task<BillEntity> MarkBillAsUnpaidAsync(int billId)
         {
             try
@@ -191,7 +196,7 @@ namespace BuildingManagement.Services.Api
                     throw new ApiException(ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage, technicalDetails);
                 }
 
-                if (bill.IsPaid == false)
+                if (!bill.IsPaid)
                 {
                     var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.AlreadyUnpaid(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_ALREADY_UNPAID_ERROR, userMessage);
@@ -209,7 +214,7 @@ namespace BuildingManagement.Services.Api
                 }
 
                 balance.CurrentAmount += bill.Amount;
-                balance.UpdatededAt = DateTime.UtcNow;
+                balance.UpdatedAt = DateTime.UtcNow;
                 var updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                 if (updatedBalance == null)
@@ -221,7 +226,7 @@ namespace BuildingManagement.Services.Api
 
                 bill.IsPaid = false;
                 bill.PaymentDate = null;
-                bill.UpdatededAt = DateTime.UtcNow;
+                bill.UpdatedAt = DateTime.UtcNow;
                 var updatedBill = await _billContextManager.UpdateAsync(billId, bill);
 
                 if (updatedBill == null)

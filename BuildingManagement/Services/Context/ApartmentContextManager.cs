@@ -77,7 +77,7 @@ namespace BuildingManagement.Services.Context
             existingApartment.IsActive = apartment.IsActive;
             existingApartment.BuildingId = apartment.BuildingId;
             existingApartment.Floor = apartment.Floor;
-            existingApartment.UpdatededAt = DateTime.UtcNow;
+            existingApartment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             
@@ -105,7 +105,7 @@ namespace BuildingManagement.Services.Context
                 return null;
 
             apartment.IsActive = isActive;
-            apartment.UpdatededAt = DateTime.UtcNow;
+            apartment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             

@@ -44,7 +44,7 @@ namespace BuildingManagement.Models.Entities
             EntityType = entityType;
             EntityId = entityId;
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

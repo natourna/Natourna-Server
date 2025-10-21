@@ -138,7 +138,7 @@ namespace BuildingManagement.Services.Api
                 BuildingId = apartment.BuildingId,
                 BuildingName = apartment.Building?.Name,
                 CreatedAt = apartment.CreatedAt,
-                UpdatededAt = apartment.UpdatededAt
+                UpdatedAt = apartment.UpdatedAt
             };
         }
     }

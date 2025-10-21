@@ -36,7 +36,7 @@ namespace BuildingManagement.Models.Entities
             Amount = amount;
             BalanceId = balanceId;
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

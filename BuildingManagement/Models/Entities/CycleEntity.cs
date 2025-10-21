@@ -43,7 +43,7 @@ namespace BuildingManagement.Models.Entities
             IsActive = true;
             Payments = [];
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

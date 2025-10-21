@@ -1,3 +1,4 @@
+using BuildingManagement.Models.Api.Requests.Bill;
 using BuildingManagement.Models.Entities;
 
 namespace BuildingManagement.Interfaces.Api
@@ -8,7 +9,7 @@ namespace BuildingManagement.Interfaces.Api
 
         Task<BillEntity?> GetBillByIdAsync(int id);
 
-        Task<BillEntity> CreateBillAsync(BillEntity bill);
+        Task<BillEntity> CreateBillAsync(BillRequest bill);
 
         Task<BillEntity?> UpdateBillAsync(int id, BillEntity bill);
 

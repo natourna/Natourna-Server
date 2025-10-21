@@ -49,7 +49,7 @@ namespace BuildingManagement.Services.Context
             existingUser.PhoneNumber = user.PhoneNumber;
             existingUser.Role = user.Role;
             existingUser.IsActive = user.IsActive;
-            existingUser.UpdatededAt = DateTime.UtcNow;
+            existingUser.UpdatedAt = DateTime.UtcNow;
 
             // Only update password if it's provided and different
             if (!string.IsNullOrEmpty(user.Password) && user.Password != existingUser.Password)

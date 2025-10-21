@@ -103,7 +103,7 @@ namespace BuildingManagement.Services.Context
                 existingPayment.DueDate = payment.DueDate;
                 existingPayment.IsPaid = payment.IsPaid;
                 existingPayment.CycleId = payment.CycleId;
-                existingPayment.UpdatededAt = DateTime.UtcNow;
+                existingPayment.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 

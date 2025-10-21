@@ -1,4 +1,5 @@
 using BuildingManagement.Interfaces.Api;
+using BuildingManagement.Models.Api.Requests.Bill;
 using BuildingManagement.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -48,7 +49,7 @@ namespace BuildingManagement.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<BillEntity>> CreateBill(BillEntity bill)
+        public async Task<ActionResult<BillEntity>> CreateBill(BillRequest bill)
         {
             var createdBill = await _billManager.CreateBillAsync(bill);
             return CreatedAtAction(nameof(GetBillById), new { id = createdBill.Id }, createdBill);
@@ -91,7 +92,7 @@ namespace BuildingManagement.Controllers
         /// <summary>
         /// Mark bill as paid - Admin only
         /// </summary>
-        [HttpPost("{id}/mark-as-paid")]
+        [HttpPatch("{id}/mark-as-paid")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<BillEntity>> MarkBillAsPaid(int id)
         {
@@ -102,7 +103,7 @@ namespace BuildingManagement.Controllers
         /// <summary>
         /// Mark bill as unpaid - Admin only
         /// </summary>
-        [HttpPost("{id}/mark-as-unpaid")]
+        [HttpPatch("{id}/mark-as-unpaid")]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<BillEntity>> MarkBillAsUnpaid(int id)
         {

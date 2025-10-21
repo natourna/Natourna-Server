@@ -7,8 +7,6 @@ namespace BuildingManagement.Models.Entities
 {
     public class PaymentEntity : BaseEntity
     {
-        private int? _cycleId;
-
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
@@ -29,11 +27,7 @@ namespace BuildingManagement.Models.Entities
         [JsonIgnore]
         public ApartmentEntity? Apartment { get; set; }
 
-        public int? CycleId
-        {
-            get => _cycleId;
-            set => _cycleId = value;
-        }
+        public int? CycleId { get; set; }
 
         [ForeignKey("CycleId")]
         [JsonIgnore]
@@ -51,7 +45,7 @@ namespace BuildingManagement.Models.Entities
             ApartmentId = apartmentId;
             PaymentAllocations = [];
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

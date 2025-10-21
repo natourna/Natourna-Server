@@ -39,7 +39,7 @@ namespace BuildingManagement.Models.Entities
             CompoundId = compoundId;
             Apartments = [];
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

@@ -35,7 +35,7 @@ namespace BuildingManagement.Models.Entities
             Role = role;
             IsActive = true;
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

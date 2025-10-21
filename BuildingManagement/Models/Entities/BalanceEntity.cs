@@ -36,7 +36,7 @@ namespace BuildingManagement.Models.Entities
             PaymentAllocations = [];
             Bills = [];
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

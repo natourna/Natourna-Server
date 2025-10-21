@@ -138,7 +138,7 @@ namespace BuildingManagement.Services.Context
                 existingBill.PaymentDate = bill.PaymentDate;
                 existingBill.Amount = bill.Amount;
                 existingBill.DueDate = bill.DueDate;
-                existingBill.UpdatededAt = DateTime.UtcNow;
+                existingBill.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 

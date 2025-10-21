@@ -138,7 +138,7 @@ namespace BuildingManagement.Services.Api
                 if (balance != null)
                 {
                     balance.CurrentAmount += paymentAllocation.AllocatedAmount;
-                    balance.UpdatededAt = DateTime.UtcNow;
+                    balance.UpdatedAt = DateTime.UtcNow;
                     await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                     _logger.LogInformation("Added {Amount:C} to balance {BalanceId} (PaymentAllocation {PaymentAllocationId})", paymentAllocation.AllocatedAmount, balance.Id, paymentAllocation.Id);
@@ -240,7 +240,7 @@ namespace BuildingManagement.Services.Api
                     }
 
                     balance.CurrentAmount += allocation.AllocatedAmount;
-                    balance.UpdatededAt = DateTime.UtcNow;
+                    balance.UpdatedAt = DateTime.UtcNow;
                     var updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                     if (updatedBalance == null)
@@ -259,7 +259,7 @@ namespace BuildingManagement.Services.Api
 
                 payment.IsPaid = true;
                 payment.PaymentDate = DateTime.UtcNow;
-                payment.UpdatededAt = DateTime.UtcNow;
+                payment.UpdatedAt = DateTime.UtcNow;
                 var updatedPayment = await _paymentContextManager.UpdateAsync(paymentId, payment);
 
                 if (updatedPayment == null)
@@ -334,7 +334,7 @@ namespace BuildingManagement.Services.Api
                     }
 
                     balance.CurrentAmount -= allocation.AllocatedAmount;
-                    balance.UpdatededAt = DateTime.UtcNow;
+                    balance.UpdatedAt = DateTime.UtcNow;
                     var updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                     if (updatedBalance == null)
@@ -353,7 +353,7 @@ namespace BuildingManagement.Services.Api
 
                 payment.IsPaid = false;
                 payment.PaymentDate = null;
-                payment.UpdatededAt = DateTime.UtcNow;
+                payment.UpdatedAt = DateTime.UtcNow;
                 var updatedPayment = await _paymentContextManager.UpdateAsync(paymentId, payment);
 
                 if (updatedPayment == null)
@@ -406,7 +406,7 @@ namespace BuildingManagement.Services.Api
                             balance.CurrentAmount += amount;
                         }
 
-                        balance.UpdatededAt = DateTime.UtcNow;
+                        balance.UpdatedAt = DateTime.UtcNow;
                         await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                         _logger.LogInformation("Rolled back balance {BalanceId} by {Amount:C}", balanceId, amount);
