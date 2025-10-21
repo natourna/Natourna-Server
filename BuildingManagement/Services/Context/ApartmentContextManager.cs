@@ -58,7 +58,7 @@ namespace BuildingManagement.Services.Context
         {
             _context.Apartments.Add(apartment);
             await _context.SaveChangesAsync();
-            
+
             // Reload with building information
             return await _context.Apartments
                 .Include(a => a.Building)
@@ -80,7 +80,7 @@ namespace BuildingManagement.Services.Context
             existingApartment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            
+
             // Reload with building information
             return await _context.Apartments
                 .Include(a => a.Building)
@@ -108,7 +108,7 @@ namespace BuildingManagement.Services.Context
             apartment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            
+
             // Reload with building information
             return await _context.Apartments
                 .Include(a => a.Building)

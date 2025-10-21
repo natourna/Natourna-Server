@@ -6,6 +6,8 @@ namespace BuildingManagement.Interfaces.Context
     {
         Task<List<PaymentEntity>> GetAllAsync(int? paymentId = null, int? apartmentId = null, int? cycleId = null, bool? isPaid = null);
 
+        Task<PaymentEntity?> GetByIdAsync(int id);
+
         Task<PaymentEntity> CreateAsync(PaymentEntity payment);
 
         Task<PaymentEntity?> UpdateAsync(int id, PaymentEntity payment);

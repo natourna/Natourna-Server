@@ -1,5 +1,6 @@
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Models.Api.Requests.Payment;
+using BuildingManagement.Models.Api.Response.Payment;
 using BuildingManagement.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -47,9 +48,9 @@ namespace BuildingManagement.Controllers
         /// Get payments by apartment ID - Any authenticated user
         /// </summary>
         [HttpGet("apartment/{apartmentId}")]
-        public async Task<ActionResult<List<PaymentEntity>>> GetPaymentsByApartmentId(int apartmentId)
+        public async Task<ActionResult<List<PaymentResponse>>> GetPaymentsByApartmentId(int apartmentId)
         {
-            var payments = await _paymentApiManager.GetPaymentsByApartmentIdAsync(apartmentId);
+            List<PaymentResponse> payments = await _paymentApiManager.GetPaymentsByApartmentIdAsync(apartmentId);
             return Ok(payments);
         }
 
@@ -58,14 +59,14 @@ namespace BuildingManagement.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<PaymentEntity>> CreatePayment([FromBody] PaymentRequest request)
+        public async Task<ActionResult<PaymentResponse>> CreatePayment([FromBody] PaymentRequest request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var createdPayment = await _paymentApiManager.CreatePaymentAsync(request);
+            PaymentResponse createdPayment = await _paymentApiManager.CreatePaymentAsync(request);
             return CreatedAtAction(nameof(GetPaymentById), new { id = createdPayment.Id }, createdPayment);
         }
 
@@ -74,9 +75,9 @@ namespace BuildingManagement.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<PaymentEntity>> UpdatePayment(int id, PaymentEntity payment)
+        public async Task<ActionResult<PaymentResponse>> UpdatePayment(int id, PaymentEntity payment)
         {
-            var updatedPayment = await _paymentApiManager.UpdatePaymentAsync(id, payment);
+            PaymentResponse? updatedPayment = await _paymentApiManager.UpdatePaymentAsync(id, payment);
             if (updatedPayment == null)
             {
                 return NotFound();
@@ -92,7 +93,8 @@ namespace BuildingManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeletePayment(int id)
         {
-            var result = await _paymentApiManager.DeletePaymentAsync(id);
+            bool result = await _paymentApiManager.DeletePaymentAsync(id);
+
             if (!result)
             {
                 return NotFound();
@@ -104,22 +106,22 @@ namespace BuildingManagement.Controllers
         /// <summary>
         /// Mark payment as paid - Admin only
         /// </summary>
-        [HttpPost("{id}/mark-as-paid")]
+        [HttpPatch("{id}/mark-as-paid")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<PaymentEntity>> MarkPaymentAsPaid(int id)
+        public async Task<ActionResult<PaymentResponse>> MarkPaymentAsPaid(int id)
         {
-            var updatedPayment = await _paymentApiManager.MarkPaymentAsPaidAsync(id);
+            PaymentResponse updatedPayment = await _paymentApiManager.MarkPaymentAsPaidAsync(id);
             return Ok(updatedPayment);
         }
 
         /// <summary>
         /// Mark payment as unpaid - Admin only
         /// </summary>
-        [HttpPost("{id}/mark-as-unpaid")]
+        [HttpPatch("{id}/mark-as-unpaid")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<PaymentEntity>> MarkPaymentAsUnpaid(int id)
+        public async Task<ActionResult<PaymentResponse>> MarkPaymentAsUnpaid(int id)
         {
-            var updatedPayment = await _paymentApiManager.MarkPaymentAsUnpaidAsync(id);
+            PaymentResponse updatedPayment = await _paymentApiManager.MarkPaymentAsUnpaidAsync(id);
             return Ok(updatedPayment);
         }
     }

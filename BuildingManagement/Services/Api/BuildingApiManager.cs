@@ -38,20 +38,17 @@ namespace BuildingManagement.Services.Api
 
         public async Task<BuildingResponse> CreateBuildingAsync(BuildingEntity building)
         {
-            var created = await _contextManager.CreateAsync(building);
+            BuildingEntity created = await _contextManager.CreateAsync(building);
 
-            await _auditService.LogAsync(LogAction.Create, "Building", created.Id, null, new
-            {
-                created.Name,
-                created.CompoundId
-            });
+            await _auditService.LogAsync(LogAction.Create, "Building", created.Id, null, new { created.Name, created.CompoundId });
 
             return MapToResponse(created);
         }
 
         public async Task<BuildingResponse?> UpdateBuildingAsync(int id, BuildingEntity building)
         {
-            var existing = await GetBuildingByIdAsync(id);
+            BuildingEntity? existing = await _contextManager.GetByIdAsync(id);
+
             if (existing == null)
             {
                 return null;
@@ -63,15 +60,11 @@ namespace BuildingManagement.Services.Api
                 existing.CompoundId
             };
 
-            var updated = await _contextManager.UpdateAsync(id, building);
+            BuildingEntity? updated = await _contextManager.UpdateAsync(id, building);
 
             if (updated != null)
             {
-                await _auditService.LogAsync(LogAction.Update, "Building", id, oldValues, new
-                {
-                    updated.Name,
-                    updated.CompoundId
-                });
+                await _auditService.LogAsync(LogAction.Update, "Building", id, oldValues, new { updated.Name, updated.CompoundId });
 
                 return MapToResponse(updated);
             }
@@ -81,17 +74,14 @@ namespace BuildingManagement.Services.Api
 
         public async Task<bool> DeleteBuildingAsync(int id)
         {
-            var existing = await GetBuildingByIdAsync(id);
+            BuildingEntity? existing = await _contextManager.GetByIdAsync(id);
+
             if (existing == null)
             {
                 return false;
             }
 
-            await _auditService.LogAsync(LogAction.Delete, "Building", id, new
-            {
-                existing.Name,
-                existing.CompoundId
-            }, null);
+            await _auditService.LogAsync(LogAction.Delete, "Building", id, new { existing.Name, existing.CompoundId }, null);
 
             return await _contextManager.DeleteAsync(id);
         }

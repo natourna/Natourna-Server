@@ -1,9 +1,9 @@
-﻿using System.Text;
-using BuildingManagement.Authentication;
+﻿using BuildingManagement.Authentication;
 using BuildingManagement.Interfaces.Authentication;
 using BuildingManagement.Models.Configurations;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace BuildingManagement.Extensions
 {

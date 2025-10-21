@@ -31,11 +31,7 @@ namespace BuildingManagement.Services.Api
         {
             var created = await _contextManager.CreateAsync(compound);
 
-            await _auditService.LogAsync(LogAction.Create, "Compound", created.Id, null, new
-            {
-                created.Name,
-                created.Address
-            });
+            await _auditService.LogAsync(LogAction.Create, "Compound", created.Id, null, new { created.Name, created.Address });
 
             return created;
         }
@@ -58,11 +54,7 @@ namespace BuildingManagement.Services.Api
 
             if (updated != null)
             {
-                await _auditService.LogAsync(LogAction.Update, "Compound", id, oldValues, new
-                {
-                    updated.Name,
-                    updated.Address
-                });
+                await _auditService.LogAsync(LogAction.Update, "Compound", id, oldValues, new { updated.Name, updated.Address });
             }
 
             return updated;
@@ -76,10 +68,7 @@ namespace BuildingManagement.Services.Api
                 return false;
             }
 
-            await _auditService.LogAsync(LogAction.Delete, "Compound", id, new
-            {
-                existing.Name
-            }, null);
+            await _auditService.LogAsync(LogAction.Delete, "Compound", id, new { existing.Name }, null);
 
             return await _contextManager.DeleteAsync(id);
         }

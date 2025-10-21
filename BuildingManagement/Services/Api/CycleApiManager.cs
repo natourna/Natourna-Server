@@ -1,4 +1,3 @@
-using System.Text.Json;
 using BuildingManagement.Constants.Cycle;
 using BuildingManagement.Constants.Error;
 using BuildingManagement.Constants.Log;
@@ -9,6 +8,7 @@ using BuildingManagement.Interfaces.Services;
 using BuildingManagement.Models.Api.Requests.Cycle;
 using BuildingManagement.Models.Api.Requests.Payment;
 using BuildingManagement.Models.Entities;
+using System.Text.Json;
 
 namespace BuildingManagement.Services.Api
 {
@@ -52,12 +52,12 @@ namespace BuildingManagement.Services.Api
 
                 if (request.StartDate.Date > request.EndDate.Date)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Cycle.InvalidDateRange(request.StartDate, request.EndDate);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Cycle.InvalidDateRange(request.StartDate, request.EndDate);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.CYCLE_CREATE_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR, userMessage, technicalDetails);
                 }
 
-                if (request.BalanceAllocations == null || !request.BalanceAllocations.Any())
+                if (request.BalanceAllocations == null || request.BalanceAllocations.Count == 0)
                 {
                     _logger.LogWarning("[{ErrorCode}] Balance allocations are required", ErrorCodes.CYCLE_CREATE_ERROR);
                     throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR, "Balance allocations are required for all payments", "BalanceAllocations: null or empty");
@@ -66,17 +66,17 @@ namespace BuildingManagement.Services.Api
                 var totalPercentage = request.BalanceAllocations.Sum(a => a.Percentage);
                 if (totalPercentage != 100)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Cycle.InvalidBalanceAllocations(totalPercentage);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Cycle.InvalidBalanceAllocations(totalPercentage);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.CYCLE_CREATE_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.CYCLE_CREATE_ERROR, userMessage, technicalDetails);
                 }
 
-                foreach (var allocation in request.BalanceAllocations)
+                foreach (var balanceId in request.BalanceAllocations.Select(x => x.BalanceId))
                 {
-                    var balances = await _balanceContextManager.GetAllAsync(balanceId: allocation.BalanceId);
-                    if (!balances.Any())
+                    var balances = await _balanceContextManager.GetAllAsync(balanceId: balanceId);
+                    if (balances.Count == 0)
                     {
-                        var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.NotFound(allocation.BalanceId);
+                        (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(balanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
                         throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
                     }
@@ -103,15 +103,7 @@ namespace BuildingManagement.Services.Api
 
                 await GeneratePaymentsForCycle(createdCycle.Id, request);
 
-                await _auditService.LogAsync(LogAction.Create, "Cycle", createdCycle.Id, null, new
-                {
-                    createdCycle.Label,
-                    createdCycle.Cycle,
-                    createdCycle.Amount,
-                    createdCycle.StartDate,
-                    createdCycle.EndDate,
-                    ApartmentCount = request.ApartmentIds?.Count ?? 0
-                });
+                await _auditService.LogAsync(LogAction.Create, "Cycle", createdCycle.Id, null, new { createdCycle.Label, createdCycle.Cycle, createdCycle.Amount, createdCycle.StartDate, createdCycle.EndDate, ApartmentCount = request.ApartmentIds?.Count ?? 0 });
 
                 _logger.LogInformation("Successfully created cycle {CycleId} with label '{Label}' and {AllocationCount} balance allocations", createdCycle.Id, createdCycle.Label, request.BalanceAllocations.Count);
 
@@ -135,7 +127,7 @@ namespace BuildingManagement.Services.Api
                 _logger.LogInformation("Generating payments for cycle {CycleId}", cycleId);
 
                 List<int> apartmentIds;
-                if (request.ApartmentIds != null && request.ApartmentIds.Any())
+                if (request.ApartmentIds != null && request.ApartmentIds.Count > 0)
                 {
                     apartmentIds = request.ApartmentIds;
                 }
@@ -145,7 +137,7 @@ namespace BuildingManagement.Services.Api
                     apartmentIds = apartments.Select(a => a.Id).ToList();
                 }
 
-                var occurrences = CalculatePaymentOccurrences(request.Cycle, request.StartDate, request.EndDate);
+                List<DateTime> occurrences = CalculatePaymentOccurrences(request.Cycle, request.StartDate, request.EndDate);
 
                 _logger.LogInformation("Creating {OccurrenceCount} payment occurrences for {ApartmentCount} apartments", occurrences.Count, apartmentIds.Count);
 
@@ -153,7 +145,8 @@ namespace BuildingManagement.Services.Api
                 {
                     foreach (var occurrence in occurrences)
                     {
-                        var payment = new PaymentEntity(request.Amount, aptId)
+                        string label = $"{request.Label} - {occurrence:MMMM yyyy}";
+                        var payment = new PaymentEntity(label, request.Amount, aptId)
                         {
                             PaymentDate = null,
                             DueDate = occurrence,
@@ -171,12 +164,12 @@ namespace BuildingManagement.Services.Api
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to generate payments for cycle {CycleId}", cycleId);
+                _logger.LogError(ex, "Failed to generate payments for cycle {CycleId}, Error:{Message}", cycleId, ex.Message);
                 throw;
             }
         }
 
-        private List<DateTime> CalculatePaymentOccurrences(PaymentCycle cycleType, DateTime startDate, DateTime endDate)
+        private static List<DateTime> CalculatePaymentOccurrences(PaymentCycle cycleType, DateTime startDate, DateTime endDate)
         {
             var occurrences = new List<DateTime>();
             var current = startDate.Date;
@@ -285,12 +278,7 @@ namespace BuildingManagement.Services.Api
 
             if (updated != null)
             {
-                await _auditService.LogAsync(LogAction.Update, "Cycle", id, oldValues, new
-                {
-                    updated.Label,
-                    updated.Amount,
-                    updated.IsActive
-                });
+                await _auditService.LogAsync(LogAction.Update, "Cycle", id, oldValues, new { updated.Label, updated.Amount, updated.IsActive });
             }
 
             return updated;
@@ -299,16 +287,13 @@ namespace BuildingManagement.Services.Api
         public async Task<bool> DeleteCycleAsync(int id)
         {
             var existing = await GetCycleByIdAsync(id);
+
             if (existing == null)
             {
                 return false;
             }
 
-            await _auditService.LogAsync(LogAction.Delete, "Cycle", id, new
-            {
-                existing.Label,
-                existing.Amount
-            }, null);
+            await _auditService.LogAsync(LogAction.Delete, "Cycle", id, new { existing.Label, existing.Amount }, null);
 
             return await _cycleContextManager.DeleteAsync(id);
         }

@@ -1,8 +1,8 @@
-﻿using System.Security.Claims;
-using BuildingManagement.Interfaces.Api;
+﻿using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BuildingManagement.Controllers
 {

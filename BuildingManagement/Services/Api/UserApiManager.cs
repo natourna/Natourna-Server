@@ -31,12 +31,7 @@ namespace BuildingManagement.Services.Api
         {
             var created = await _contextManager.CreateAsync(user);
 
-            await _auditService.LogAsync(LogAction.Create, "User", created.Id, null, new
-            {
-                created.Email,
-                created.Role,
-                created.IsActive
-            });
+            await _auditService.LogAsync(LogAction.Create, "User", created.Id, null, new { created.Email, created.Role, created.IsActive });
 
             return created;
         }
@@ -70,13 +65,7 @@ namespace BuildingManagement.Services.Api
                     action = updated.IsActive ? LogAction.ActivateUser : LogAction.DeactivateUser;
                 }
 
-                await _auditService.LogAsync(action, "User", id, oldValues, new
-                {
-                    updated.Email,
-                    updated.PhoneNumber,
-                    updated.Role,
-                    updated.IsActive
-                });
+                await _auditService.LogAsync(action, "User", id, oldValues, new { updated.Email, updated.PhoneNumber, updated.Role, updated.IsActive });
             }
 
             return updated;
@@ -90,11 +79,7 @@ namespace BuildingManagement.Services.Api
                 return false;
             }
 
-            await _auditService.LogAsync(LogAction.Delete, "User", id, new
-            {
-                existing.Email,
-                existing.Role
-            }, null);
+            await _auditService.LogAsync(LogAction.Delete, "User", id, new { existing.Email, existing.Role }, null);
 
             return await _contextManager.DeleteAsync(id);
         }

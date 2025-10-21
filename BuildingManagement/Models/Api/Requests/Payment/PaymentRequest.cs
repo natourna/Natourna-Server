@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using BuildingManagement.Models.Validation;
+using System.ComponentModel.DataAnnotations;
 
 namespace BuildingManagement.Models.Api.Requests.Payment
 {
@@ -7,6 +7,8 @@ namespace BuildingManagement.Models.Api.Requests.Payment
     {
         [Required]
         public int ApartmentId { get; set; }
+
+        public string Label { get; set; }
 
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than 0")]
@@ -16,15 +18,12 @@ namespace BuildingManagement.Models.Api.Requests.Payment
         [PaymentAllocationsValidation(ErrorMessage = "Allocations must sum to exactly 100%")]
         public List<PaymentAllocationRequest> Allocations { get; set; }
 
-        public DateTime? PaymentDate { get; set; }
-
         public DateTime? DueDate { get; set; }
 
-        public bool IsPaid { get; set; } = false;
-
-        public PaymentRequest(int apartmentId, decimal amount, List<PaymentAllocationRequest> allocations)
+        public PaymentRequest(int apartmentId, string label, decimal amount, List<PaymentAllocationRequest> allocations)
         {
             ApartmentId = apartmentId;
+            Label = label;
             Amount = amount;
             Allocations = allocations;
         }

@@ -9,8 +9,8 @@ namespace BuildingManagement.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(new 
-            { 
+            return Ok(new
+            {
                 status = "Healthy",
                 timestamp = DateTime.UtcNow,
                 service = "BuildingManagement API"

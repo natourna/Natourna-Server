@@ -1,7 +1,7 @@
+using BuildingManagement.Constants.Cycle;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using BuildingManagement.Constants.Cycle;
 
 namespace BuildingManagement.Models.Entities
 {

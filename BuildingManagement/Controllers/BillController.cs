@@ -1,5 +1,6 @@
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Models.Api.Requests.Bill;
+using BuildingManagement.Models.Api.Response.Bill;
 using BuildingManagement.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +23,9 @@ namespace BuildingManagement.Controllers
         /// Get all bills - Any authenticated user
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<BillEntity>>> GetAllBills()
+        public async Task<ActionResult<List<BillResponse>>> GetAllBills()
         {
-            var bills = await _billManager.GetAllBillsAsync();
+            List<BillResponse> bills = await _billManager.GetAllBillsAsync();
             return Ok(bills);
         }
 
@@ -32,9 +33,9 @@ namespace BuildingManagement.Controllers
         /// Get bill by ID - Any authenticated user
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<BillEntity>> GetBillById(int id)
+        public async Task<ActionResult<BillResponse>> GetBillById(int id)
         {
-            var bill = await _billManager.GetBillByIdAsync(id);
+            BillResponse? bill = await _billManager.GetBillByIdAsync(id);
 
             if (bill == null)
             {
@@ -49,9 +50,9 @@ namespace BuildingManagement.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<BillEntity>> CreateBill(BillRequest bill)
+        public async Task<ActionResult<BillResponse>> CreateBill(BillRequest bill)
         {
-            var createdBill = await _billManager.CreateBillAsync(bill);
+            BillResponse createdBill = await _billManager.CreateBillAsync(bill);
             return CreatedAtAction(nameof(GetBillById), new { id = createdBill.Id }, createdBill);
         }
 
@@ -60,7 +61,7 @@ namespace BuildingManagement.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<BillEntity>> UpdateBill(int id, BillEntity bill)
+        public async Task<ActionResult<BillResponse>> UpdateBill(int id, BillEntity bill)
         {
             var updatedBill = await _billManager.UpdateBillAsync(id, bill);
 
@@ -79,7 +80,7 @@ namespace BuildingManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteBill(int id)
         {
-            var result = await _billManager.DeleteBillAsync(id);
+            bool result = await _billManager.DeleteBillAsync(id);
 
             if (!result)
             {
@@ -94,9 +95,9 @@ namespace BuildingManagement.Controllers
         /// </summary>
         [HttpPatch("{id}/mark-as-paid")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<BillEntity>> MarkBillAsPaid(int id)
+        public async Task<ActionResult<BillResponse>> MarkBillAsPaid(int id)
         {
-            var updatedBill = await _billManager.MarkBillAsPaidAsync(id);
+            BillResponse updatedBill = await _billManager.MarkBillAsPaidAsync(id);
             return Ok(updatedBill);
         }
 
@@ -107,7 +108,7 @@ namespace BuildingManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<BillEntity>> MarkBillAsUnpaid(int id)
         {
-            var updatedBill = await _billManager.MarkBillAsUnpaidAsync(id);
+            BillResponse updatedBill = await _billManager.MarkBillAsUnpaidAsync(id);
             return Ok(updatedBill);
         }
     }

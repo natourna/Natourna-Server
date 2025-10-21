@@ -1,6 +1,6 @@
+using BuildingManagement.Constants.Log;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using BuildingManagement.Constants.Log;
 
 namespace BuildingManagement.Models.Entities
 {

@@ -37,12 +37,7 @@ namespace BuildingManagement.Services.Api
         {
             var created = await _balanceContextManager.CreateAsync(balance);
 
-            await _auditService.LogAsync(LogAction.Create, "Balance", created.Id, null, new
-            {
-                created.CompoundId,
-                created.CurrentAmount,
-                created.Label
-            });
+            await _auditService.LogAsync(LogAction.Create, "Balance", created.Id, null, new { created.CompoundId, created.CurrentAmount, created.Label });
 
             return created;
         }
@@ -64,12 +59,7 @@ namespace BuildingManagement.Services.Api
 
             if (updated != null)
             {
-                await _auditService.LogAsync(LogAction.Update, "Balance", id, oldValues, new
-                {
-                    updated.CompoundId,
-                    updated.CurrentAmount,
-                    updated.Label
-                });
+                await _auditService.LogAsync(LogAction.Update, "Balance", id, oldValues, new { updated.CompoundId, updated.CurrentAmount, updated.Label });
             }
 
             return updated;
@@ -83,11 +73,7 @@ namespace BuildingManagement.Services.Api
                 return false;
             }
 
-            await _auditService.LogAsync(LogAction.Delete, "Balance", id, new
-            {
-                existing.CompoundId,
-                existing.CurrentAmount
-            }, null);
+            await _auditService.LogAsync(LogAction.Delete, "Balance", id, new { existing.CompoundId, existing.CurrentAmount }, null);
 
             return await _balanceContextManager.DeleteAsync(id);
         }

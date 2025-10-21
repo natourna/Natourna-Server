@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using BuildingManagement.Constants.Cycle;
 using BuildingManagement.Models.Api.Requests.Payment;
 using BuildingManagement.Models.Validation;
+using System.ComponentModel.DataAnnotations;
 
 namespace BuildingManagement.Models.Api.Requests.Cycle
 {

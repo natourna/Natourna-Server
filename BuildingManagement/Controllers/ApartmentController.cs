@@ -24,7 +24,7 @@ namespace BuildingManagement.Controllers
         [HttpGet]
         public async Task<ActionResult<List<ApartmentResponse>>> GetAllApartments()
         {
-            var apartments = await _apartmentManager.GetAllApartmentsAsync();
+            List<ApartmentResponse> apartments = await _apartmentManager.GetAllApartmentsAsync();
             return Ok(apartments);
         }
 
@@ -34,7 +34,7 @@ namespace BuildingManagement.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ApartmentResponse>> GetApartmentById(int id)
         {
-            var apartment = await _apartmentManager.GetApartmentByIdAsync(id);
+            ApartmentResponse? apartment = await _apartmentManager.GetApartmentByIdAsync(id);
 
             if (apartment == null)
             {
@@ -50,7 +50,7 @@ namespace BuildingManagement.Controllers
         [HttpGet("building/{buildingId}")]
         public async Task<ActionResult<List<ApartmentResponse>>> GetApartmentsByBuildingId(int buildingId)
         {
-            var apartments = await _apartmentManager.GetApartmentsByBuildingIdAsync(buildingId);
+            List<ApartmentResponse> apartments = await _apartmentManager.GetApartmentsByBuildingIdAsync(buildingId);
             return Ok(apartments);
         }
 
@@ -61,7 +61,7 @@ namespace BuildingManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApartmentResponse>> CreateApartment(ApartmentEntity apartment)
         {
-            var createdApartment = await _apartmentManager.CreateApartmentAsync(apartment);
+            ApartmentResponse createdApartment = await _apartmentManager.CreateApartmentAsync(apartment);
             return CreatedAtAction(nameof(GetApartmentById), new { id = createdApartment.Id }, createdApartment);
         }
 
@@ -72,7 +72,7 @@ namespace BuildingManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApartmentResponse>> UpdateApartment(int id, ApartmentEntity apartment)
         {
-            var updatedApartment = await _apartmentManager.UpdateApartmentAsync(id, apartment);
+            ApartmentResponse? updatedApartment = await _apartmentManager.UpdateApartmentAsync(id, apartment);
 
             if (updatedApartment == null)
             {
@@ -89,7 +89,7 @@ namespace BuildingManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteApartment(int id)
         {
-            var result = await _apartmentManager.DeleteApartmentAsync(id);
+            bool result = await _apartmentManager.DeleteApartmentAsync(id);
 
             if (!result)
             {
@@ -106,7 +106,7 @@ namespace BuildingManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ApartmentResponse>> SetApartmentActive(int id, [FromBody] bool isActive)
         {
-            var apartment = await _apartmentManager.SetApartmentActiveAsync(id, isActive);
+            ApartmentResponse? apartment = await _apartmentManager.SetApartmentActiveAsync(id, isActive);
 
             if (apartment == null)
             {
