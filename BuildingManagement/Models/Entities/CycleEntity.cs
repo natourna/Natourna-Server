@@ -26,7 +26,7 @@ namespace BuildingManagement.Models.Entities
 
         public decimal Amount { get; set; }
 
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; }
 
         public string? BalanceAllocationsJson { get; set; }
 
@@ -40,7 +40,6 @@ namespace BuildingManagement.Models.Entities
             StartDate = startDate;
             EndDate = endDate;
             Amount = amount;
-            IsActive = true;
             Payments = [];
             CreatedAt = DateTime.UtcNow;
             UpdatedAt = DateTime.UtcNow;

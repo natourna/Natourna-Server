@@ -33,6 +33,7 @@ namespace BuildingManagement.Services.Audit
 
                 var userEmail = httpContext.User.FindFirst(ClaimTypes.Name)?.Value ?? "Anonymous";
                 var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
                 int? userId = null;
                 if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedUserId))
                 {
@@ -42,12 +43,14 @@ namespace BuildingManagement.Services.Audit
                 var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
                 var userAgent = httpContext.Request.Headers["User-Agent"].ToString();
 
-                var log = new AuditEntity(userId, userEmail, action, entityType, entityId)
+                var log = new AuditEntity(userEmail, action, entityType)
                 {
+                    UserId = userId,
                     OldValues = oldValues != null ? JsonSerializer.Serialize(oldValues) : null,
                     NewValues = newValues != null ? JsonSerializer.Serialize(newValues) : null,
                     IpAddress = ipAddress,
-                    UserAgent = userAgent
+                    UserAgent = userAgent,
+                    EntityId = entityId
                 };
 
                 await _logContextManager.CreateAsync(log);

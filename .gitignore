@@ -64,3 +64,4 @@ docker-compose.override.yml
 /BuildingManagement/deployment/local-testing/run-local.ps1
 /BuildingManagement/deployment/production/docker-compose.yml
 /BuildingManagement/deployment/production/production.env
+/BuildingManagement/.editorconfig
