@@ -1,7 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BuildingManagement.Models.Validation;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using BuildingManagement.Models.Validation;
 
 namespace BuildingManagement.Models.Entities
 {
@@ -27,7 +27,7 @@ namespace BuildingManagement.Models.Entities
         public int BuildingId { get; set; }
 
         [ForeignKey("BuildingId")]
-        [JsonIgnore]
+        [JsonIgnore]  // Added back - prevents circular reference
         public BuildingEntity? Building { get; set; }
 
         [JsonIgnore]
@@ -42,7 +42,7 @@ namespace BuildingManagement.Models.Entities
             BuildingId = buildingId;
             Payments = [];
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

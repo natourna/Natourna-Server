@@ -190,6 +190,14 @@ namespace BuildingManagement.Exceptions
                 );
             }
 
+            public static (string userMessage, string technicalDetails) GetByIdFailed(int id)
+            {
+                return (
+                    $"Failed to retrieve bill with ID {id}",
+                    $"BillId: {id}"
+                );
+            }
+
             public static (string userMessage, string technicalDetails) CreateFailed(PaymentEntity payment)
             {
                 return (

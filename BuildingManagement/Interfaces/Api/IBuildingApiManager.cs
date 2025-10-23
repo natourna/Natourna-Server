@@ -1,18 +1,19 @@
+using BuildingManagement.Models.Api.Response.Building;
 using BuildingManagement.Models.Entities;
 
 namespace BuildingManagement.Interfaces.Api
 {
     public interface IBuildingApiManager
     {
-        Task<List<BuildingEntity>> GetAllBuildingsAsync();
+        Task<List<BuildingResponse>> GetAllBuildingsAsync();
 
-        Task<BuildingEntity?> GetBuildingByIdAsync(int id);
+        Task<BuildingResponse?> GetBuildingByIdAsync(int id);
 
-        Task<List<BuildingEntity>> GetBuildingsByCompoundIdAsync(int compoundId);
+        Task<List<BuildingResponse>> GetBuildingsByCompoundIdAsync(int compoundId);
 
-        Task<BuildingEntity> CreateBuildingAsync(BuildingEntity building);
+        Task<BuildingResponse> CreateBuildingAsync(BuildingEntity building);
 
-        Task<BuildingEntity?> UpdateBuildingAsync(int id, BuildingEntity building);
+        Task<BuildingResponse?> UpdateBuildingAsync(int id, BuildingEntity building);
 
         Task<bool> DeleteBuildingAsync(int id);
     }

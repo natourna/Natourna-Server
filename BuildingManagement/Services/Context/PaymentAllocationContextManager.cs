@@ -18,15 +18,11 @@ namespace BuildingManagement.Services.Context
             _logger = logger;
         }
 
-        public async Task<List<PaymentAllocationEntity>> GetAllAsync(
-            int? allocationId = null,
-            int? paymentId = null,
-            int? balanceId = null)
+        public async Task<List<PaymentAllocationEntity>> GetAllAsync(int? allocationId = null, int? paymentId = null, int? balanceId = null)
         {
             try
             {
-                _logger.LogInformation("Getting all payment allocations with filters - AllocationId: {AllocationId}, PaymentId: {PaymentId}, BalanceId: {BalanceId}",
-                    allocationId, paymentId, balanceId);
+                _logger.LogInformation("Getting all payment allocations with filters - AllocationId: {AllocationId}, PaymentId: {PaymentId}, BalanceId: {BalanceId}", allocationId, paymentId, balanceId);
 
                 var query = _context.PaymentAllocations
                     .Include(pa => pa.Payment)
@@ -180,7 +176,7 @@ namespace BuildingManagement.Services.Context
                     .Where(pa => pa.PaymentId == paymentId)
                     .ToListAsync();
 
-                if (!allocations.Any())
+                if (allocations.Count == 0)
                 {
                     _logger.LogWarning("No payment allocations found for payment ID {PaymentId}", paymentId);
                     return false;

@@ -1,6 +1,6 @@
+using BuildingManagement.Constants.Log;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using BuildingManagement.Constants.Log;
 
 namespace BuildingManagement.Models.Entities
 {
@@ -10,19 +10,18 @@ namespace BuildingManagement.Models.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required]
         public int? UserId { get; set; }
 
         [Required]
         [MaxLength(255)]
-        public string UserEmail { get; set; } = string.Empty;
+        public string UserEmail { get; set; }
 
         [Required]
         public LogAction Action { get; set; }
 
         [Required]
         [MaxLength(100)]
-        public string EntityType { get; set; } = string.Empty;
+        public string EntityType { get; set; }
 
         public int? EntityId { get; set; }
 
@@ -36,15 +35,13 @@ namespace BuildingManagement.Models.Entities
 
         public string? UserAgent { get; set; }
 
-        public AuditEntity(int? userId, string userEmail, LogAction action, string entityType, int? entityId = null)
+        public AuditEntity( string userEmail, LogAction action, string entityType)
         {
-            UserId = userId;
             UserEmail = userEmail;
             Action = action;
             EntityType = entityType;
-            EntityId = entityId;
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

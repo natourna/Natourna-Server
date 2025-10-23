@@ -18,7 +18,6 @@ namespace BuildingManagement.Services.Context
         {
             return await _context.Compounds
                 .Include(c => c.Buildings)
-                .Include(c => c.Bills)
                 .ToListAsync();
         }
 
@@ -26,7 +25,6 @@ namespace BuildingManagement.Services.Context
         {
             return await _context.Compounds
                 .Include(c => c.Buildings)
-                .Include(c => c.Bills)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
@@ -46,7 +44,7 @@ namespace BuildingManagement.Services.Context
             existingCompound.Name = compound.Name;
             existingCompound.Address = compound.Address;
             existingCompound.ActiveApartments = compound.ActiveApartments;
-            existingCompound.UpdatededAt = DateTime.UtcNow;
+            existingCompound.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return existingCompound;

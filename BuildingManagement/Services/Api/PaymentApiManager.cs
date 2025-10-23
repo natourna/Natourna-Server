@@ -5,6 +5,7 @@ using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Interfaces.Context;
 using BuildingManagement.Interfaces.Services;
 using BuildingManagement.Models.Api.Requests.Payment;
+using BuildingManagement.Models.Api.Response.Payment;
 using BuildingManagement.Models.Entities;
 
 namespace BuildingManagement.Services.Api
@@ -26,68 +27,71 @@ namespace BuildingManagement.Services.Api
             _logger = logger;
         }
 
-        public async Task<List<PaymentEntity>> GetAllPaymentsAsync()
+        public async Task<List<PaymentResponse>> GetAllPaymentsAsync()
         {
-            return await _paymentContextManager.GetAllAsync();
+            List<PaymentEntity> payments = await _paymentContextManager.GetAllAsync();
+            return payments.Select(MapToResponse).ToList();
         }
 
-        public async Task<PaymentEntity?> GetPaymentByIdAsync(int id)
+        public async Task<PaymentResponse?> GetPaymentByIdAsync(int id)
         {
-            var payments = await _paymentContextManager.GetAllAsync(paymentId: id);
-            return payments.FirstOrDefault();
+            PaymentEntity? payment = await _paymentContextManager.GetByIdAsync(id);
+            return payment != null ? MapToResponse(payment) : null;
         }
 
-        public async Task<List<PaymentEntity>> GetPaymentsByApartmentIdAsync(int apartmentId)
+        public async Task<List<PaymentResponse>> GetPaymentsByApartmentIdAsync(int apartmentId)
         {
-            return await _paymentContextManager.GetAllAsync(apartmentId: apartmentId);
+            List<PaymentEntity> payments = await _paymentContextManager.GetAllAsync(apartmentId: apartmentId);
+            return payments.Select(MapToResponse).ToList();
         }
 
-        public async Task<List<PaymentEntity>> GetPaymentsByCycleIdAsync(int cycleId)
+        public async Task<List<PaymentResponse>> GetPaymentsByCycleIdAsync(int cycleId)
         {
-            return await _paymentContextManager.GetAllAsync(cycleId: cycleId);
+            List<PaymentEntity> payments = await _paymentContextManager.GetAllAsync(cycleId: cycleId);
+            return payments.Select(MapToResponse).ToList();
         }
 
-        public async Task<PaymentEntity> CreatePaymentAsync(PaymentRequest request)
+        public async Task<PaymentResponse> CreatePaymentAsync(PaymentRequest request)
         {
             try
             {
                 _logger.LogInformation("Creating payment with balance allocations - Amount: {Amount}, ApartmentId: {ApartmentId}", request.Amount, request.ApartmentId);
 
-                var totalPercentage = request.Allocations.Sum(a => a.Percentage);
+                decimal totalPercentage = request.Allocations.Sum(a => a.Percentage);
                 if (totalPercentage != 100)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.InvalidBalanceAllocations(totalPercentage);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.InvalidBalanceAllocations(totalPercentage);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_INVALID_ALLOCATIONS_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.PAYMENT_INVALID_ALLOCATIONS_ERROR, userMessage, technicalDetails);
                 }
 
-                foreach (var allocation in request.Allocations)
+                foreach (int balanceId in request.Allocations.Select(x => x.BalanceId))
                 {
-                    var balances = await _balanceContextManager.GetAllAsync(balanceId: allocation.BalanceId);
-                    if (!balances.Any())
+                    List<BalanceEntity> balances = await _balanceContextManager.GetAllAsync(balanceId: balanceId);
+
+                    if (balances.Count == 0)
                     {
-                        var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.NotFound(allocation.BalanceId);
+                        (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(balanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
                         throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
                     }
                 }
 
-                var payment = new PaymentEntity(request.Amount, request.ApartmentId)
+                PaymentEntity payment = new(request.Label, request.Amount, request.ApartmentId)
                 {
                     DueDate = request.DueDate,
-                    IsPaid = request.IsPaid,
-                    PaymentDate = request.IsPaid ? (request.PaymentDate ?? DateTime.UtcNow) : null,
                     CycleId = null
                 };
 
-                var createdPayment = await _paymentContextManager.CreateAsync(payment);
+                PaymentEntity createdPayment = await _paymentContextManager.CreateAsync(payment);
 
-                var paymentAllocations = new List<PaymentAllocationEntity>();
-                foreach (var allocation in request.Allocations)
+                List<PaymentAllocationEntity> paymentAllocations = new();
+
+                foreach (PaymentAllocationRequest allocation in request.Allocations)
                 {
-                    var allocatedAmount = request.Amount * (allocation.Percentage / 100m);
+                    decimal allocatedAmount = request.Amount * (allocation.Percentage / 100m);
 
-                    var paymentAllocation = new PaymentAllocationEntity
+                    PaymentAllocationEntity paymentAllocation = new()
                     {
                         PaymentId = createdPayment.Id,
                         BalanceId = allocation.BalanceId,
@@ -102,19 +106,11 @@ namespace BuildingManagement.Services.Api
 
                 _logger.LogInformation("Successfully saved {AllocationCount} payment allocations", paymentAllocations.Count);
 
-                await UpdateBalancesForPayment(paymentAllocations);
-
-                await _auditService.LogAsync(LogAction.Create, "Payment", createdPayment.Id, null, new
-                {
-                    createdPayment.Amount,
-                    createdPayment.ApartmentId,
-                    createdPayment.IsPaid,
-                    AllocationCount = request.Allocations.Count
-                });
+                await _auditService.LogAsync(LogAction.Create, "Payment", createdPayment.Id, null, new { createdPayment.Amount, createdPayment.ApartmentId, createdPayment.IsPaid, AllocationCount = request.Allocations.Count });
 
                 _logger.LogInformation("Successfully created payment {PaymentId} with {AllocationCount} balance allocations", createdPayment.Id, request.Allocations.Count);
 
-                return createdPayment;
+                return MapToResponse(createdPayment);
             }
             catch (ApiException)
             {
@@ -122,33 +118,16 @@ namespace BuildingManagement.Services.Api
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.CreateWithBalancesFailed(request);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.CreateWithBalancesFailed(request);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_CREATE_ERROR, userMessage);
                 throw new ApiException(ErrorCodes.PAYMENT_CREATE_ERROR, userMessage, technicalDetails, ex);
             }
         }
 
-        private async Task UpdateBalancesForPayment(List<PaymentAllocationEntity> paymentAllocations)
+        public async Task<PaymentResponse?> UpdatePaymentAsync(int id, PaymentEntity payment)
         {
-            foreach (var paymentAllocation in paymentAllocations)
-            {
-                var balances = await _balanceContextManager.GetAllAsync(balanceId: paymentAllocation.BalanceId);
-                var balance = balances.FirstOrDefault();
+            PaymentEntity? existing = await _paymentContextManager.GetByIdAsync(id);
 
-                if (balance != null)
-                {
-                    balance.CurrentAmount += paymentAllocation.AllocatedAmount;
-                    balance.UpdatededAt = DateTime.UtcNow;
-                    await _balanceContextManager.UpdateAsync(balance.Id, balance);
-
-                    _logger.LogInformation("Added {Amount:C} to balance {BalanceId} (PaymentAllocation {PaymentAllocationId})", paymentAllocation.AllocatedAmount, balance.Id, paymentAllocation.Id);
-                }
-            }
-        }
-
-        public async Task<PaymentEntity?> UpdatePaymentAsync(int id, PaymentEntity payment)
-        {
-            var existing = await GetPaymentByIdAsync(id);
             if (existing == null)
             {
                 return null;
@@ -162,92 +141,86 @@ namespace BuildingManagement.Services.Api
                 existing.DueDate
             };
 
-            var updated = await _paymentContextManager.UpdateAsync(id, payment);
+            PaymentEntity? updated = await _paymentContextManager.UpdateAsync(id, payment);
 
             if (updated != null)
             {
-                await _auditService.LogAsync(LogAction.Update, "Payment", id, oldValues, new
-                {
-                    updated.Amount,
-                    updated.ApartmentId,
-                    updated.IsPaid,
-                    updated.DueDate
-                });
+                await _auditService.LogAsync(LogAction.Update, "Payment", id, oldValues, new { updated.Amount, updated.ApartmentId, updated.IsPaid, updated.DueDate });
+
+                return MapToResponse(updated);
             }
 
-            return updated;
+            return null;
         }
 
         public async Task<bool> DeletePaymentAsync(int id)
         {
-            var existing = await GetPaymentByIdAsync(id);
+            PaymentEntity? existing = await _paymentContextManager.GetByIdAsync(id);
+
             if (existing == null)
             {
                 return false;
             }
 
-            await _auditService.LogAsync(LogAction.Delete, "Payment", id, new
-            {
-                existing.Amount,
-                existing.ApartmentId,
-                existing.IsPaid
-            }, null);
+            await _auditService.LogAsync(LogAction.Delete, "Payment", id, new { existing.Amount, existing.ApartmentId, existing.IsPaid }, null);
 
             return await _paymentContextManager.DeleteAsync(id);
         }
 
-        public async Task<PaymentEntity> MarkPaymentAsPaidAsync(int paymentId)
+        public async Task<PaymentResponse> MarkPaymentAsPaidAsync(int paymentId)
         {
             try
             {
                 _logger.LogInformation("Marking payment {PaymentId} as paid", paymentId);
 
-                var payment = await GetPaymentByIdAsync(paymentId);
+                PaymentEntity? payment = await _paymentContextManager.GetByIdAsync(paymentId);
 
                 if (payment == null)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.PaymentNotFound(paymentId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.PaymentNotFound(paymentId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage, technicalDetails);
                 }
 
-                if (payment.IsPaid == true)
+                if (payment.IsPaid)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.AlreadyPaid(paymentId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.AlreadyPaid(paymentId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_ALREADY_PAID_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.PAYMENT_ALREADY_PAID_ERROR, userMessage, technicalDetails);
                 }
 
-                var allocations = await _paymentAllocationContextManager.GetAllAsync(paymentId: paymentId);
-                if (!allocations.Any())
+                List<PaymentAllocationEntity> allocations = await _paymentAllocationContextManager.GetAllAsync(paymentId: paymentId);
+                if (allocations.Count == 0)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.MarkAsPaidFailed(paymentId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsPaidFailed(paymentId);
                     _logger.LogWarning("[{ErrorCode}] No allocations found for payment {PaymentId}", ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, paymentId);
                     throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, $"{technicalDetails}, No allocations found");
                 }
 
-                var balanceUpdates = new List<(int balanceId, decimal amount)>();
-                foreach (var allocation in allocations)
+                List<(int balanceId, decimal amount)> balanceUpdates = [];
+
+                foreach (PaymentAllocationEntity allocation in allocations)
                 {
-                    var balances = await _balanceContextManager.GetAllAsync(balanceId: allocation.BalanceId);
-                    var balance = balances.FirstOrDefault();
+                    List<BalanceEntity> balances = await _balanceContextManager.GetAllAsync(balanceId: allocation.BalanceId);
+                    BalanceEntity? balance = balances.FirstOrDefault();
 
                     if (balance == null)
                     {
-                        var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.NotFound(allocation.BalanceId);
+                        (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(allocation.BalanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
                         throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
                     }
 
                     balance.CurrentAmount += allocation.AllocatedAmount;
-                    balance.UpdatededAt = DateTime.UtcNow;
-                    var updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
+                    balance.UpdatedAt = DateTime.UtcNow;
+
+                    BalanceEntity? updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                     if (updatedBalance == null)
                     {
                         await RollbackBalanceUpdates(balanceUpdates, subtract: true);
 
-                        var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
+                        (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
                         _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_UPDATE_ERROR, userMessage);
                         throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
                     }
@@ -259,25 +232,24 @@ namespace BuildingManagement.Services.Api
 
                 payment.IsPaid = true;
                 payment.PaymentDate = DateTime.UtcNow;
-                payment.UpdatededAt = DateTime.UtcNow;
-                var updatedPayment = await _paymentContextManager.UpdateAsync(paymentId, payment);
+                payment.UpdatedAt = DateTime.UtcNow;
+
+                PaymentEntity? updatedPayment = await _paymentContextManager.UpdateAsync(paymentId, payment);
 
                 if (updatedPayment == null)
                 {
                     await RollbackBalanceUpdates(balanceUpdates, subtract: true);
 
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.MarkAsPaidFailed(paymentId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsPaidFailed(paymentId);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, technicalDetails);
                 }
 
-                await _auditService.LogAsync(LogAction.Update, "Payment", paymentId,
-                    new { IsPaid = false, PaymentDate = (DateTime?)null },
-                    new { IsPaid = true, payment.PaymentDate });
+                await _auditService.LogAsync(LogAction.Update, "Payment", paymentId, new { IsPaid = false, PaymentDate = (DateTime?)null }, new { IsPaid = true, payment.PaymentDate });
 
                 _logger.LogInformation("Successfully marked payment {PaymentId} as paid on {PaymentDate} and added funds to {BalanceCount} balances", paymentId, payment.PaymentDate, allocations.Count);
 
-                return updatedPayment;
+                return MapToResponse(updatedPayment);
             }
             catch (ApiException)
             {
@@ -285,63 +257,66 @@ namespace BuildingManagement.Services.Api
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.MarkAsPaidFailed(paymentId);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsPaidFailed(paymentId);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage);
                 throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, technicalDetails, ex);
             }
         }
 
-        public async Task<PaymentEntity> MarkPaymentAsUnpaidAsync(int paymentId)
+        public async Task<PaymentResponse> MarkPaymentAsUnpaidAsync(int paymentId)
         {
             try
             {
                 _logger.LogInformation("Marking payment {PaymentId} as unpaid", paymentId);
 
-                var payment = await GetPaymentByIdAsync(paymentId);
+                PaymentEntity? payment = await _paymentContextManager.GetByIdAsync(paymentId);
+
                 if (payment == null)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.PaymentNotFound(paymentId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.PaymentNotFound(paymentId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage, technicalDetails);
                 }
 
-                if (payment.IsPaid == false)
+                if (!payment.IsPaid)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.AlreadyUnpaid(paymentId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.AlreadyUnpaid(paymentId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_ALREADY_UNPAID_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.PAYMENT_ALREADY_UNPAID_ERROR, userMessage, technicalDetails);
                 }
 
-                var allocations = await _paymentAllocationContextManager.GetAllAsync(paymentId: paymentId);
-                if (!allocations.Any())
+                List<PaymentAllocationEntity> allocations = await _paymentAllocationContextManager.GetAllAsync(paymentId: paymentId);
+
+                if (allocations.Count == 0)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
                     _logger.LogWarning("[{ErrorCode}] No allocations found for payment {PaymentId}", ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, paymentId);
                     throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, $"{technicalDetails}, No allocations found");
                 }
 
-                var balanceUpdates = new List<(int balanceId, decimal amount)>();
-                foreach (var allocation in allocations)
+                List<(int balanceId, decimal amount)> balanceUpdates = new();
+
+                foreach (PaymentAllocationEntity allocation in allocations)
                 {
-                    var balances = await _balanceContextManager.GetAllAsync(balanceId: allocation.BalanceId);
-                    var balance = balances.FirstOrDefault();
+                    BalanceEntity? balance = await _balanceContextManager.GetByIdAsync(allocation.BalanceId);
 
                     if (balance == null)
                     {
-                        var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.NotFound(allocation.BalanceId);
+                        (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(allocation.BalanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
                         throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
                     }
 
                     balance.CurrentAmount -= allocation.AllocatedAmount;
-                    balance.UpdatededAt = DateTime.UtcNow;
-                    var updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
+                    balance.UpdatedAt = DateTime.UtcNow;
+
+                    BalanceEntity? updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                     if (updatedBalance == null)
                     {
                         await RollbackBalanceUpdates(balanceUpdates, subtract: false);
 
-                        var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
+                        (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
                         _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_UPDATE_ERROR, userMessage);
                         throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
                     }
@@ -353,26 +328,25 @@ namespace BuildingManagement.Services.Api
 
                 payment.IsPaid = false;
                 payment.PaymentDate = null;
-                payment.UpdatededAt = DateTime.UtcNow;
-                var updatedPayment = await _paymentContextManager.UpdateAsync(paymentId, payment);
+                payment.UpdatedAt = DateTime.UtcNow;
+
+                PaymentEntity? updatedPayment = await _paymentContextManager.UpdateAsync(paymentId, payment);
 
                 if (updatedPayment == null)
                 {
                     await RollbackBalanceUpdates(balanceUpdates, subtract: false);
 
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails);
                 }
 
-                await _auditService.LogAsync(LogAction.Update, "Payment", paymentId,
-                    new { IsPaid = true, PaymentDate = payment.PaymentDate },
-                    new { IsPaid = false, PaymentDate = (DateTime?)null });
+                await _auditService.LogAsync(LogAction.Update, "Payment", paymentId, new { IsPaid = true, payment.PaymentDate }, new { IsPaid = false, PaymentDate = (DateTime?)null });
 
                 _logger.LogInformation("Successfully marked payment {PaymentId} as unpaid and deducted funds from {BalanceCount} balances",
                     paymentId, allocations.Count);
 
-                return updatedPayment;
+                return MapToResponse(updatedPayment);
             }
             catch (ApiException)
             {
@@ -380,7 +354,7 @@ namespace BuildingManagement.Services.Api
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage);
                 throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails, ex);
             }
@@ -388,12 +362,11 @@ namespace BuildingManagement.Services.Api
 
         private async Task RollbackBalanceUpdates(List<(int balanceId, decimal amount)> updates, bool subtract)
         {
-            foreach (var (balanceId, amount) in updates)
+            foreach ((int balanceId, decimal amount) in updates)
             {
                 try
                 {
-                    var balances = await _balanceContextManager.GetAllAsync(balanceId: balanceId);
-                    var balance = balances.FirstOrDefault();
+                    BalanceEntity? balance = await _balanceContextManager.GetByIdAsync(balanceId);
 
                     if (balance != null)
                     {
@@ -406,7 +379,7 @@ namespace BuildingManagement.Services.Api
                             balance.CurrentAmount += amount;
                         }
 
-                        balance.UpdatededAt = DateTime.UtcNow;
+                        balance.UpdatedAt = DateTime.UtcNow;
                         await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                         _logger.LogInformation("Rolled back balance {BalanceId} by {Amount:C}", balanceId, amount);
@@ -417,6 +390,44 @@ namespace BuildingManagement.Services.Api
                     _logger.LogError(ex, "Failed to rollback balance {BalanceId}", balanceId);
                 }
             }
+        }
+
+        private static PaymentResponse MapToResponse(PaymentEntity payment)
+        {
+            return new PaymentResponse
+            {
+                Id = payment.Id,
+                Label = payment.Label,
+                Amount = payment.Amount,
+                DueDate = payment.DueDate,
+                IsPaid = payment.IsPaid,
+                ApartmentId = payment.ApartmentId,
+                ApartmentOwner = payment.Apartment?.Owner,
+                ApartmentTenant = payment.Apartment?.Tenant,
+                CycleId = payment.CycleId,
+                CycleName = payment.Cycle?.Label,
+                Recurrent = payment.Recurrent,
+                PaymentDate = payment.PaymentDate,
+                PaymentOccurrence = payment.Cycle?.Cycle.ToString(),
+                Allocations = payment.PaymentAllocations.Select(MapAllocationsToResponse).ToList(),
+                CreatedAt = payment.CreatedAt,
+                UpdatedAt = payment.UpdatedAt
+            };
+        }
+
+        private static PaymentAllocationResponse MapAllocationsToResponse(PaymentAllocationEntity paymentAllocation)
+        {
+            return new PaymentAllocationResponse
+            {
+                Id = paymentAllocation.Id,
+                PaymentId = paymentAllocation.PaymentId,
+                BalanceId = paymentAllocation.BalanceId,
+                BalanceName = paymentAllocation.Balance?.Label,
+                Percentage = paymentAllocation.Percentage,
+                AllocatedAmount = paymentAllocation.AllocatedAmount,
+                CreatedAt = paymentAllocation.CreatedAt,
+                UpdatedAt = paymentAllocation.UpdatedAt
+            };
         }
     }
 }

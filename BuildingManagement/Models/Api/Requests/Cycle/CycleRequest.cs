@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using BuildingManagement.Constants.Cycle;
 using BuildingManagement.Models.Api.Requests.Payment;
 using BuildingManagement.Models.Validation;
+using System.ComponentModel.DataAnnotations;
 
 namespace BuildingManagement.Models.Api.Requests.Cycle
 {
@@ -30,8 +30,6 @@ namespace BuildingManagement.Models.Api.Requests.Cycle
         [Required]
         [PaymentAllocationsValidation(ErrorMessage = "Balance allocations must sum to exactly 100%")]
         public List<PaymentAllocationRequest> BalanceAllocations { get; set; } = new();
-
-        public CycleRequest() { }
 
         public CycleRequest(string label, PaymentCycle cycle, DateTime startDate, DateTime endDate, decimal amount, List<PaymentAllocationRequest> balanceAllocations, string? description = null, List<int>? apartmentIds = null)
         {

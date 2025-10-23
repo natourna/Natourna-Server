@@ -1,21 +1,23 @@
+using BuildingManagement.Models.Api.Requests.Bill;
+using BuildingManagement.Models.Api.Response.Bill;
 using BuildingManagement.Models.Entities;
 
 namespace BuildingManagement.Interfaces.Api
 {
     public interface IBillApiManager
     {
-        Task<List<BillEntity>> GetAllBillsAsync();
+        Task<List<BillResponse>> GetAllBillsAsync();
 
-        Task<BillEntity?> GetBillByIdAsync(int id);
+        Task<BillResponse?> GetBillByIdAsync(int id);
 
-        Task<BillEntity> CreateBillAsync(BillEntity bill);
+        Task<BillResponse> CreateBillAsync(BillRequest bill);
 
-        Task<BillEntity?> UpdateBillAsync(int id, BillEntity bill);
+        Task<BillResponse?> UpdateBillAsync(int id, BillEntity bill);
 
         Task<bool> DeleteBillAsync(int id);
 
-        Task<BillEntity> MarkBillAsPaidAsync(int billId);
+        Task<BillResponse> MarkBillAsPaidAsync(int billId);
 
-        Task<BillEntity> MarkBillAsUnpaidAsync(int billId);
+        Task<BillResponse> MarkBillAsUnpaidAsync(int billId);
     }
 }

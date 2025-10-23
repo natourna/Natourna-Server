@@ -4,6 +4,8 @@ using BuildingManagement.Exceptions;
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Interfaces.Context;
 using BuildingManagement.Interfaces.Services;
+using BuildingManagement.Models.Api.Requests.Bill;
+using BuildingManagement.Models.Api.Response.Bill;
 using BuildingManagement.Models.Entities;
 
 namespace BuildingManagement.Services.Api
@@ -23,33 +25,37 @@ namespace BuildingManagement.Services.Api
             _logger = logger;
         }
 
-        public async Task<List<BillEntity>> GetAllBillsAsync()
+        public async Task<List<BillResponse>> GetAllBillsAsync()
         {
-            return await _billContextManager.GetAllAsync();
+            List<BillEntity> bills = await _billContextManager.GetAllAsync();
+            return bills.Select(MapToResponse).ToList();
         }
 
-        public async Task<BillEntity?> GetBillByIdAsync(int id)
+        public async Task<BillResponse?> GetBillByIdAsync(int id)
         {
-            return await _billContextManager.GetByIdAsync(id);
+            BillEntity? bill = await _billContextManager.GetByIdAsync(id);
+            return bill == null ? null : MapToResponse(bill);
         }
 
-        public async Task<BillEntity> CreateBillAsync(BillEntity bill)
+        public async Task<BillResponse> CreateBillAsync(BillRequest bill)
         {
-            var created = await _billContextManager.CreateAsync(bill);
-
-            await _auditService.LogAsync(LogAction.Create, "Bill", created.Id, null, new
+            BillEntity billEntity = new(bill.Label, bill.Amount, bill.BalanceId)
             {
-                created.Amount,
-                created.BalanceId,
-                created.IsPaid
-            });
+                DueDate = bill.DueDate,
+                IsPaid = false
+            };
 
-            return created;
+            BillEntity created = await _billContextManager.CreateAsync(billEntity);
+
+            await _auditService.LogAsync(LogAction.Create, "Bill", created.Id, null, new { created.Amount, created.BalanceId, created.IsPaid });
+
+            return MapToResponse(created);
         }
 
-        public async Task<BillEntity?> UpdateBillAsync(int id, BillEntity bill)
+        public async Task<BillResponse?> UpdateBillAsync(int id, BillEntity bill)
         {
-            var existing = await GetBillByIdAsync(id);
+            BillEntity? existing = await _billContextManager.GetByIdAsync(id);
+
             if (existing == null)
                 return null;
 
@@ -60,109 +66,102 @@ namespace BuildingManagement.Services.Api
                 existing.IsPaid
             };
 
-            var updated = await _billContextManager.UpdateAsync(id, bill);
+            BillEntity? updated = await _billContextManager.UpdateAsync(id, bill);
 
             if (updated != null)
             {
-                await _auditService.LogAsync(LogAction.Update, "Bill", id, oldValues, new
-                {
-                    updated.Amount,
-                    updated.BalanceId,
-                    updated.IsPaid
-                });
+                await _auditService.LogAsync(LogAction.Update, "Bill", id, oldValues, new { updated.Amount, updated.BalanceId, updated.IsPaid });
+
+                return MapToResponse(updated);
             }
 
-            return updated;
+            return null;
         }
 
         public async Task<bool> DeleteBillAsync(int id)
         {
-            var existing = await GetBillByIdAsync(id);
-            if (existing == null)
-                return false;
+            BillEntity? existing = await _billContextManager.GetByIdAsync(id);
 
-            await _auditService.LogAsync(LogAction.Delete, "Bill", id, new
+            if (existing == null)
             {
-                existing.Amount,
-                existing.BalanceId
-            }, null);
+                return false;
+            }
+
+            await _auditService.LogAsync(LogAction.Delete, "Bill", id, new { existing.Amount, existing.BalanceId }, null);
 
             return await _billContextManager.DeleteAsync(id);
         }
 
-        public async Task<BillEntity> MarkBillAsPaidAsync(int billId)
+        public async Task<BillResponse> MarkBillAsPaidAsync(int billId)
         {
             try
             {
                 _logger.LogInformation("Marking bill {BillId} as paid", billId);
 
-                var bill = await GetBillByIdAsync(billId);
+                BillEntity? bill = await _billContextManager.GetByIdAsync(billId);
                 if (bill == null)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.BillNotFound(billId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.BillNotFound(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage, technicalDetails);
                 }
 
-                if (bill.IsPaid == true)
+                if (bill.IsPaid)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.AlreadyPaid(billId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.AlreadyPaid(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_ALREADY_PAID_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BILL_ALREADY_PAID_ERROR, userMessage, technicalDetails);
                 }
 
-                var balances = await _balanceContextManager.GetAllAsync(balanceId: bill.BalanceId);
-                var balance = balances.FirstOrDefault();
+                List<BalanceEntity> balances = await _balanceContextManager.GetAllAsync(balanceId: bill.BalanceId);
+                BalanceEntity? balance = balances.FirstOrDefault();
 
                 if (balance == null)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.NotFound(bill.BalanceId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(bill.BalanceId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
                 }
 
                 if (balance.CurrentAmount < bill.Amount)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.InsufficientBalance(
-                        billId, balance.Id, bill.Amount, balance.CurrentAmount);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.InsufficientBalance(billId, balance.Id, bill.Amount, balance.CurrentAmount);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_INSUFFICIENT_BALANCE_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BILL_INSUFFICIENT_BALANCE_ERROR, userMessage, technicalDetails);
                 }
 
                 balance.CurrentAmount -= bill.Amount;
-                balance.UpdatededAt = DateTime.UtcNow;
-                var updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
+                balance.UpdatedAt = DateTime.UtcNow;
+                BalanceEntity? updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                 if (updatedBalance == null)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_UPDATE_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
                 }
 
                 bill.IsPaid = true;
                 bill.PaymentDate = DateTime.UtcNow;
-                bill.UpdatededAt = DateTime.UtcNow;
-                var updatedBill = await _billContextManager.UpdateAsync(billId, bill);
+                bill.UpdatedAt = DateTime.UtcNow;
+                BillEntity? updatedBill = await _billContextManager.UpdateAsync(billId, bill);
 
                 if (updatedBill == null)
                 {
                     balance.CurrentAmount += bill.Amount;
                     await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.MarkAsPaidFailed(billId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.MarkAsPaidFailed(billId);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage, technicalDetails);
                 }
 
-                await _auditService.LogAsync(LogAction.Update, "Bill", billId,
-                    new { IsPaid = false, PaymentDate = (DateTime?)null },
-                    new { IsPaid = true, bill.PaymentDate });
+                await _auditService.LogAsync(LogAction.Update, "Bill", billId, new { IsPaid = false, PaymentDate = (DateTime?)null }, new { IsPaid = true, bill.PaymentDate });
 
                 _logger.LogInformation("Successfully marked bill {BillId} as paid on {PaymentDate} and deducted {Amount:C} from balance {BalanceId}",
                     billId, bill.PaymentDate, bill.Amount, balance.Id);
 
-                return updatedBill;
+                return MapToResponse(updatedBill);
             }
             catch (ApiException)
             {
@@ -170,78 +169,77 @@ namespace BuildingManagement.Services.Api
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.MarkAsPaidFailed(billId);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.MarkAsPaidFailed(billId);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage);
                 throw new ApiException(ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage, technicalDetails, ex);
             }
         }
 
-
-        public async Task<BillEntity> MarkBillAsUnpaidAsync(int billId)
+        public async Task<BillResponse> MarkBillAsUnpaidAsync(int billId)
         {
             try
             {
                 _logger.LogInformation("Marking bill {BillId} as unpaid", billId);
 
-                var bill = await GetBillByIdAsync(billId);
+                BillEntity? bill = await _billContextManager.GetByIdAsync(billId);
                 if (bill == null)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.BillNotFound(billId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.BillNotFound(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage, technicalDetails);
                 }
 
-                if (bill.IsPaid == false)
+                if (!bill.IsPaid)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.AlreadyUnpaid(billId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.AlreadyUnpaid(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_ALREADY_UNPAID_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BILL_ALREADY_UNPAID_ERROR, userMessage, technicalDetails);
                 }
 
-                var balances = await _balanceContextManager.GetAllAsync(balanceId: bill.BalanceId);
-                var balance = balances.FirstOrDefault();
+                List<BalanceEntity> balances = await _balanceContextManager.GetAllAsync(balanceId: bill.BalanceId);
+                BalanceEntity? balance = balances.FirstOrDefault();
 
                 if (balance == null)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.NotFound(bill.BalanceId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(bill.BalanceId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
                 }
 
                 balance.CurrentAmount += bill.Amount;
-                balance.UpdatededAt = DateTime.UtcNow;
-                var updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
+                balance.UpdatedAt = DateTime.UtcNow;
+
+                BalanceEntity? updatedBalance = await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
                 if (updatedBalance == null)
                 {
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_UPDATE_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
                 }
 
                 bill.IsPaid = false;
                 bill.PaymentDate = null;
-                bill.UpdatededAt = DateTime.UtcNow;
-                var updatedBill = await _billContextManager.UpdateAsync(billId, bill);
+                bill.UpdatedAt = DateTime.UtcNow;
+
+                BillEntity? updatedBill = await _billContextManager.UpdateAsync(billId, bill);
 
                 if (updatedBill == null)
                 {
                     balance.CurrentAmount -= bill.Amount;
                     await _balanceContextManager.UpdateAsync(balance.Id, balance);
 
-                    var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.MarkAsUnpaidFailed(billId);
+                    (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.MarkAsUnpaidFailed(billId);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage);
                     throw new ApiException(ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails);
                 }
 
-                await _auditService.LogAsync(LogAction.Update, "Bill", billId,
-                    new { IsPaid = true, PaymentDate = bill.PaymentDate },
-                    new { IsPaid = false, PaymentDate = (DateTime?)null });
+                await _auditService.LogAsync(LogAction.Update, "Bill", billId, new { IsPaid = true, bill.PaymentDate }, new { IsPaid = false, PaymentDate = (DateTime?)null });
 
                 _logger.LogInformation("Successfully marked bill {BillId} as unpaid and added {Amount:C} back to balance {BalanceId}",
                     billId, bill.Amount, balance.Id);
 
-                return updatedBill;
+                return MapToResponse(updatedBill);
             }
             catch (ApiException)
             {
@@ -249,10 +247,27 @@ namespace BuildingManagement.Services.Api
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.MarkAsUnpaidFailed(billId);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.MarkAsUnpaidFailed(billId);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage);
                 throw new ApiException(ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails, ex);
             }
+        }
+
+        private static BillResponse MapToResponse(BillEntity bill)
+        {
+            return new BillResponse
+            {
+                Id = bill.Id,
+                Label = bill.Label,
+                Amount = bill.Amount,
+                DueDate = bill.DueDate,
+                IsPaid = bill.IsPaid,
+                PaymentDate = bill.PaymentDate,
+                BalanceId = bill.BalanceId,
+                BalanceName = bill.Balance?.Label,
+                CreatedAt = bill.CreatedAt,
+                UpdatedAt = bill.UpdatedAt
+            };
         }
     }
 }

@@ -1,7 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BuildingManagement.Models.Validation;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using BuildingManagement.Models.Validation;
 
 namespace BuildingManagement.Models.Entities
 {
@@ -24,7 +24,7 @@ namespace BuildingManagement.Models.Entities
         public ICollection<BuildingEntity> Buildings { get; set; }
 
         [JsonIgnore]
-        public ICollection<BillEntity> Bills { get; set; }
+        public ICollection<BalanceEntity> Balances { get; set; }
 
         public CompoundEntity(int id, string name, string address, int activeApartments)
         {
@@ -33,9 +33,9 @@ namespace BuildingManagement.Models.Entities
             Address = address;
             ActiveApartments = activeApartments;
             Buildings = [];
-            Bills = [];
+            Balances = [];
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

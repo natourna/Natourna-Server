@@ -1,10 +1,10 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using BuildingManagement.Interfaces.Authentication;
 using BuildingManagement.Models.Configurations;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace BuildingManagement.Authentication
 {
@@ -19,7 +19,7 @@ namespace BuildingManagement.Authentication
             _logger = logger;
         }
 
-        public string GenerateToken(string username, string role = "Admin")
+        public string GenerateToken(string username, string userId, string role = "Admin")
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -27,6 +27,7 @@ namespace BuildingManagement.Authentication
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, username),
+                new Claim(ClaimTypes.NameIdentifier, userId),  // Add UserId claim
                 new Claim(ClaimTypes.Role, role),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())

@@ -24,7 +24,7 @@ namespace BuildingManagement.Services.Context
             {
                 _logger.LogInformation("Getting all bills with filters - BalanceId: {BalanceId}, IsPaid: {IsPaid}, DueDateFrom: {DueDateFrom}, DueDateTo: {DueDateTo}", balanceId, isPaid, dueDateFrom, dueDateTo);
 
-                var query = _context.Bills.AsQueryable();
+                var query = _context.Bills.Include(b => b.Balance).AsQueryable();
 
                 // Apply filters
                 if (billId.HasValue)
@@ -56,7 +56,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.GetAllFailed(balanceId, isPaid, dueDateFrom, dueDateTo);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.GetAllFailed(balanceId, isPaid, dueDateFrom, dueDateTo);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}. {TechnicalDetails}", ErrorCodes.BILL_GET_ALL_ERROR, userMessage, technicalDetails);
 
@@ -72,7 +72,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.GetByIdFailed(id);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.GetByIdFailed(id);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_GET_BY_ID_ERROR, userMessage);
 
@@ -88,7 +88,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.GetByBalanceIdFailed(balanceId);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.GetByBalanceIdFailed(balanceId);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_GET_ALL_ERROR, userMessage);
 
@@ -112,7 +112,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.CreateFailed(bill);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.CreateFailed(bill);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_CREATE_ERROR, userMessage);
 
@@ -138,7 +138,7 @@ namespace BuildingManagement.Services.Context
                 existingBill.PaymentDate = bill.PaymentDate;
                 existingBill.Amount = bill.Amount;
                 existingBill.DueDate = bill.DueDate;
-                existingBill.UpdatededAt = DateTime.UtcNow;
+                existingBill.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 
@@ -148,7 +148,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.UpdateFailed(id, bill);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.UpdateFailed(id, bill);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_UPDATE_ERROR, userMessage);
 
@@ -178,7 +178,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Bill.DeleteFailed(id);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.DeleteFailed(id);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_DELETE_ERROR, userMessage);
 

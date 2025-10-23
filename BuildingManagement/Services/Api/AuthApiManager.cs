@@ -55,8 +55,8 @@ namespace BuildingManagement.Services.Api
             // Log successful login
             await _auditService.LogAsync(LogAction.Login, "User", user.Id);
 
-            // Generate JWT token with role
-            var token = _jwtService.GenerateToken(user.Email, user.Role.ToString());
+            // Generate JWT token with role and userId
+            var token = _jwtService.GenerateToken(user.Email, user.Id.ToString(), user.Role.ToString());
             var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
 
             _logger.LogInformation("User {Email} with role {Role} logged in successfully", user.Email, user.Role);
@@ -85,8 +85,8 @@ namespace BuildingManagement.Services.Api
                 return null;
             }
 
-            // Generate new token with current role
-            var token = _jwtService.GenerateToken(user.Email, user.Role.ToString());
+            // Generate new token with current role and userId
+            var token = _jwtService.GenerateToken(user.Email, user.Id.ToString(), user.Role.ToString());
             var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
 
             _logger.LogInformation("Token refreshed for user: {Email}", username);

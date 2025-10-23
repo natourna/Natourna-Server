@@ -1,7 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BuildingManagement.Models.Validation;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using BuildingManagement.Models.Validation;
 
 namespace BuildingManagement.Models.Entities
 {
@@ -39,7 +39,7 @@ namespace BuildingManagement.Models.Entities
             CompoundId = compoundId;
             Apartments = [];
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

@@ -116,7 +116,7 @@ namespace BuildingManagement.Services.Context
                 existingCycle.Amount = cycle.Amount;
                 existingCycle.IsActive = cycle.IsActive;
                 existingCycle.BalanceAllocationsJson = cycle.BalanceAllocationsJson;
-                existingCycle.UpdatededAt = DateTime.UtcNow;
+                existingCycle.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 

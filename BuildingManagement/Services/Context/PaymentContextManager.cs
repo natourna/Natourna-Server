@@ -22,8 +22,7 @@ namespace BuildingManagement.Services.Context
         {
             try
             {
-                _logger.LogInformation("Getting all payments with filters - PaymentId: {PaymentId}, ApartmentId: {ApartmentId}, CycleId: {CycleId}, IsPaid: {IsPaid}",
-                    paymentId, apartmentId, cycleId, isPaid);
+                _logger.LogInformation("Getting all payments with filters - PaymentId: {PaymentId}, ApartmentId: {ApartmentId}, CycleId: {CycleId}, IsPaid: {IsPaid}", paymentId, apartmentId, cycleId, isPaid);
 
                 var query = _context.Payments.Include(p => p.Apartment).Include(p => p.Cycle).Include(p => p.PaymentAllocations).AsQueryable();
 
@@ -52,11 +51,27 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.GetAllFailed(paymentId, apartmentId, cycleId, isPaid);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.GetAllFailed(paymentId, apartmentId, cycleId, isPaid);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}. {TechnicalDetails}", ErrorCodes.PAYMENT_GET_ALL_ERROR, userMessage, technicalDetails);
 
                 throw new ContextException(ErrorCodes.PAYMENT_GET_ALL_ERROR, userMessage, technicalDetails, ex);
+            }
+        }
+
+        public async Task<PaymentEntity?> GetByIdAsync(int id)
+        {
+            try
+            {
+                return (await GetAllAsync(paymentId: id)).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.GetByIdFailed(id);
+
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_GET_BY_ID_ERROR, userMessage);
+
+                throw new ContextException(ErrorCodes.PAYMENT_GET_BY_ID_ERROR, userMessage, technicalDetails, ex);
             }
         }
 
@@ -76,7 +91,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.CreateFailed(payment);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.CreateFailed(payment);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_CREATE_ERROR, userMessage);
 
@@ -103,7 +118,7 @@ namespace BuildingManagement.Services.Context
                 existingPayment.DueDate = payment.DueDate;
                 existingPayment.IsPaid = payment.IsPaid;
                 existingPayment.CycleId = payment.CycleId;
-                existingPayment.UpdatededAt = DateTime.UtcNow;
+                existingPayment.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 
@@ -113,7 +128,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.UpdateFailed(id, payment);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.UpdateFailed(id, payment);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_UPDATE_ERROR, userMessage);
 
@@ -143,7 +158,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Payment.DeleteFailed(id);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.DeleteFailed(id);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_DELETE_ERROR, userMessage);
 

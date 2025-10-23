@@ -53,19 +53,14 @@ namespace BuildingManagement.Migrations
                     b.Property<string>("Tenant")
                         .HasColumnType("longtext");
 
-                    b.Property<DateTimeOffset>("UpdatededAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("UserEntityId")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BuildingId");
 
                     b.HasIndex("IsActive");
-
-                    b.HasIndex("UserEntityId");
 
                     b.ToTable("Apartments");
                 });
@@ -103,7 +98,7 @@ namespace BuildingManagement.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
-                    b.Property<DateTimeOffset>("UpdatededAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("UserAgent")
@@ -115,7 +110,6 @@ namespace BuildingManagement.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<int?>("UserId")
-                        .IsRequired()
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -155,7 +149,7 @@ namespace BuildingManagement.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<DateTimeOffset>("UpdatededAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
@@ -180,9 +174,6 @@ namespace BuildingManagement.Migrations
                     b.Property<int>("BalanceId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CompoundId")
-                        .HasColumnType("int");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -199,14 +190,12 @@ namespace BuildingManagement.Migrations
                     b.Property<DateTime?>("PaymentDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTimeOffset>("UpdatededAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("BalanceId");
-
-                    b.HasIndex("CompoundId");
 
                     b.HasIndex("IsPaid");
 
@@ -237,7 +226,7 @@ namespace BuildingManagement.Migrations
                     b.Property<int>("NumberOfApartments")
                         .HasColumnType("int");
 
-                    b.Property<DateTimeOffset>("UpdatededAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
@@ -269,7 +258,7 @@ namespace BuildingManagement.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.Property<DateTimeOffset>("UpdatededAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
@@ -319,7 +308,7 @@ namespace BuildingManagement.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTimeOffset>("UpdatededAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
@@ -358,7 +347,7 @@ namespace BuildingManagement.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
 
-                    b.Property<DateTimeOffset>("UpdatededAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
@@ -397,10 +386,14 @@ namespace BuildingManagement.Migrations
                     b.Property<bool>("IsPaid")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("PaymentDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTimeOffset>("UpdatededAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
@@ -445,7 +438,7 @@ namespace BuildingManagement.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("int");
 
-                    b.Property<DateTimeOffset>("UpdatededAt")
+                    b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
@@ -461,17 +454,13 @@ namespace BuildingManagement.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BuildingManagement.Models.Entities.UserEntity", null)
-                        .WithMany("Apartments")
-                        .HasForeignKey("UserEntityId");
-
                     b.Navigation("Building");
                 });
 
             modelBuilder.Entity("BuildingManagement.Models.Entities.BalanceEntity", b =>
                 {
                     b.HasOne("BuildingManagement.Models.Entities.CompoundEntity", "Compound")
-                        .WithMany()
+                        .WithMany("Balances")
                         .HasForeignKey("CompoundId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -486,11 +475,6 @@ namespace BuildingManagement.Migrations
                         .HasForeignKey("BalanceId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("BuildingManagement.Models.Entities.CompoundEntity", null)
-                        .WithMany("Bills")
-                        .HasForeignKey("CompoundId")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Balance");
                 });
@@ -562,7 +546,7 @@ namespace BuildingManagement.Migrations
 
             modelBuilder.Entity("BuildingManagement.Models.Entities.CompoundEntity", b =>
                 {
-                    b.Navigation("Bills");
+                    b.Navigation("Balances");
 
                     b.Navigation("Buildings");
                 });
@@ -575,11 +559,6 @@ namespace BuildingManagement.Migrations
             modelBuilder.Entity("BuildingManagement.Models.Entities.PaymentEntity", b =>
                 {
                     b.Navigation("PaymentAllocations");
-                });
-
-            modelBuilder.Entity("BuildingManagement.Models.Entities.UserEntity", b =>
-                {
-                    b.Navigation("Apartments");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,7 +1,7 @@
+using BuildingManagement.Constants.Cycle;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using BuildingManagement.Constants.Cycle;
 
 namespace BuildingManagement.Models.Entities
 {
@@ -26,7 +26,7 @@ namespace BuildingManagement.Models.Entities
 
         public decimal Amount { get; set; }
 
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; }
 
         public string? BalanceAllocationsJson { get; set; }
 
@@ -40,10 +40,9 @@ namespace BuildingManagement.Models.Entities
             StartDate = startDate;
             EndDate = endDate;
             Amount = amount;
-            IsActive = true;
             Payments = [];
             CreatedAt = DateTime.UtcNow;
-            UpdatededAt = DateTime.UtcNow;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

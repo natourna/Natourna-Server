@@ -1,5 +1,6 @@
 using BuildingManagement.Interfaces.Api;
 using BuildingManagement.Models.Api.Requests.Cycle;
+using BuildingManagement.Models.Api.Response.Cycle;
 using BuildingManagement.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +23,10 @@ namespace BuildingManagement.Controllers
         /// Get all cycles - Any authenticated user
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<CycleEntity>>> GetAllCycles()
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<List<CycleResponse>>> GetAllCycles()
         {
-            var cycles = await _cycleApiManager.GetAllCyclesAsync();
+            List<CycleResponse> cycles = await _cycleApiManager.GetAllCyclesAsync();
             return Ok(cycles);
         }
 
@@ -32,9 +34,11 @@ namespace BuildingManagement.Controllers
         /// Get cycle by ID - Any authenticated user
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<CycleEntity>> GetCycleById(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<CycleResponse?>> GetCycleById(int id)
         {
-            var cycle = await _cycleApiManager.GetCycleByIdAsync(id);
+            CycleResponse? cycle = await _cycleApiManager.GetCycleByIdAsync(id);
+
             if (cycle == null)
             {
                 return NotFound();
@@ -55,7 +59,8 @@ namespace BuildingManagement.Controllers
                 return BadRequest(ModelState);
             }
 
-            var createdCycle = await _cycleApiManager.CreateCycleAsync(request);
+            CycleEntity createdCycle = await _cycleApiManager.CreateCycleAsync(request);
+
             return CreatedAtAction(nameof(GetCycleById), new { id = createdCycle.Id }, createdCycle);
         }
 
@@ -66,7 +71,8 @@ namespace BuildingManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<CycleEntity>> UpdateCycle(int id, CycleEntity cycle)
         {
-            var updatedCycle = await _cycleApiManager.UpdateCycleAsync(id, cycle);
+            CycleEntity? updatedCycle = await _cycleApiManager.UpdateCycleAsync(id, cycle);
+
             if (updatedCycle == null)
             {
                 return NotFound();
@@ -82,7 +88,8 @@ namespace BuildingManagement.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteCycle(int id)
         {
-            var result = await _cycleApiManager.DeleteCycleAsync(id);
+            bool result = await _cycleApiManager.DeleteCycleAsync(id);
+
             if (!result)
             {
                 return NotFound();

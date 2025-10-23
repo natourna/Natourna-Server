@@ -55,7 +55,7 @@ namespace BuildingManagement.Services.Context
             existingBuilding.NumberOfApartments = building.NumberOfApartments;
             existingBuilding.Floors = building.Floors;
             existingBuilding.CompoundId = building.CompoundId;
-            existingBuilding.UpdatededAt = DateTime.UtcNow;
+            existingBuilding.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return existingBuilding;

@@ -44,11 +44,27 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.GetAllFailed(balanceId, compoundId);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.GetAllFailed(balanceId, compoundId);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}. {TechnicalDetails}", ErrorCodes.BALANCE_GET_ALL_ERROR, userMessage, technicalDetails);
 
                 throw new ContextException(ErrorCodes.BALANCE_GET_ALL_ERROR, userMessage, technicalDetails, ex);
+            }
+        }
+
+        public async Task<BalanceEntity?> GetByIdAsync(int id)
+        {
+            try
+            {
+                return (await GetAllAsync(balanceId: id)).FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.GetByIdFailed(id);
+
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_GET_BY_ID_ERROR, userMessage);
+
+                throw new ContextException(ErrorCodes.BALANCE_GET_BY_ID_ERROR, userMessage, technicalDetails, ex);
             }
         }
 
@@ -67,7 +83,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.CreateFailed(balance);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.CreateFailed(balance);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_CREATE_ERROR, userMessage);
 
@@ -90,7 +106,7 @@ namespace BuildingManagement.Services.Context
 
                 existingBalance.Label = balance.Label;
                 existingBalance.CurrentAmount = balance.CurrentAmount;
-                existingBalance.UpdatededAt = DateTime.UtcNow;
+                existingBalance.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 
@@ -100,7 +116,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(id, balance);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(id, balance);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_UPDATE_ERROR, userMessage);
 
@@ -130,7 +146,7 @@ namespace BuildingManagement.Services.Context
             }
             catch (Exception ex)
             {
-                var (userMessage, technicalDetails) = ErrorMessageBuilder.Balance.DeleteFailed(id);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.DeleteFailed(id);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_DELETE_ERROR, userMessage);
 

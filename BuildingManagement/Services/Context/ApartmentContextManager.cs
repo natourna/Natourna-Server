@@ -18,7 +18,6 @@ namespace BuildingManagement.Services.Context
         {
             var query = _context.Apartments
                 .Include(a => a.Building)
-                .Include(a => a.Payments)
                 .AsQueryable();
 
             // Apply filters
@@ -44,14 +43,13 @@ namespace BuildingManagement.Services.Context
         {
             return await _context.Apartments
                 .Include(a => a.Building)
-                .Include(a => a.Payments)
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
         public async Task<List<ApartmentEntity>> GetByBuildingIdAsync(int buildingId)
         {
             return await _context.Apartments
-                .Include(a => a.Payments)
+                .Include(a => a.Building)
                 .Where(a => a.BuildingId == buildingId)
                 .ToListAsync();
         }
@@ -60,7 +58,11 @@ namespace BuildingManagement.Services.Context
         {
             _context.Apartments.Add(apartment);
             await _context.SaveChangesAsync();
-            return apartment;
+
+            // Reload with building information
+            return await _context.Apartments
+                .Include(a => a.Building)
+                .FirstAsync(a => a.Id == apartment.Id);
         }
 
         public async Task<ApartmentEntity?> UpdateAsync(int id, ApartmentEntity apartment)
@@ -75,10 +77,14 @@ namespace BuildingManagement.Services.Context
             existingApartment.IsActive = apartment.IsActive;
             existingApartment.BuildingId = apartment.BuildingId;
             existingApartment.Floor = apartment.Floor;
-            existingApartment.UpdatededAt = DateTime.UtcNow;
+            existingApartment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            return existingApartment;
+
+            // Reload with building information
+            return await _context.Apartments
+                .Include(a => a.Building)
+                .FirstAsync(a => a.Id == id);
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -99,10 +105,14 @@ namespace BuildingManagement.Services.Context
                 return null;
 
             apartment.IsActive = isActive;
-            apartment.UpdatededAt = DateTime.UtcNow;
+            apartment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            return apartment;
+
+            // Reload with building information
+            return await _context.Apartments
+                .Include(a => a.Building)
+                .FirstAsync(a => a.Id == id);
         }
     }
 }
