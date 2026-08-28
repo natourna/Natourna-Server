@@ -1,39 +1,50 @@
 using NatournaServer.Extensions;
+using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 try
 {
-    // Add services using extensions
     builder.Host.AddSeriLog();
     builder.Services.AddControllers();
-    builder.Services.AddHttpContextAccessor(); // Required for AuditService
+    builder.Services.AddHttpContextAccessor();
     builder.Services.AddPostgreSqlService(builder.Configuration);
     builder.Services.AddApiManagers();
     builder.Services.AddContextManagers();
     builder.Services.AddSwaggerServices();
     builder.Services.AddAuthenticationService(builder.Configuration);
+    builder.Services.AddCorsPolicy(builder.Configuration);
+    builder.Services.AddRateLimiting();
     builder.WebHost.AddListenPort(builder.Configuration);
 
     var app = builder.Build();
 
-    await app.Services.AddContextService(app.Environment.IsDevelopment());
+    await app.Services.AddContextService(builder.Configuration);
 
-    app.UseGlobalExceptionLogging();
+    var forwardedHeadersOptions = new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    };
+    forwardedHeadersOptions.KnownIPNetworks.Clear();
+    forwardedHeadersOptions.KnownProxies.Clear();
+    app.UseForwardedHeaders(forwardedHeadersOptions);
+
+    app.UseGlobalExceptionHandling();
+    app.UseSecurityHeaders();
     app.UseRequestLogging();
     app.UseSwaggerServices();
 
+    app.UseCors();
+    app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
-
-    app.UseCors("AllowLocalhost4200");
 
     app.MapControllers();
 
     await app.RunAsync();
 }
-catch (Exception ex)
+catch (Exception ex) when (ex is not HostAbortedException)
 {
     string errorMsg = $"Startup failed : {ex.Message}";
     Console.WriteLine(errorMsg);

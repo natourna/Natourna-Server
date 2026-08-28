@@ -1,7 +1,10 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Data;
 using NatournaServer.Exceptions;
 using NatournaServer.Interfaces.Context;
+using NatournaServer.Models.Entities;
 using NatournaServer.Services.Context;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace NatournaServer.Extensions;
@@ -17,6 +20,7 @@ public static class ContextManagerExtension
         services.AddScoped<IPaymentContextManager, PaymentContextManager>();
         services.AddScoped<IPaymentAllocationContextManager, PaymentAllocationContextManager>();
         services.AddScoped<IUserContextManager, UserContextManager>();
+        services.AddScoped<IRoleContextManager, RoleContextManager>();
         services.AddScoped<IBalanceContextManager, BalanceContextManager>();
         services.AddScoped<ICycleContextManager, CycleContextManager>();
         services.AddScoped<ILogContextManager, AuditContextManager>();
@@ -24,32 +28,52 @@ public static class ContextManagerExtension
         return services;
     }
 
-    /// <summary>
-    /// Ensure database is created and migrations are applied
-    /// </summary>
-    public static async Task AddContextService(this IServiceProvider services, bool isDev)
+    public static async Task AddContextService(this IServiceProvider services, IConfiguration configuration)
     {
         using var scope = services.CreateScope();
 
-        var service = scope.ServiceProvider;
-        var context = service.GetRequiredService<NatournaServerContext>();
+        var provider = scope.ServiceProvider;
+        var context = provider.GetRequiredService<NatournaServerContext>();
 
         if (context.Database.IsNpgsql())
         {
-            if (isDev)
-            {
-                await context.Database.EnsureCreatedAsync();
-            }
-            else
-            {
-                await context.Database.MigrateAsync();
-            }
+            await context.Database.MigrateAsync();
         }
+
+        await SeedAdminAsync(provider, configuration);
     }
 
-    /// <summary>
-    /// Add PostgreSQL database context to the service collection
-    /// </summary>
+    private static async Task SeedAdminAsync(IServiceProvider provider, IConfiguration configuration)
+    {
+        var context = provider.GetRequiredService<NatournaServerContext>();
+        var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("AdminBootstrap");
+
+        if (await context.Users.AnyAsync())
+        {
+            return;
+        }
+
+        string? email = configuration["Bootstrap:AdminEmail"];
+        string? password = configuration["Bootstrap:AdminPassword"];
+
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        {
+            logger.LogWarning("No users exist and Bootstrap:AdminEmail / Bootstrap:AdminPassword are not configured; nobody can log in");
+            return;
+        }
+
+        var adminRole = await context.Roles.FirstAsync(r => r.Name == RoleNames.Admin);
+        var hasher = provider.GetRequiredService<IPasswordHasher<UserEntity>>();
+
+        var admin = new UserEntity(email, string.Empty, string.Empty, adminRole.Id);
+        admin.Password = hasher.HashPassword(admin, password);
+
+        context.Users.Add(admin);
+        await context.SaveChangesAsync();
+
+        logger.LogInformation("Bootstrapped initial admin user {Email}", email);
+    }
+
     public static void AddPostgreSqlService(this IServiceCollection services, IConfiguration configuration)
     {
         string? connectionString = configuration.GetConnectionString("DefaultConnection");

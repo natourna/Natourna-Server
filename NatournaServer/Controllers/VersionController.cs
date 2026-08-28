@@ -6,7 +6,7 @@ namespace NatournaServer.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [AllowAnonymous]
+    [Authorize]
     public class VersionController : ControllerBase
     {
         [HttpGet]
