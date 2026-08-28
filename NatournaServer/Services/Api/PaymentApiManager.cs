@@ -396,6 +396,7 @@ namespace NatournaServer.Services.Api
                 DueDate = payment.DueDate,
                 IsPaid = payment.IsPaid,
                 ApartmentId = payment.ApartmentId,
+                ApartmentInfo = payment.Apartment?.ApartmentInfo,
                 ApartmentOwner = payment.Apartment?.Owner,
                 ApartmentTenant = payment.Apartment?.Tenant,
                 CycleId = payment.CycleId,

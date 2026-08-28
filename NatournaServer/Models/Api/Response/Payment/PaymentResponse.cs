@@ -16,6 +16,8 @@
 
         public int ApartmentId { get; set; }
 
+        public string? ApartmentInfo { get; set; }
+
         public string? ApartmentOwner { get; set; }
 
         public string? ApartmentTenant { get; set; }
