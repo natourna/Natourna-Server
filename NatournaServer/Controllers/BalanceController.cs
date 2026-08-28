@@ -1,3 +1,4 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -56,7 +57,7 @@ namespace NatournaServer.Controllers
         /// Create balance - Admin only
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<BalanceEntity>> CreateBalance(BalanceEntity balance)
         {
             if (!ModelState.IsValid)
@@ -72,7 +73,7 @@ namespace NatournaServer.Controllers
         /// Update balance - Admin only
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<BalanceEntity>> UpdateBalance(int id, BalanceEntity balance)
         {
             if (!ModelState.IsValid)
@@ -93,7 +94,7 @@ namespace NatournaServer.Controllers
         /// Delete balance - Admin only
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeleteBalance(int id)
         {
             var result = await _balanceApiManager.DeleteBalanceAsync(id);

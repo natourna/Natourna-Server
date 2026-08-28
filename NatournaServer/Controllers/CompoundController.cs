@@ -1,3 +1,4 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -47,7 +48,7 @@ namespace NatournaServer.Controllers
         /// Create compound - Admin only
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<CompoundEntity>> CreateCompound(CompoundEntity compound)
         {
             var createdCompound = await _compoundManager.CreateCompoundAsync(compound);
@@ -58,7 +59,7 @@ namespace NatournaServer.Controllers
         /// Update compound - Admin only
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<CompoundEntity>> UpdateCompound(int id, CompoundEntity compound)
         {
             var updatedCompound = await _compoundManager.UpdateCompoundAsync(id, compound);
@@ -75,7 +76,7 @@ namespace NatournaServer.Controllers
         /// Delete compound - Admin only
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeleteCompound(int id)
         {
             var result = await _compoundManager.DeleteCompoundAsync(id);
