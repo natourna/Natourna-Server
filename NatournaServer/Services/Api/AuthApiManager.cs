@@ -56,10 +56,10 @@ namespace NatournaServer.Services.Api
             await _auditService.LogAsync(LogAction.Login, "User", user.Id);
 
             // Generate JWT token with role and userId
-            var token = _jwtService.GenerateToken(user.Email, user.Id.ToString(), user.Role.ToString());
+            var token = _jwtService.GenerateToken(user.Email, user.Id.ToString(), user.Role!.Name);
             var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
 
-            _logger.LogInformation("User {Email} with role {Role} logged in successfully", user.Email, user.Role);
+            _logger.LogInformation("User {Email} with role {Role} logged in successfully", user.Email, user.Role.Name);
 
             return new LoginResponse
             {
@@ -86,7 +86,7 @@ namespace NatournaServer.Services.Api
             }
 
             // Generate new token with current role and userId
-            var token = _jwtService.GenerateToken(user.Email, user.Id.ToString(), user.Role.ToString());
+            var token = _jwtService.GenerateToken(user.Email, user.Id.ToString(), user.Role!.Name);
             var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
 
             _logger.LogInformation("Token refreshed for user: {Email}", username);

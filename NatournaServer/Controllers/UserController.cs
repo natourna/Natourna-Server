@@ -1,4 +1,6 @@
-﻿using NatournaServer.Interfaces.Api;
+using NatournaServer.Constants.User;
+using NatournaServer.Interfaces.Api;
+using NatournaServer.Models.Api.Response.User;
 using NatournaServer.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,15 +21,15 @@ namespace NatournaServer.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<List<UserEntity>>> GetAllUsers()
+        [Authorize(Roles = RoleNames.Admin)]
+        public async Task<ActionResult<List<UserResponse>>> GetAllUsers()
         {
             var users = await _userManager.GetAllUsersAsync();
             return Ok(users);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserEntity>> GetUserById(int id)
+        public async Task<ActionResult<UserResponse>> GetUserById(int id)
         {
             var user = await _userManager.GetUserByIdAsync(id);
             if (user == null)
@@ -36,7 +38,7 @@ namespace NatournaServer.Controllers
             }
 
             var currentUserEmail = User.FindFirst(ClaimTypes.Name)?.Value;
-            var isAdmin = User.IsInRole("Admin");
+            var isAdmin = User.IsInRole(RoleNames.Admin);
 
             if (!isAdmin && user.Email != currentUserEmail)
             {
@@ -47,7 +49,7 @@ namespace NatournaServer.Controllers
         }
 
         [HttpGet("me")]
-        public async Task<ActionResult<UserEntity>> GetCurrentUser()
+        public async Task<ActionResult<UserResponse>> GetCurrentUser()
         {
             var email = User.FindFirst(ClaimTypes.Name)?.Value;
             if (string.IsNullOrEmpty(email))
@@ -55,9 +57,7 @@ namespace NatournaServer.Controllers
                 return Unauthorized();
             }
 
-            var users = await _userManager.GetAllUsersAsync();
-            var user = users.FirstOrDefault(u => u.Email == email);
-
+            var user = await _userManager.GetUserByEmailAsync(email);
             if (user == null)
             {
                 return NotFound();
@@ -67,15 +67,15 @@ namespace NatournaServer.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<UserEntity>> CreateUser(UserEntity user)
+        [Authorize(Roles = RoleNames.Admin)]
+        public async Task<ActionResult<UserResponse>> CreateUser(UserEntity user)
         {
             var createdUser = await _userManager.CreateUserAsync(user);
             return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<UserEntity>> UpdateUser(int id, UserEntity user)
+        public async Task<ActionResult<UserResponse>> UpdateUser(int id, UserEntity user)
         {
             var existingUser = await _userManager.GetUserByIdAsync(id);
             if (existingUser == null)
@@ -84,7 +84,7 @@ namespace NatournaServer.Controllers
             }
 
             var currentUserEmail = User.FindFirst(ClaimTypes.Name)?.Value;
-            var isAdmin = User.IsInRole("Admin");
+            var isAdmin = User.IsInRole(RoleNames.Admin);
 
             if (!isAdmin && existingUser.Email != currentUserEmail)
             {
@@ -93,7 +93,7 @@ namespace NatournaServer.Controllers
 
             if (!isAdmin)
             {
-                user.Role = existingUser.Role;
+                user.RoleId = existingUser.RoleId;
                 user.IsActive = existingUser.IsActive;
             }
 
@@ -102,7 +102,7 @@ namespace NatournaServer.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeleteUser(int id)
         {
             var result = await _userManager.DeleteUserAsync(id);

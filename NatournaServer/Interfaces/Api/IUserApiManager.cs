@@ -1,16 +1,19 @@
-﻿using NatournaServer.Models.Entities;
+﻿using NatournaServer.Models.Api.Response.User;
+using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Interfaces.Api
 {
     public interface IUserApiManager
     {
-        Task<List<UserEntity>> GetAllUsersAsync();
+        Task<List<UserResponse>> GetAllUsersAsync();
 
-        Task<UserEntity?> GetUserByIdAsync(int id);
+        Task<UserResponse?> GetUserByIdAsync(int id);
 
-        Task<UserEntity> CreateUserAsync(UserEntity user);
+        Task<UserResponse?> GetUserByEmailAsync(string email);
 
-        Task<UserEntity?> UpdateUserAsync(int id, UserEntity user);
+        Task<UserResponse> CreateUserAsync(UserEntity user);
+
+        Task<UserResponse?> UpdateUserAsync(int id, UserEntity user);
 
         Task<bool> DeleteUserAsync(int id);
     }
