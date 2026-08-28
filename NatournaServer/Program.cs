@@ -19,6 +19,7 @@ try
     var app = builder.Build();
 
     await app.Services.AddContextService(app.Environment.IsDevelopment());
+    await app.Services.SeedRolesAsync();
 
     app.UseGlobalExceptionLogging();
     app.UseRequestLogging();

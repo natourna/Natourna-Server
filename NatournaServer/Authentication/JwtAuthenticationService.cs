@@ -19,7 +19,7 @@ namespace NatournaServer.Authentication
             _logger = logger;
         }
 
-        public string GenerateToken(string username, string userId, string role = "Admin")
+        public string GenerateToken(string username, string userId, string role)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);

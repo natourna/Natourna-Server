@@ -17,6 +17,7 @@ public static class ContextManagerExtension
         services.AddScoped<IPaymentContextManager, PaymentContextManager>();
         services.AddScoped<IPaymentAllocationContextManager, PaymentAllocationContextManager>();
         services.AddScoped<IUserContextManager, UserContextManager>();
+        services.AddScoped<IRoleContextManager, RoleContextManager>();
         services.AddScoped<IBalanceContextManager, BalanceContextManager>();
         services.AddScoped<ICycleContextManager, CycleContextManager>();
         services.AddScoped<ILogContextManager, AuditContextManager>();

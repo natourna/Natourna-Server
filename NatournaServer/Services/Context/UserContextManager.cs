@@ -17,18 +17,21 @@ namespace NatournaServer.Services.Context
         public async Task<List<UserEntity>> GetAllAsync()
         {
             return await _context.Users
+                .Include(u => u.Role)
                 .ToListAsync();
         }
 
         public async Task<UserEntity?> GetByIdAsync(int id)
         {
             return await _context.Users
+                .Include(u => u.Role)
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public async Task<UserEntity?> GetByEmailAsync(string email)
         {
             return await _context.Users
+                .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
 
@@ -47,7 +50,7 @@ namespace NatournaServer.Services.Context
 
             existingUser.Email = user.Email;
             existingUser.PhoneNumber = user.PhoneNumber;
-            existingUser.Role = user.Role;
+            existingUser.RoleId = user.RoleId;
             existingUser.IsActive = user.IsActive;
             existingUser.UpdatedAt = DateTime.UtcNow;
 

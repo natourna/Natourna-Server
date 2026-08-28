@@ -1,3 +1,4 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Requests.Cycle;
 using NatournaServer.Models.Api.Response.Cycle;
@@ -23,7 +24,7 @@ namespace NatournaServer.Controllers
         /// Get all cycles - Any authenticated user
         /// </summary>
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<List<CycleResponse>>> GetAllCycles()
         {
             List<CycleResponse> cycles = await _cycleApiManager.GetAllCyclesAsync();
@@ -34,7 +35,7 @@ namespace NatournaServer.Controllers
         /// Get cycle by ID - Any authenticated user
         /// </summary>
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<CycleResponse?>> GetCycleById(int id)
         {
             CycleResponse? cycle = await _cycleApiManager.GetCycleByIdAsync(id);
@@ -51,7 +52,7 @@ namespace NatournaServer.Controllers
         /// Create cycle - Admin only
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<CycleEntity>> CreateCycle([FromBody] CycleRequest request)
         {
             if (!ModelState.IsValid)
@@ -68,7 +69,7 @@ namespace NatournaServer.Controllers
         /// Update cycle - Admin only
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<CycleEntity>> UpdateCycle(int id, CycleEntity cycle)
         {
             CycleEntity? updatedCycle = await _cycleApiManager.UpdateCycleAsync(id, cycle);
@@ -85,7 +86,7 @@ namespace NatournaServer.Controllers
         /// Delete cycle - Admin only
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeleteCycle(int id)
         {
             bool result = await _cycleApiManager.DeleteCycleAsync(id);

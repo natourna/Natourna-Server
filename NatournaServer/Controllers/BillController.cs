@@ -1,3 +1,4 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Requests.Bill;
 using NatournaServer.Models.Api.Response.Bill;
@@ -49,7 +50,7 @@ namespace NatournaServer.Controllers
         /// Create bill - Admin only
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<BillResponse>> CreateBill(BillRequest bill)
         {
             BillResponse createdBill = await _billManager.CreateBillAsync(bill);
@@ -60,7 +61,7 @@ namespace NatournaServer.Controllers
         /// Update bill - Admin only
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<BillResponse>> UpdateBill(int id, BillEntity bill)
         {
             var updatedBill = await _billManager.UpdateBillAsync(id, bill);
@@ -77,7 +78,7 @@ namespace NatournaServer.Controllers
         /// Delete bill - Admin only
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeleteBill(int id)
         {
             bool result = await _billManager.DeleteBillAsync(id);
@@ -94,7 +95,7 @@ namespace NatournaServer.Controllers
         /// Mark bill as paid - Admin only
         /// </summary>
         [HttpPatch("{id}/mark-as-paid")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<BillResponse>> MarkBillAsPaid(int id)
         {
             BillResponse updatedBill = await _billManager.MarkBillAsPaidAsync(id);
@@ -105,7 +106,7 @@ namespace NatournaServer.Controllers
         /// Mark bill as unpaid - Admin only
         /// </summary>
         [HttpPatch("{id}/mark-as-unpaid")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<BillEntity>> MarkBillAsUnpaid(int id)
         {
             BillResponse updatedBill = await _billManager.MarkBillAsUnpaidAsync(id);

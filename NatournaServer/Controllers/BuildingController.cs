@@ -1,3 +1,4 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -57,7 +58,7 @@ namespace NatournaServer.Controllers
         /// Create building - Admin only
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<BuildingEntity>> CreateBuilding(BuildingEntity building)
         {
             var createdBuilding = await _buildingManager.CreateBuildingAsync(building);
@@ -68,7 +69,7 @@ namespace NatournaServer.Controllers
         /// Update building - Admin only
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<BuildingEntity>> UpdateBuilding(int id, BuildingEntity building)
         {
             var updatedBuilding = await _buildingManager.UpdateBuildingAsync(id, building);
@@ -85,7 +86,7 @@ namespace NatournaServer.Controllers
         /// Delete building - Admin only
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeleteBuilding(int id)
         {
             var result = await _buildingManager.DeleteBuildingAsync(id);

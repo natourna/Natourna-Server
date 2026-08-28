@@ -1,5 +1,4 @@
-﻿using NatournaServer.Constants.User;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
@@ -22,17 +21,21 @@ namespace NatournaServer.Models.Entities
         public string PhoneNumber { get; set; }
 
         [Required]
-        public UserRole Role { get; set; } = UserRole.User;
+        public int RoleId { get; set; }
+
+        [ForeignKey("RoleId")]
+        [JsonIgnore]
+        public RoleEntity? Role { get; set; }
 
         public bool IsActive { get; set; } = true;
 
-        public UserEntity(int id, string email, string password, string phoneNumber, UserRole role = UserRole.User)
+        public UserEntity(int id, string email, string password, string phoneNumber, int roleId)
         {
             Id = id;
             Email = email;
             Password = password;
             PhoneNumber = phoneNumber;
-            Role = role;
+            RoleId = roleId;
             IsActive = true;
             CreatedAt = DateTime.UtcNow;
             UpdatedAt = DateTime.UtcNow;

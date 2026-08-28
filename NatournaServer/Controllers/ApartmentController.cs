@@ -1,3 +1,4 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Response.Apartment;
 using NatournaServer.Models.Entities;
@@ -58,7 +59,7 @@ namespace NatournaServer.Controllers
         /// Create apartment - Admin only
         /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<ApartmentResponse>> CreateApartment(ApartmentEntity apartment)
         {
             ApartmentResponse createdApartment = await _apartmentManager.CreateApartmentAsync(apartment);
@@ -69,7 +70,7 @@ namespace NatournaServer.Controllers
         /// Update apartment - Admin only
         /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<ApartmentResponse>> UpdateApartment(int id, ApartmentEntity apartment)
         {
             ApartmentResponse? updatedApartment = await _apartmentManager.UpdateApartmentAsync(id, apartment);
@@ -86,7 +87,7 @@ namespace NatournaServer.Controllers
         /// Delete apartment - Admin only
         /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeleteApartment(int id)
         {
             bool result = await _apartmentManager.DeleteApartmentAsync(id);
@@ -103,7 +104,7 @@ namespace NatournaServer.Controllers
         /// Set apartment active status - Admin only
         /// </summary>
         [HttpPatch("{id}/active")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<ApartmentResponse>> SetApartmentActive(int id, [FromBody] bool isActive)
         {
             ApartmentResponse? apartment = await _apartmentManager.SetApartmentActiveAsync(id, isActive);
