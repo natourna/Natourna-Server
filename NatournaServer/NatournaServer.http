@@ -1,0 +1,6 @@
+@NatournaServer_HostAddress = http://localhost:5162
+
+GET {{NatournaServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
