@@ -20,16 +20,23 @@ namespace NatournaServer.Exceptions
         /// </summary>
         public string TechnicalDetails { get; }
 
+        /// <summary>
+        /// HTTP status code the central error middleware responds with
+        /// </summary>
+        public int StatusCode { get; }
+
         public ApiException(
             string errorCode,
             string userMessage,
             string technicalDetails,
-            Exception? innerException = null)
+            Exception? innerException = null,
+            int statusCode = 400)
             : base($"[{errorCode}] {userMessage}", innerException)
         {
             ErrorCode = errorCode;
             UserMessage = userMessage;
             TechnicalDetails = technicalDetails;
+            StatusCode = statusCode;
         }
 
         /// <summary>
