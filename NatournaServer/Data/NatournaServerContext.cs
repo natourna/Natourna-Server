@@ -28,6 +28,8 @@ namespace NatournaServer.Data
 
         public DbSet<UserEntity> Users { get; set; }
 
+        public DbSet<RoleEntity> Roles { get; set; }
+
         public DbSet<AuditEntity> Audits { get; set; }
 
         public NatournaServerContext(DbContextOptions<NatournaServerContext> options) : base(options) { }
@@ -116,6 +118,17 @@ namespace NatournaServer.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // ========================================
+            // USER RELATIONSHIPS
+            // ========================================
+
+            // Role -> Users (One-to-Many)
+            modelBuilder.Entity<RoleEntity>()
+                .HasMany(r => r.Users)
+                .WithOne(u => u.Role)
+                .HasForeignKey(u => u.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ========================================
             // INDEXES FOR PERFORMANCE
             // ========================================
 
@@ -174,6 +187,19 @@ namespace NatournaServer.Data
 
             modelBuilder.Entity<CycleEntity>()
                 .HasIndex(c => c.EndDate);
+
+            // User indexes
+            modelBuilder.Entity<UserEntity>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<UserEntity>()
+                .HasIndex(u => u.RoleId);
+
+            // Role indexes
+            modelBuilder.Entity<RoleEntity>()
+                .HasIndex(r => r.Name)
+                .IsUnique();
 
             // Audit indexes
             modelBuilder.Entity<AuditEntity>()
