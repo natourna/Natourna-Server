@@ -1,9 +1,8 @@
-﻿using NatournaServer.Models.Validation;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace NatournaServer.Models.Api.Requests.Bill
 {
-    public class BillRequest
+    public class BillUpdateRequest
     {
         [Required]
         [MaxLength(200)]
@@ -14,7 +13,8 @@ namespace NatournaServer.Models.Api.Requests.Bill
 
         public DateTime? DueDate { get; set; }
 
-        [RequiredInt]
-        public int BalanceId { get; set; }
+        public bool IsPaid { get; set; }
+
+        public DateTime? PaymentDate { get; set; }
     }
 }
