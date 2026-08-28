@@ -26,6 +26,7 @@ namespace NatournaServer.Constants.Error
 
         // Balance API Manager Error Codes (BAL-API-xxx)
         public const string BALANCE_NOT_FOUND_ERROR = "BAL-API-001";
+        public const string BALANCE_COMPOUND_INVALID_ERROR = "BAL-API-002";
 
         // Payment Context Manager Error Codes (PAY-xxx)
         public const string PAYMENT_GET_ALL_ERROR = "PAY-001";
@@ -42,6 +43,10 @@ namespace NatournaServer.Constants.Error
         public const string PAYMENT_NOT_FOUND_ERROR = "PAY-API-005";
         public const string PAYMENT_ALREADY_PAID_ERROR = "PAY-API-006";
         public const string PAYMENT_ALREADY_UNPAID_ERROR = "PAY-API-007";
+        public const string PAYMENT_APARTMENT_INVALID_ERROR = "PAY-API-008";
+
+        // Apartment API Manager Error Codes (APT-API-xxx)
+        public const string APARTMENT_BUILDING_INVALID_ERROR = "APT-API-001";
 
         // Apartment Context Manager Error Codes (APT-xxx)
         public const string APARTMENT_GET_ALL_ERROR = "APT-001";
@@ -49,6 +54,9 @@ namespace NatournaServer.Constants.Error
         public const string APARTMENT_CREATE_ERROR = "APT-003";
         public const string APARTMENT_UPDATE_ERROR = "APT-004";
         public const string APARTMENT_DELETE_ERROR = "APT-005";
+
+        // Building API Manager Error Codes (BLD-API-xxx)
+        public const string BUILDING_COMPOUND_INVALID_ERROR = "BLD-API-001";
 
         // Building Context Manager Error Codes (BLD-xxx)
         public const string BUILDING_GET_ALL_ERROR = "BLD-001";
@@ -70,6 +78,10 @@ namespace NatournaServer.Constants.Error
         public const string CYCLE_CREATE_ERROR = "CYC-003";
         public const string CYCLE_UPDATE_ERROR = "CYC-004";
         public const string CYCLE_DELETE_ERROR = "CYC-005";
+
+        // User API Manager Error Codes (USR-API-xxx)
+        public const string USER_EMAIL_EXISTS_ERROR = "USR-API-001";
+        public const string USER_ROLE_INVALID_ERROR = "USR-API-002";
 
         // User Context Manager Error Codes (USR-xxx)
         public const string USER_GET_ALL_ERROR = "USR-001";
