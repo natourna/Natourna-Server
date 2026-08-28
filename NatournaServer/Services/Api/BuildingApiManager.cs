@@ -1,7 +1,10 @@
+using NatournaServer.Constants.Error;
 using NatournaServer.Constants.Log;
+using NatournaServer.Exceptions;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
+using NatournaServer.Models.Api.Requests.Building;
 using NatournaServer.Models.Api.Response.Building;
 using NatournaServer.Models.Entities;
 
@@ -10,11 +13,13 @@ namespace NatournaServer.Services.Api
     public class BuildingApiManager : IBuildingApiManager
     {
         private readonly IBuildingContextManager _contextManager;
+        private readonly ICompoundContextManager _compoundContextManager;
         private readonly IAuditService _auditService;
 
-        public BuildingApiManager(IBuildingContextManager contextManager, IAuditService auditService)
+        public BuildingApiManager(IBuildingContextManager contextManager, ICompoundContextManager compoundContextManager, IAuditService auditService)
         {
             _contextManager = contextManager;
+            _compoundContextManager = compoundContextManager;
             _auditService = auditService;
         }
 
@@ -30,14 +35,12 @@ namespace NatournaServer.Services.Api
             return building == null ? null : MapToResponse(building);
         }
 
-        public async Task<List<BuildingResponse>> GetBuildingsByCompoundIdAsync(int compoundId)
+        public async Task<BuildingResponse> CreateBuildingAsync(BuildingRequest request)
         {
-            List<BuildingEntity> buildings = await _contextManager.GetByCompoundIdAsync(compoundId);
-            return buildings.Select(MapToResponse).ToList();
-        }
+            await EnsureCompoundExistsAsync(request.CompoundId);
 
-        public async Task<BuildingResponse> CreateBuildingAsync(BuildingEntity building)
-        {
+            var building = new BuildingEntity(0, request.Name, request.NumberOfApartments, request.Floors, request.CompoundId);
+
             BuildingEntity created = await _contextManager.CreateAsync(building);
 
             await _auditService.LogAsync(LogAction.Create, "Building", created.Id, null, new { created.Name, created.CompoundId });
@@ -45,7 +48,7 @@ namespace NatournaServer.Services.Api
             return MapToResponse(created);
         }
 
-        public async Task<BuildingResponse?> UpdateBuildingAsync(int id, BuildingEntity building)
+        public async Task<BuildingResponse?> UpdateBuildingAsync(int id, BuildingRequest request)
         {
             BuildingEntity? existing = await _contextManager.GetByIdAsync(id);
 
@@ -54,11 +57,15 @@ namespace NatournaServer.Services.Api
                 return null;
             }
 
+            await EnsureCompoundExistsAsync(request.CompoundId);
+
             var oldValues = new
             {
                 existing.Name,
                 existing.CompoundId
             };
+
+            var building = new BuildingEntity(0, request.Name, request.NumberOfApartments, request.Floors, request.CompoundId);
 
             BuildingEntity? updated = await _contextManager.UpdateAsync(id, building);
 
@@ -84,6 +91,15 @@ namespace NatournaServer.Services.Api
             await _auditService.LogAsync(LogAction.Delete, "Building", id, new { existing.Name, existing.CompoundId }, null);
 
             return await _contextManager.DeleteAsync(id);
+        }
+
+        private async Task EnsureCompoundExistsAsync(int compoundId)
+        {
+            var compound = await _compoundContextManager.GetByIdAsync(compoundId);
+            if (compound == null)
+            {
+                throw new ApiException(ErrorCodes.BUILDING_COMPOUND_INVALID_ERROR, "The requested compound does not exist", $"CompoundId: {compoundId}");
+            }
         }
 
         private static BuildingResponse MapToResponse(BuildingEntity building)

@@ -1,5 +1,5 @@
+using NatournaServer.Models.Api.Requests.Building;
 using NatournaServer.Models.Api.Response.Building;
-using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Interfaces.Api
 {
@@ -9,11 +9,9 @@ namespace NatournaServer.Interfaces.Api
 
         Task<BuildingResponse?> GetBuildingByIdAsync(int id);
 
-        Task<List<BuildingResponse>> GetBuildingsByCompoundIdAsync(int compoundId);
+        Task<BuildingResponse> CreateBuildingAsync(BuildingRequest request);
 
-        Task<BuildingResponse> CreateBuildingAsync(BuildingEntity building);
-
-        Task<BuildingResponse?> UpdateBuildingAsync(int id, BuildingEntity building);
+        Task<BuildingResponse?> UpdateBuildingAsync(int id, BuildingRequest request);
 
         Task<bool> DeleteBuildingAsync(int id);
     }

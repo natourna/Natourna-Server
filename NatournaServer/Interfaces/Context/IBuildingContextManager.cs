@@ -8,8 +8,6 @@ namespace NatournaServer.Interfaces.Context
 
         Task<BuildingEntity?> GetByIdAsync(int id);
 
-        Task<List<BuildingEntity>> GetByCompoundIdAsync(int compoundId);
-
         Task<BuildingEntity> CreateAsync(BuildingEntity building);
 
         Task<BuildingEntity?> UpdateAsync(int id, BuildingEntity building);

@@ -1,5 +1,7 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Requests.Building;
+using NatournaServer.Models.Api.Response.Building;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,21 +19,15 @@ namespace NatournaServer.Controllers
             _buildingManager = buildingManager;
         }
 
-        /// <summary>
-        /// Get all buildings - Any authenticated user
-        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<BuildingEntity>>> GetAllBuildings()
+        public async Task<ActionResult<List<BuildingResponse>>> GetAllBuildings()
         {
             var buildings = await _buildingManager.GetAllBuildingsAsync();
             return Ok(buildings);
         }
 
-        /// <summary>
-        /// Get building by ID - Any authenticated user
-        /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<BuildingEntity>> GetBuildingById(int id)
+        public async Task<ActionResult<BuildingResponse>> GetBuildingById(int id)
         {
             var building = await _buildingManager.GetBuildingByIdAsync(id);
 
@@ -43,35 +39,19 @@ namespace NatournaServer.Controllers
             return Ok(building);
         }
 
-        /// <summary>
-        /// Get buildings by compound ID - Any authenticated user
-        /// </summary>
-        [HttpGet("compound/{compoundId}")]
-        public async Task<ActionResult<List<BuildingEntity>>> GetBuildingsByCompoundId(int compoundId)
-        {
-            var buildings = await _buildingManager.GetBuildingsByCompoundIdAsync(compoundId);
-            return Ok(buildings);
-        }
-
-        /// <summary>
-        /// Create building - Admin only
-        /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<BuildingEntity>> CreateBuilding(BuildingEntity building)
+        [Authorize(Roles = RoleNames.Admin)]
+        public async Task<ActionResult<BuildingResponse>> CreateBuilding([FromBody] BuildingRequest request)
         {
-            var createdBuilding = await _buildingManager.CreateBuildingAsync(building);
+            var createdBuilding = await _buildingManager.CreateBuildingAsync(request);
             return CreatedAtAction(nameof(GetBuildingById), new { id = createdBuilding.Id }, createdBuilding);
         }
 
-        /// <summary>
-        /// Update building - Admin only
-        /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<BuildingEntity>> UpdateBuilding(int id, BuildingEntity building)
+        [Authorize(Roles = RoleNames.Admin)]
+        public async Task<ActionResult<BuildingResponse>> UpdateBuilding(int id, [FromBody] BuildingRequest request)
         {
-            var updatedBuilding = await _buildingManager.UpdateBuildingAsync(id, building);
+            var updatedBuilding = await _buildingManager.UpdateBuildingAsync(id, request);
 
             if (updatedBuilding == null)
             {
@@ -81,11 +61,8 @@ namespace NatournaServer.Controllers
             return Ok(updatedBuilding);
         }
 
-        /// <summary>
-        /// Delete building - Admin only
-        /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeleteBuilding(int id)
         {
             var result = await _buildingManager.DeleteBuildingAsync(id);

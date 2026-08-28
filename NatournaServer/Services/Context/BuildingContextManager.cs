@@ -19,6 +19,7 @@ namespace NatournaServer.Services.Context
             return await _context.Buildings
                 .Include(b => b.Compound)
                 .Include(b => b.Apartments)
+                .OrderBy(b => b.Name)
                 .ToListAsync();
         }
 
@@ -28,14 +29,6 @@ namespace NatournaServer.Services.Context
                 .Include(b => b.Compound)
                 .Include(b => b.Apartments)
                 .FirstOrDefaultAsync(b => b.Id == id);
-        }
-
-        public async Task<List<BuildingEntity>> GetByCompoundIdAsync(int compoundId)
-        {
-            return await _context.Buildings
-                .Include(b => b.Apartments)
-                .Where(b => b.CompoundId == compoundId)
-                .ToListAsync();
         }
 
         public async Task<BuildingEntity> CreateAsync(BuildingEntity building)
