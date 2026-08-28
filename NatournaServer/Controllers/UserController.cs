@@ -1,5 +1,7 @@
 using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
+using NatournaServer.Models.Api.Requests.Paging;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Api.Response.User;
 using NatournaServer.Models.Api.Requests.User;
 using Microsoft.AspNetCore.Authorization;
@@ -22,9 +24,9 @@ namespace NatournaServer.Controllers
 
         [HttpGet]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<List<UserResponse>>> GetAllUsers()
+        public async Task<ActionResult<PagedResponse<UserResponse>>> GetAllUsers([FromQuery] PagedQuery query)
         {
-            var users = await _userManager.GetAllUsersAsync();
+            var users = await _userManager.GetPagedUsersAsync(query);
             return Ok(users);
         }
 

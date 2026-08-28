@@ -26,6 +26,22 @@ namespace NatournaServer.Services.Context
                 .ToListAsync();
         }
 
+        public async Task<(List<UserEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize)
+        {
+            var query = _context.Users
+                .Include(u => u.Role)
+                .AsQueryable();
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderBy(u => u.Email)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
         public async Task<UserEntity?> GetByIdAsync(int id)
         {
             return await _context.Users

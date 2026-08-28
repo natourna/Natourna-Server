@@ -1,7 +1,9 @@
 using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Requests.Bill;
+using NatournaServer.Models.Api.Requests.Paging;
 using NatournaServer.Models.Api.Response.Bill;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,9 +26,9 @@ namespace NatournaServer.Controllers
         /// Get all bills - Any authenticated user
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<BillResponse>>> GetAllBills()
+        public async Task<ActionResult<PagedResponse<BillResponse>>> GetAllBills([FromQuery] PagedQuery query, [FromQuery] int? balanceId = null, [FromQuery] bool? isPaid = null)
         {
-            List<BillResponse> bills = await _billManager.GetAllBillsAsync();
+            var bills = await _billManager.GetPagedBillsAsync(query, balanceId, isPaid);
             return Ok(bills);
         }
 

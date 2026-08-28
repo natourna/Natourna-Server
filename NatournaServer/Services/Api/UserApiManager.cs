@@ -5,7 +5,9 @@ using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Authentication;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
+using NatournaServer.Models.Api.Requests.Paging;
 using NatournaServer.Models.Api.Requests.User;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Api.Response.User;
 using NatournaServer.Models.Entities;
 
@@ -26,10 +28,17 @@ namespace NatournaServer.Services.Api
             _auditService = auditService;
         }
 
-        public async Task<List<UserResponse>> GetAllUsersAsync()
+        public async Task<PagedResponse<UserResponse>> GetPagedUsersAsync(PagedQuery query)
         {
-            var users = await _contextManager.GetAllAsync();
-            return users.Select(u => MapToResponse(u, u.Role!.Name)).ToList();
+            var (items, totalCount) = await _contextManager.GetPagedAsync(query.Page, query.PageSize);
+
+            return new PagedResponse<UserResponse>
+            {
+                Items = items.Select(u => MapToResponse(u, u.Role!.Name)).ToList(),
+                Page = query.Page,
+                PageSize = query.PageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<UserResponse?> GetUserByIdAsync(int id)

@@ -6,6 +6,8 @@ namespace NatournaServer.Interfaces.Context
     {
         Task<List<ApartmentEntity>> GetAllAsync(int? apartmentId = null, int? buildingId = null, bool? isActive = null);
 
+        Task<(List<ApartmentEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, int? buildingId = null, bool? isActive = null, string? search = null);
+
         Task<ApartmentEntity?> GetByIdAsync(int id);
 
         Task<List<ApartmentEntity>> GetByBuildingIdAsync(int buildingId);

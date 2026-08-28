@@ -1,6 +1,8 @@
 using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
+using NatournaServer.Models.Api.Requests.Paging;
 using NatournaServer.Models.Api.Requests.Payment;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Api.Response.Payment;
 using NatournaServer.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -24,9 +26,9 @@ namespace NatournaServer.Controllers
         /// Get all payments - Any authenticated user
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<PaymentResponse>>> GetAllPayments()
+        public async Task<ActionResult<PagedResponse<PaymentResponse>>> GetAllPayments([FromQuery] PagedQuery query, [FromQuery] int? cycleId = null, [FromQuery] bool? isPaid = null)
         {
-            var payments = await _paymentApiManager.GetAllPaymentsAsync();
+            var payments = await _paymentApiManager.GetPagedPaymentsAsync(query, cycleId: cycleId, isPaid: isPaid);
             return Ok(payments);
         }
 
@@ -49,9 +51,9 @@ namespace NatournaServer.Controllers
         /// Get payments by apartment ID - Any authenticated user
         /// </summary>
         [HttpGet("apartment/{apartmentId}")]
-        public async Task<ActionResult<List<PaymentResponse>>> GetPaymentsByApartmentId(int apartmentId)
+        public async Task<ActionResult<PagedResponse<PaymentResponse>>> GetPaymentsByApartmentId(int apartmentId, [FromQuery] PagedQuery query)
         {
-            List<PaymentResponse> payments = await _paymentApiManager.GetPaymentsByApartmentIdAsync(apartmentId);
+            var payments = await _paymentApiManager.GetPagedPaymentsAsync(query, apartmentId: apartmentId);
             return Ok(payments);
         }
 

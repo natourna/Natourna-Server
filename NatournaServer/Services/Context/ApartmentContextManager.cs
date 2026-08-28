@@ -39,6 +39,42 @@ namespace NatournaServer.Services.Context
             return await query.ToListAsync();
         }
 
+        public async Task<(List<ApartmentEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, int? buildingId = null, bool? isActive = null, string? search = null)
+        {
+            var query = _context.Apartments
+                .Include(a => a.Building)
+                .AsQueryable();
+
+            if (buildingId.HasValue)
+            {
+                query = query.Where(a => a.BuildingId == buildingId.Value);
+            }
+
+            if (isActive.HasValue)
+            {
+                query = query.Where(a => a.IsActive == isActive.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var pattern = $"%{search.Trim()}%";
+                query = query.Where(a =>
+                    EF.Functions.ILike(a.ApartmentInfo, pattern) ||
+                    (a.Owner != null && EF.Functions.ILike(a.Owner, pattern)) ||
+                    (a.Tenant != null && EF.Functions.ILike(a.Tenant, pattern)));
+            }
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderBy(a => a.BuildingId)
+                .ThenBy(a => a.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
         public async Task<ApartmentEntity?> GetByIdAsync(int id)
         {
             return await _context.Apartments

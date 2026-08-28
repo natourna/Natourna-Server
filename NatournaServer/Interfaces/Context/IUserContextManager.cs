@@ -8,6 +8,8 @@ namespace NatournaServer.Interfaces.Context
 
         Task<List<UserEntity>> GetAllAsync();
 
+        Task<(List<UserEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize);
+
         Task<UserEntity?> GetByIdAsync(int id);
 
         Task<UserEntity?> GetByEmailAsync(string email);
