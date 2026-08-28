@@ -16,6 +16,7 @@ try
     builder.Services.AddAuthenticationService(builder.Configuration);
     builder.Services.AddBootstrapConfiguration(builder.Configuration);
     builder.Services.AddCorsPolicy(builder.Configuration);
+    builder.Services.AddRateLimiting();
     builder.WebHost.AddListenPort(builder.Configuration);
 
     var app = builder.Build();
@@ -32,6 +33,8 @@ try
 
     app.UseAuthentication();
     app.UseAuthorization();
+
+    app.UseRateLimiter();
 
     app.MapControllers();
 
