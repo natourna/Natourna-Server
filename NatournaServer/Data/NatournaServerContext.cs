@@ -1,12 +1,9 @@
-﻿using NatournaServer.Models.Entities;
+﻿using NatournaServer.Constants.User;
+using NatournaServer.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace NatournaServer.Data
 {
-    /// <summary>
-    /// Database context for Natourna Server System.
-    /// Manages all entities and their relationships for building, apartment, payment, and financial operations.
-    /// </summary>
     public class NatournaServerContext : DbContext
     {
 
@@ -27,6 +24,8 @@ namespace NatournaServer.Data
         public DbSet<PaymentAllocationEntity> PaymentAllocations { get; set; }
 
         public DbSet<UserEntity> Users { get; set; }
+
+        public DbSet<RoleEntity> Roles { get; set; }
 
         public DbSet<AuditEntity> Audits { get; set; }
 
@@ -174,6 +173,26 @@ namespace NatournaServer.Data
 
             modelBuilder.Entity<CycleEntity>()
                 .HasIndex(c => c.EndDate);
+
+            modelBuilder.Entity<RoleEntity>()
+                .HasMany(r => r.Users)
+                .WithOne(u => u.Role)
+                .HasForeignKey(u => u.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RoleEntity>()
+                .HasIndex(r => r.Name)
+                .IsUnique();
+
+            modelBuilder.Entity<RoleEntity>()
+                .HasData(new RoleEntity(1, RoleNames.Admin), new RoleEntity(2, RoleNames.User));
+
+            modelBuilder.Entity<UserEntity>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<UserEntity>()
+                .HasIndex(u => u.RoleId);
 
             // Audit indexes
             modelBuilder.Entity<AuditEntity>()
