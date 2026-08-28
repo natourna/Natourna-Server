@@ -1,5 +1,6 @@
 using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
+using NatournaServer.Models.Api.Requests.Compound;
 using NatournaServer.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -49,7 +50,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<CompoundEntity>> CreateCompound(CompoundEntity compound)
+        public async Task<ActionResult<CompoundEntity>> CreateCompound(CompoundRequest compound)
         {
             var createdCompound = await _compoundManager.CreateCompoundAsync(compound);
             return CreatedAtAction(nameof(GetCompoundById), new { id = createdCompound.Id }, createdCompound);
@@ -60,7 +61,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<CompoundEntity>> UpdateCompound(int id, CompoundEntity compound)
+        public async Task<ActionResult<CompoundEntity>> UpdateCompound(int id, CompoundRequest compound)
         {
             var updatedCompound = await _compoundManager.UpdateCompoundAsync(id, compound);
 

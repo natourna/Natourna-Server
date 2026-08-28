@@ -2,6 +2,7 @@ using NatournaServer.Constants.Log;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
+using NatournaServer.Models.Api.Requests.Building;
 using NatournaServer.Models.Api.Response.Building;
 using NatournaServer.Models.Entities;
 
@@ -36,16 +37,16 @@ namespace NatournaServer.Services.Api
             return buildings.Select(MapToResponse).ToList();
         }
 
-        public async Task<BuildingResponse> CreateBuildingAsync(BuildingEntity building)
+        public async Task<BuildingResponse> CreateBuildingAsync(BuildingRequest building)
         {
-            BuildingEntity created = await _contextManager.CreateAsync(building);
+            BuildingEntity created = await _contextManager.CreateAsync(MapToEntity(building));
 
             await _auditService.LogAsync(LogAction.Create, "Building", created.Id, null, new { created.Name, created.CompoundId });
 
             return MapToResponse(created);
         }
 
-        public async Task<BuildingResponse?> UpdateBuildingAsync(int id, BuildingEntity building)
+        public async Task<BuildingResponse?> UpdateBuildingAsync(int id, BuildingRequest building)
         {
             BuildingEntity? existing = await _contextManager.GetByIdAsync(id);
 
@@ -60,7 +61,7 @@ namespace NatournaServer.Services.Api
                 existing.CompoundId
             };
 
-            BuildingEntity? updated = await _contextManager.UpdateAsync(id, building);
+            BuildingEntity? updated = await _contextManager.UpdateAsync(id, MapToEntity(building));
 
             if (updated != null)
             {
@@ -84,6 +85,11 @@ namespace NatournaServer.Services.Api
             await _auditService.LogAsync(LogAction.Delete, "Building", id, new { existing.Name, existing.CompoundId }, null);
 
             return await _contextManager.DeleteAsync(id);
+        }
+
+        private static BuildingEntity MapToEntity(BuildingRequest request)
+        {
+            return new BuildingEntity(0, request.Name, request.NumberOfApartments, request.Floors, request.CompoundId);
         }
 
         private static BuildingResponse MapToResponse(BuildingEntity building)

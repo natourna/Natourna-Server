@@ -1,3 +1,4 @@
+using NatournaServer.Models.Api.Requests.Balance;
 using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Interfaces.Api
@@ -10,9 +11,9 @@ namespace NatournaServer.Interfaces.Api
 
         Task<List<BalanceEntity>> GetBalancesByCompoundIdAsync(int compoundId);
 
-        Task<BalanceEntity> CreateBalanceAsync(BalanceEntity balance);
+        Task<BalanceEntity> CreateBalanceAsync(BalanceRequest balance);
 
-        Task<BalanceEntity?> UpdateBalanceAsync(int id, BalanceEntity balance);
+        Task<BalanceEntity?> UpdateBalanceAsync(int id, BalanceRequest balance);
 
         Task<bool> DeleteBalanceAsync(int id);
     }

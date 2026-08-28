@@ -62,7 +62,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<BillResponse>> UpdateBill(int id, BillEntity bill)
+        public async Task<ActionResult<BillResponse>> UpdateBill(int id, BillUpdateRequest bill)
         {
             var updatedBill = await _billManager.UpdateBillAsync(id, bill);
 
@@ -107,7 +107,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPatch("{id}/mark-as-unpaid")]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<BillEntity>> MarkBillAsUnpaid(int id)
+        public async Task<ActionResult<BillResponse>> MarkBillAsUnpaid(int id)
         {
             BillResponse updatedBill = await _billManager.MarkBillAsUnpaidAsync(id);
             return Ok(updatedBill);

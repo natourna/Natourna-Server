@@ -1,6 +1,5 @@
 using NatournaServer.Models.Api.Requests.Bill;
 using NatournaServer.Models.Api.Response.Bill;
-using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Interfaces.Api
 {
@@ -12,7 +11,7 @@ namespace NatournaServer.Interfaces.Api
 
         Task<BillResponse> CreateBillAsync(BillRequest bill);
 
-        Task<BillResponse?> UpdateBillAsync(int id, BillEntity bill);
+        Task<BillResponse?> UpdateBillAsync(int id, BillUpdateRequest bill);
 
         Task<bool> DeleteBillAsync(int id);
 

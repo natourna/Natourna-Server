@@ -1,3 +1,4 @@
+using NatournaServer.Models.Api.Requests.Compound;
 using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Interfaces.Api
@@ -8,9 +9,9 @@ namespace NatournaServer.Interfaces.Api
 
         Task<CompoundEntity?> GetCompoundByIdAsync(int id);
 
-        Task<CompoundEntity> CreateCompoundAsync(CompoundEntity compound);
+        Task<CompoundEntity> CreateCompoundAsync(CompoundRequest compound);
 
-        Task<CompoundEntity?> UpdateCompoundAsync(int id, CompoundEntity compound);
+        Task<CompoundEntity?> UpdateCompoundAsync(int id, CompoundRequest compound);
 
         Task<bool> DeleteCompoundAsync(int id);
     }

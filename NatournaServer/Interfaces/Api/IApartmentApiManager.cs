@@ -1,5 +1,5 @@
 using NatournaServer.Models.Api.Response.Apartment;
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Requests.Apartment;
 
 namespace NatournaServer.Interfaces.Api
 {
@@ -11,9 +11,9 @@ namespace NatournaServer.Interfaces.Api
 
         Task<List<ApartmentResponse>> GetApartmentsByBuildingIdAsync(int buildingId);
 
-        Task<ApartmentResponse> CreateApartmentAsync(ApartmentEntity apartment);
+        Task<ApartmentResponse> CreateApartmentAsync(ApartmentRequest apartment);
 
-        Task<ApartmentResponse?> UpdateApartmentAsync(int id, ApartmentEntity apartment);
+        Task<ApartmentResponse?> UpdateApartmentAsync(int id, ApartmentRequest apartment);
 
         Task<bool> DeleteApartmentAsync(int id);
 

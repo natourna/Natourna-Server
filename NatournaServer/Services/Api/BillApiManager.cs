@@ -52,12 +52,19 @@ namespace NatournaServer.Services.Api
             return MapToResponse(created);
         }
 
-        public async Task<BillResponse?> UpdateBillAsync(int id, BillEntity bill)
+        public async Task<BillResponse?> UpdateBillAsync(int id, BillUpdateRequest bill)
         {
             BillEntity? existing = await _billContextManager.GetByIdAsync(id);
 
             if (existing == null)
                 return null;
+
+            BillEntity billEntity = new(bill.Label, bill.Amount, existing.BalanceId)
+            {
+                DueDate = bill.DueDate,
+                IsPaid = bill.IsPaid,
+                PaymentDate = bill.PaymentDate
+            };
 
             var oldValues = new
             {
@@ -66,7 +73,7 @@ namespace NatournaServer.Services.Api
                 existing.IsPaid
             };
 
-            BillEntity? updated = await _billContextManager.UpdateAsync(id, bill);
+            BillEntity? updated = await _billContextManager.UpdateAsync(id, billEntity);
 
             if (updated != null)
             {
