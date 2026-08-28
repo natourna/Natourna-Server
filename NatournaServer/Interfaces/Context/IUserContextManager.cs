@@ -4,6 +4,8 @@ namespace NatournaServer.Interfaces.Context
 {
     public interface IUserContextManager
     {
+        Task<bool> AnyAsync();
+
         Task<List<UserEntity>> GetAllAsync();
 
         Task<UserEntity?> GetByIdAsync(int id);
