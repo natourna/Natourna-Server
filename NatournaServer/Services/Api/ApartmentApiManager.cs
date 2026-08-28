@@ -2,6 +2,7 @@ using NatournaServer.Constants.Log;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
+using NatournaServer.Models.Api.Requests.Apartment;
 using NatournaServer.Models.Api.Response.Apartment;
 using NatournaServer.Models.Entities;
 
@@ -36,16 +37,16 @@ namespace NatournaServer.Services.Api
             return apartments.Select(MapToResponse).ToList();
         }
 
-        public async Task<ApartmentResponse> CreateApartmentAsync(ApartmentEntity apartment)
+        public async Task<ApartmentResponse> CreateApartmentAsync(ApartmentRequest apartment)
         {
-            ApartmentEntity created = await _contextManager.CreateAsync(apartment);
+            ApartmentEntity created = await _contextManager.CreateAsync(MapToEntity(apartment));
 
             await _auditService.LogAsync(LogAction.Create, "Apartment", created.Id, null, new { created.BuildingId, created.ApartmentInfo, created.IsActive });
 
             return MapToResponse(created);
         }
 
-        public async Task<ApartmentResponse?> UpdateApartmentAsync(int id, ApartmentEntity apartment)
+        public async Task<ApartmentResponse?> UpdateApartmentAsync(int id, ApartmentRequest apartment)
         {
             ApartmentEntity? existing = await _contextManager.GetByIdAsync(id);
 
@@ -61,7 +62,7 @@ namespace NatournaServer.Services.Api
                 existing.IsActive
             };
 
-            ApartmentEntity? updated = await _contextManager.UpdateAsync(id, apartment);
+            ApartmentEntity? updated = await _contextManager.UpdateAsync(id, MapToEntity(apartment));
 
             if (updated != null)
             {
@@ -111,6 +112,15 @@ namespace NatournaServer.Services.Api
         /// <summary>
         /// Maps ApartmentEntity to ApartmentResponse DTO
         /// </summary>
+        private static ApartmentEntity MapToEntity(ApartmentRequest request)
+        {
+            return new ApartmentEntity(0, request.ApartmentInfo, request.Floor, request.IsActive, request.BuildingId)
+            {
+                Owner = request.Owner,
+                Tenant = request.Tenant
+            };
+        }
+
         private static ApartmentResponse MapToResponse(ApartmentEntity apartment)
         {
             return new ApartmentResponse

@@ -1,7 +1,7 @@
 using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Response.Apartment;
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Requests.Apartment;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -60,7 +60,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<ApartmentResponse>> CreateApartment(ApartmentEntity apartment)
+        public async Task<ActionResult<ApartmentResponse>> CreateApartment(ApartmentRequest apartment)
         {
             ApartmentResponse createdApartment = await _apartmentManager.CreateApartmentAsync(apartment);
             return CreatedAtAction(nameof(GetApartmentById), new { id = createdApartment.Id }, createdApartment);
@@ -71,7 +71,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<ApartmentResponse>> UpdateApartment(int id, ApartmentEntity apartment)
+        public async Task<ActionResult<ApartmentResponse>> UpdateApartment(int id, ApartmentRequest apartment)
         {
             ApartmentResponse? updatedApartment = await _apartmentManager.UpdateApartmentAsync(id, apartment);
 
