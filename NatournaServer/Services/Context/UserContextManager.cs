@@ -14,6 +14,11 @@ namespace NatournaServer.Services.Context
             _context = context;
         }
 
+        public async Task<bool> AnyAsync()
+        {
+            return await _context.Users.AnyAsync();
+        }
+
         public async Task<List<UserEntity>> GetAllAsync()
         {
             return await _context.Users

@@ -14,12 +14,14 @@ try
     builder.Services.AddContextManagers();
     builder.Services.AddSwaggerServices();
     builder.Services.AddAuthenticationService(builder.Configuration);
+    builder.Services.AddBootstrapConfiguration(builder.Configuration);
     builder.WebHost.AddListenPort(builder.Configuration);
 
     var app = builder.Build();
 
     await app.Services.AddContextService(app.Environment.IsDevelopment());
     await app.Services.SeedRolesAsync();
+    await app.Services.SeedBootstrapAdminAsync();
 
     app.UseGlobalExceptionLogging();
     app.UseRequestLogging();
