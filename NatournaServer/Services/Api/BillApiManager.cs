@@ -6,6 +6,7 @@ using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
 using NatournaServer.Models.Api.Requests.Bill;
 using NatournaServer.Models.Api.Response.Bill;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Services.Api
@@ -25,10 +26,17 @@ namespace NatournaServer.Services.Api
             _logger = logger;
         }
 
-        public async Task<List<BillResponse>> GetAllBillsAsync()
+        public async Task<PagedResponse<BillResponse>> GetBillsAsync(int page, int pageSize, bool? isPaid)
         {
-            List<BillEntity> bills = await _billContextManager.GetAllAsync();
-            return bills.Select(MapToResponse).ToList();
+            (List<BillEntity> items, int totalCount) = await _billContextManager.GetPagedAsync(page, pageSize, isPaid);
+
+            return new PagedResponse<BillResponse>
+            {
+                Items = items.Select(MapToResponse).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<BillResponse?> GetBillByIdAsync(int id)
@@ -37,11 +45,18 @@ namespace NatournaServer.Services.Api
             return bill == null ? null : MapToResponse(bill);
         }
 
-        public async Task<BillResponse> CreateBillAsync(BillRequest bill)
+        public async Task<BillResponse> CreateBillAsync(BillRequest request)
         {
-            BillEntity billEntity = new(bill.Label, bill.Amount, bill.BalanceId)
+            BalanceEntity? balance = await _balanceContextManager.GetByIdAsync(request.BalanceId);
+            if (balance == null)
             {
-                DueDate = bill.DueDate,
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(request.BalanceId);
+                throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
+            }
+
+            BillEntity billEntity = new(request.Label, request.Amount, request.BalanceId)
+            {
+                DueDate = request.DueDate,
                 IsPaid = false
             };
 
@@ -52,7 +67,7 @@ namespace NatournaServer.Services.Api
             return MapToResponse(created);
         }
 
-        public async Task<BillResponse?> UpdateBillAsync(int id, BillEntity bill)
+        public async Task<BillResponse?> UpdateBillAsync(int id, BillUpdateRequest request)
         {
             BillEntity? existing = await _billContextManager.GetByIdAsync(id);
 
@@ -66,7 +81,7 @@ namespace NatournaServer.Services.Api
                 existing.IsPaid
             };
 
-            BillEntity? updated = await _billContextManager.UpdateAsync(id, bill);
+            BillEntity? updated = await _billContextManager.UpdateAsync(id, request.Label, request.Amount, request.DueDate);
 
             if (updated != null)
             {
@@ -96,8 +111,6 @@ namespace NatournaServer.Services.Api
         {
             try
             {
-                _logger.LogInformation("Marking bill {BillId} as paid", billId);
-
                 BillEntity? bill = await _billContextManager.GetByIdAsync(billId);
                 if (bill == null)
                 {
@@ -113,8 +126,7 @@ namespace NatournaServer.Services.Api
                     throw new ApiException(ErrorCodes.BILL_ALREADY_PAID_ERROR, userMessage, technicalDetails);
                 }
 
-                List<BalanceEntity> balances = await _balanceContextManager.GetAllAsync(balanceId: bill.BalanceId);
-                BalanceEntity? balance = balances.FirstOrDefault();
+                BalanceEntity? balance = await _balanceContextManager.GetByIdAsync(bill.BalanceId);
 
                 if (balance == null)
                 {
@@ -141,10 +153,8 @@ namespace NatournaServer.Services.Api
                     throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
                 }
 
-                bill.IsPaid = true;
-                bill.PaymentDate = DateTime.UtcNow;
-                bill.UpdatedAt = DateTime.UtcNow;
-                BillEntity? updatedBill = await _billContextManager.UpdateAsync(billId, bill);
+                DateTime paymentDate = DateTime.UtcNow;
+                BillEntity? updatedBill = await _billContextManager.SetPaidStatusAsync(billId, true, paymentDate);
 
                 if (updatedBill == null)
                 {
@@ -156,10 +166,9 @@ namespace NatournaServer.Services.Api
                     throw new ApiException(ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage, technicalDetails);
                 }
 
-                await _auditService.LogAsync(LogAction.Update, "Bill", billId, new { IsPaid = false, PaymentDate = (DateTime?)null }, new { IsPaid = true, bill.PaymentDate });
+                await _auditService.LogAsync(LogAction.Update, "Bill", billId, new { IsPaid = false, PaymentDate = (DateTime?)null }, new { IsPaid = true, PaymentDate = paymentDate });
 
-                _logger.LogInformation("Successfully marked bill {BillId} as paid on {PaymentDate} and deducted {Amount:C} from balance {BalanceId}",
-                    billId, bill.PaymentDate, bill.Amount, balance.Id);
+                _logger.LogInformation("Marked bill {BillId} as paid and deducted {Amount} from balance {BalanceId}", billId, bill.Amount, balance.Id);
 
                 return MapToResponse(updatedBill);
             }
@@ -179,8 +188,6 @@ namespace NatournaServer.Services.Api
         {
             try
             {
-                _logger.LogInformation("Marking bill {BillId} as unpaid", billId);
-
                 BillEntity? bill = await _billContextManager.GetByIdAsync(billId);
                 if (bill == null)
                 {
@@ -196,8 +203,7 @@ namespace NatournaServer.Services.Api
                     throw new ApiException(ErrorCodes.BILL_ALREADY_UNPAID_ERROR, userMessage, technicalDetails);
                 }
 
-                List<BalanceEntity> balances = await _balanceContextManager.GetAllAsync(balanceId: bill.BalanceId);
-                BalanceEntity? balance = balances.FirstOrDefault();
+                BalanceEntity? balance = await _balanceContextManager.GetByIdAsync(bill.BalanceId);
 
                 if (balance == null)
                 {
@@ -218,11 +224,7 @@ namespace NatournaServer.Services.Api
                     throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
                 }
 
-                bill.IsPaid = false;
-                bill.PaymentDate = null;
-                bill.UpdatedAt = DateTime.UtcNow;
-
-                BillEntity? updatedBill = await _billContextManager.UpdateAsync(billId, bill);
+                BillEntity? updatedBill = await _billContextManager.SetPaidStatusAsync(billId, false, null);
 
                 if (updatedBill == null)
                 {
@@ -236,8 +238,7 @@ namespace NatournaServer.Services.Api
 
                 await _auditService.LogAsync(LogAction.Update, "Bill", billId, new { IsPaid = true, bill.PaymentDate }, new { IsPaid = false, PaymentDate = (DateTime?)null });
 
-                _logger.LogInformation("Successfully marked bill {BillId} as unpaid and added {Amount:C} back to balance {BalanceId}",
-                    billId, bill.Amount, balance.Id);
+                _logger.LogInformation("Marked bill {BillId} as unpaid and added {Amount} back to balance {BalanceId}", billId, bill.Amount, balance.Id);
 
                 return MapToResponse(updatedBill);
             }

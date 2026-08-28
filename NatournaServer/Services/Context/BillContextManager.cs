@@ -18,45 +18,31 @@ namespace NatournaServer.Services.Context
             _logger = logger;
         }
 
-        public async Task<List<BillEntity>> GetAllAsync(int? billId = null, int? balanceId = null, bool? isPaid = null, DateTime? dueDateFrom = null, DateTime? dueDateTo = null)
+        public async Task<(List<BillEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, bool? isPaid = null)
         {
             try
             {
-                _logger.LogInformation("Getting all bills with filters - BalanceId: {BalanceId}, IsPaid: {IsPaid}, DueDateFrom: {DueDateFrom}, DueDateTo: {DueDateTo}", balanceId, isPaid, dueDateFrom, dueDateTo);
-
                 var query = _context.Bills.Include(b => b.Balance).AsQueryable();
-
-                // Apply filters
-                if (billId.HasValue)
-                {
-                    query = query.Where(b => b.Id == billId.Value);
-                }
-
-                if (balanceId.HasValue)
-                {
-                    query = query.Where(b => b.BalanceId == balanceId.Value);
-                }
 
                 if (isPaid.HasValue)
                 {
                     query = query.Where(b => b.IsPaid == isPaid.Value);
                 }
 
-                if (dueDateFrom.HasValue)
-                {
-                    query = query.Where(b => b.DueDate >= dueDateFrom.Value);
-                }
+                int totalCount = await query.CountAsync();
 
-                if (dueDateTo.HasValue)
-                {
-                    query = query.Where(b => b.DueDate <= dueDateTo.Value);
-                }
+                var items = await query
+                    .OrderByDescending(b => b.DueDate)
+                    .ThenByDescending(b => b.Id)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
 
-                return await query.ToListAsync();
+                return (items, totalCount);
             }
             catch (Exception ex)
             {
-                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.GetAllFailed(balanceId, isPaid, dueDateFrom, dueDateTo);
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.GetAllFailed(null, isPaid, null, null);
 
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}. {TechnicalDetails}", ErrorCodes.BILL_GET_ALL_ERROR, userMessage, technicalDetails);
 
@@ -68,7 +54,9 @@ namespace NatournaServer.Services.Context
         {
             try
             {
-                return (await GetAllAsync(billId: id)).FirstOrDefault();
+                return await _context.Bills
+                    .Include(b => b.Balance)
+                    .FirstOrDefaultAsync(b => b.Id == id);
             }
             catch (Exception ex)
             {
@@ -80,35 +68,17 @@ namespace NatournaServer.Services.Context
             }
         }
 
-        public async Task<List<BillEntity>> GetByBalanceIdAsync(int balanceId)
-        {
-            try
-            {
-                return (await GetAllAsync(balanceId: balanceId)).ToList();
-            }
-            catch (Exception ex)
-            {
-                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.GetByBalanceIdFailed(balanceId);
-
-                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_GET_ALL_ERROR, userMessage);
-
-                throw new ContextException(ErrorCodes.BILL_GET_ALL_ERROR, userMessage, technicalDetails, ex);
-            }
-        }
-
         public async Task<BillEntity> CreateAsync(BillEntity bill)
         {
             try
             {
-                _logger.LogInformation("Creating new bill - Label: {Label}, Amount: {Amount}, BalanceId: {BalanceId}", bill.Label, bill.Amount, bill.BalanceId);
-
                 _context.Bills.Add(bill);
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully created bill with ID {BillId}", bill.Id);
-
-                return bill;
+                return await _context.Bills
+                    .Include(b => b.Balance)
+                    .FirstAsync(b => b.Id == bill.Id);
             }
             catch (Exception ex)
             {
@@ -120,39 +90,60 @@ namespace NatournaServer.Services.Context
             }
         }
 
-        public async Task<BillEntity?> UpdateAsync(int id, BillEntity bill)
+        public async Task<BillEntity?> UpdateAsync(int id, string label, decimal amount, DateTime? dueDate)
         {
             try
             {
-                _logger.LogInformation("Updating bill with ID: {BillId}", id);
-
                 var existingBill = await _context.Bills.FindAsync(id);
                 if (existingBill == null)
                 {
-                    _logger.LogWarning("Cannot update - Bill with ID {BillId} not found", id);
                     return null;
                 }
 
-                existingBill.Label = bill.Label;
-                existingBill.IsPaid = bill.IsPaid;
-                existingBill.PaymentDate = bill.PaymentDate;
-                existingBill.Amount = bill.Amount;
-                existingBill.DueDate = bill.DueDate;
+                existingBill.Label = label;
+                existingBill.Amount = amount;
+                existingBill.DueDate = dueDate;
                 existingBill.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Successfully updated bill with ID {BillId}", id);
-
-                return existingBill;
+                return await _context.Bills
+                    .Include(b => b.Balance)
+                    .FirstAsync(b => b.Id == id);
             }
             catch (Exception ex)
             {
-                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.UpdateFailed(id, bill);
+                _logger.LogError(ex, "[{ErrorCode}] Failed to update bill with ID {BillId}", ErrorCodes.BILL_UPDATE_ERROR, id);
 
-                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_UPDATE_ERROR, userMessage);
+                throw new ContextException(ErrorCodes.BILL_UPDATE_ERROR, $"Failed to update bill with ID {id}", $"BillId: {id}", ex);
+            }
+        }
 
-                throw new ContextException(ErrorCodes.BILL_UPDATE_ERROR, userMessage, technicalDetails, ex);
+        public async Task<BillEntity?> SetPaidStatusAsync(int id, bool isPaid, DateTime? paymentDate)
+        {
+            try
+            {
+                var existingBill = await _context.Bills.FindAsync(id);
+                if (existingBill == null)
+                {
+                    return null;
+                }
+
+                existingBill.IsPaid = isPaid;
+                existingBill.PaymentDate = paymentDate;
+                existingBill.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                return await _context.Bills
+                    .Include(b => b.Balance)
+                    .FirstAsync(b => b.Id == id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[{ErrorCode}] Failed to update paid status for bill with ID {BillId}", ErrorCodes.BILL_UPDATE_ERROR, id);
+
+                throw new ContextException(ErrorCodes.BILL_UPDATE_ERROR, $"Failed to update bill with ID {id}", $"BillId: {id}", ex);
             }
         }
 
@@ -160,19 +151,14 @@ namespace NatournaServer.Services.Context
         {
             try
             {
-                _logger.LogInformation("Deleting bill with ID: {BillId}", id);
-
                 var bill = await _context.Bills.FindAsync(id);
                 if (bill == null)
                 {
-                    _logger.LogWarning("Cannot delete - Bill with ID {BillId} not found", id);
                     return false;
                 }
 
                 _context.Bills.Remove(bill);
                 await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Successfully deleted bill with ID {BillId}", id);
 
                 return true;
             }

@@ -1,8 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace NatournaServer.Models.Api.Requests.Bill
 {
-    public class BillRequest
+    public class BillUpdateRequest
     {
         [Required]
         [MaxLength(200)]
@@ -12,8 +12,5 @@ namespace NatournaServer.Models.Api.Requests.Bill
         public decimal Amount { get; set; }
 
         public DateTime? DueDate { get; set; }
-
-        [Range(1, int.MaxValue)]
-        public int BalanceId { get; set; }
     }
 }

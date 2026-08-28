@@ -4,15 +4,15 @@ namespace NatournaServer.Interfaces.Context
 {
     public interface IBillContextManager
     {
-        Task<List<BillEntity>> GetAllAsync(int? billId = null, int? balanceId = null, bool? isPaid = null, DateTime? dueDateFrom = null, DateTime? dueDateTo = null);
+        Task<(List<BillEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, bool? isPaid = null);
 
         Task<BillEntity?> GetByIdAsync(int id);
 
-        Task<List<BillEntity>> GetByBalanceIdAsync(int balanceId);
-
         Task<BillEntity> CreateAsync(BillEntity bill);
 
-        Task<BillEntity?> UpdateAsync(int id, BillEntity bill);
+        Task<BillEntity?> UpdateAsync(int id, string label, decimal amount, DateTime? dueDate);
+
+        Task<BillEntity?> SetPaidStatusAsync(int id, bool isPaid, DateTime? paymentDate);
 
         Task<bool> DeleteAsync(int id);
     }
