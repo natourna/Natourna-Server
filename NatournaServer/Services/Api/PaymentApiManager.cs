@@ -62,7 +62,7 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.InvalidBalanceAllocations(totalPercentage);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_INVALID_ALLOCATIONS_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.PAYMENT_INVALID_ALLOCATIONS_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.PAYMENT_INVALID_ALLOCATIONS_ERROR, userMessage, technicalDetails, statusCode: 422);
                 }
 
                 foreach (int balanceId in request.Allocations.Select(x => x.BalanceId))
@@ -73,7 +73,7 @@ namespace NatournaServer.Services.Api
                     {
                         (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(balanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
-                        throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
+                        throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails, statusCode: 404);
                     }
                 }
 
@@ -120,7 +120,7 @@ namespace NatournaServer.Services.Api
             {
                 (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.CreateWithBalancesFailed(request);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_CREATE_ERROR, userMessage);
-                throw new ApiException(ErrorCodes.PAYMENT_CREATE_ERROR, userMessage, technicalDetails, ex);
+                throw new ApiException(ErrorCodes.PAYMENT_CREATE_ERROR, userMessage, technicalDetails, ex, statusCode: 500);
             }
         }
 
@@ -187,14 +187,14 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.PaymentNotFound(paymentId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage, technicalDetails, statusCode: 404);
                 }
 
                 if (payment.IsPaid)
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.AlreadyPaid(paymentId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_ALREADY_PAID_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.PAYMENT_ALREADY_PAID_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.PAYMENT_ALREADY_PAID_ERROR, userMessage, technicalDetails, statusCode: 409);
                 }
 
                 List<PaymentAllocationEntity> allocations = await _paymentAllocationContextManager.GetAllAsync(paymentId: paymentId);
@@ -202,7 +202,7 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsPaidFailed(paymentId);
                     _logger.LogWarning("[{ErrorCode}] No allocations found for payment {PaymentId}", ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, paymentId);
-                    throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, $"{technicalDetails}, No allocations found");
+                    throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, $"{technicalDetails}, No allocations found", statusCode: 500);
                 }
 
                 List<(int balanceId, decimal amount)> balanceUpdates = [];
@@ -216,7 +216,7 @@ namespace NatournaServer.Services.Api
                     {
                         (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(allocation.BalanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
-                        throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
+                        throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails, statusCode: 404);
                     }
 
                     balance.CurrentAmount += allocation.AllocatedAmount;
@@ -230,7 +230,7 @@ namespace NatournaServer.Services.Api
 
                         (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
                         _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_UPDATE_ERROR, userMessage);
-                        throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
+                        throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails, statusCode: 500);
                     }
 
                     balanceUpdates.Add((balance.Id, allocation.AllocatedAmount));
@@ -250,7 +250,7 @@ namespace NatournaServer.Services.Api
 
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsPaidFailed(paymentId);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, technicalDetails, statusCode: 500);
                 }
 
                 await _auditService.LogAsync(LogAction.Update, "Payment", paymentId, new { IsPaid = false, PaymentDate = (DateTime?)null }, new { IsPaid = true, payment.PaymentDate });
@@ -267,7 +267,7 @@ namespace NatournaServer.Services.Api
             {
                 (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsPaidFailed(paymentId);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage);
-                throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, technicalDetails, ex);
+                throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, technicalDetails, ex, statusCode: 500);
             }
         }
 
@@ -283,14 +283,14 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.PaymentNotFound(paymentId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.PAYMENT_NOT_FOUND_ERROR, userMessage, technicalDetails, statusCode: 404);
                 }
 
                 if (!payment.IsPaid)
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.AlreadyUnpaid(paymentId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_ALREADY_UNPAID_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.PAYMENT_ALREADY_UNPAID_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.PAYMENT_ALREADY_UNPAID_ERROR, userMessage, technicalDetails, statusCode: 409);
                 }
 
                 List<PaymentAllocationEntity> allocations = await _paymentAllocationContextManager.GetAllAsync(paymentId: paymentId);
@@ -299,7 +299,7 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
                     _logger.LogWarning("[{ErrorCode}] No allocations found for payment {PaymentId}", ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, paymentId);
-                    throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, $"{technicalDetails}, No allocations found");
+                    throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, $"{technicalDetails}, No allocations found", statusCode: 500);
                 }
 
                 List<(int balanceId, decimal amount)> balanceUpdates = new();
@@ -312,7 +312,7 @@ namespace NatournaServer.Services.Api
                     {
                         (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(allocation.BalanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
-                        throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
+                        throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails, statusCode: 404);
                     }
 
                     balance.CurrentAmount -= allocation.AllocatedAmount;
@@ -326,7 +326,7 @@ namespace NatournaServer.Services.Api
 
                         (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
                         _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_UPDATE_ERROR, userMessage);
-                        throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
+                        throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails, statusCode: 500);
                     }
 
                     balanceUpdates.Add((balance.Id, allocation.AllocatedAmount));
@@ -346,7 +346,7 @@ namespace NatournaServer.Services.Api
 
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails, statusCode: 500);
                 }
 
                 await _auditService.LogAsync(LogAction.Update, "Payment", paymentId, new { IsPaid = true, payment.PaymentDate }, new { IsPaid = false, PaymentDate = (DateTime?)null });
@@ -364,7 +364,7 @@ namespace NatournaServer.Services.Api
             {
                 (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage);
-                throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails, ex);
+                throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails, ex, statusCode: 500);
             }
         }
 

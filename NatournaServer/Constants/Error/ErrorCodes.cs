@@ -71,6 +71,11 @@ namespace NatournaServer.Constants.Error
         public const string CYCLE_UPDATE_ERROR = "CYC-004";
         public const string CYCLE_DELETE_ERROR = "CYC-005";
 
+        // Auth Api Manager Error Codes (AUTH-xxx)
+        public const string AUTH_INVALID_CREDENTIALS_ERROR = "AUTH-001";
+        public const string AUTH_INVALID_TOKEN_ERROR = "AUTH-002";
+        public const string AUTH_REFRESH_ERROR = "AUTH-003";
+
         // User Context Manager Error Codes (USR-xxx)
         public const string USER_GET_ALL_ERROR = "USR-001";
         public const string USER_GET_BY_ID_ERROR = "USR-002";

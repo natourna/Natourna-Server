@@ -126,7 +126,7 @@ namespace NatournaServer.Services.Api
             var role = await _roleContextManager.GetByIdAsync(roleId);
             if (role == null)
             {
-                throw new ApiException(errorCode, "The selected role does not exist.", $"No role found with id {roleId}");
+                throw new ApiException(errorCode, "The selected role does not exist.", $"No role found with id {roleId}", statusCode: 422);
             }
 
             return role;

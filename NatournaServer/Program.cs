@@ -23,7 +23,7 @@ try
     await app.Services.SeedRolesAsync();
     await app.Services.SeedBootstrapAdminAsync();
 
-    app.UseGlobalExceptionLogging();
+    app.UseExceptionHandling();
     app.UseRequestLogging();
     app.UseSwaggerServices();
 

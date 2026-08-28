@@ -1,5 +1,7 @@
+using NatournaServer.Constants.Error;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Requests.Login;
+using NatournaServer.Models.Api.Response.Error;
 using NatournaServer.Models.Api.Response.Login;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +31,7 @@ namespace NatournaServer.Controllers
 
             if (response == null)
             {
-                return Unauthorized(new { message = "Invalid username or password" });
+                return Unauthorized(new ErrorResponse { ErrorCode = ErrorCodes.AUTH_INVALID_CREDENTIALS_ERROR, Message = "Invalid username or password" });
             }
 
             return Ok(response);
@@ -43,14 +45,14 @@ namespace NatournaServer.Controllers
 
             if (string.IsNullOrEmpty(username))
             {
-                return Unauthorized(new { message = "Invalid token" });
+                return Unauthorized(new ErrorResponse { ErrorCode = ErrorCodes.AUTH_INVALID_TOKEN_ERROR, Message = "Invalid token" });
             }
 
             var response = await _authManager.RefreshTokenAsync(username);
 
             if (response == null)
             {
-                return Unauthorized(new { message = "Unable to refresh token" });
+                return Unauthorized(new ErrorResponse { ErrorCode = ErrorCodes.AUTH_REFRESH_ERROR, Message = "Unable to refresh token" });
             }
 
             return Ok(response);

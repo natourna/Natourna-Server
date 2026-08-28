@@ -110,14 +110,14 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.BillNotFound(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage, technicalDetails, statusCode: 404);
                 }
 
                 if (bill.IsPaid)
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.AlreadyPaid(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_ALREADY_PAID_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BILL_ALREADY_PAID_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BILL_ALREADY_PAID_ERROR, userMessage, technicalDetails, statusCode: 409);
                 }
 
                 List<BalanceEntity> balances = await _balanceContextManager.GetAllAsync(balanceId: bill.BalanceId);
@@ -127,14 +127,14 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(bill.BalanceId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails, statusCode: 404);
                 }
 
                 if (balance.CurrentAmount < bill.Amount)
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.InsufficientBalance(billId, balance.Id, bill.Amount, balance.CurrentAmount);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_INSUFFICIENT_BALANCE_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BILL_INSUFFICIENT_BALANCE_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BILL_INSUFFICIENT_BALANCE_ERROR, userMessage, technicalDetails, statusCode: 422);
                 }
 
                 balance.CurrentAmount -= bill.Amount;
@@ -145,7 +145,7 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_UPDATE_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails, statusCode: 500);
                 }
 
                 bill.IsPaid = true;
@@ -160,7 +160,7 @@ namespace NatournaServer.Services.Api
 
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.MarkAsPaidFailed(billId);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage, technicalDetails, statusCode: 500);
                 }
 
                 await _auditService.LogAsync(LogAction.Update, "Bill", billId, new { IsPaid = false, PaymentDate = (DateTime?)null }, new { IsPaid = true, bill.PaymentDate });
@@ -178,7 +178,7 @@ namespace NatournaServer.Services.Api
             {
                 (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.MarkAsPaidFailed(billId);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage);
-                throw new ApiException(ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage, technicalDetails, ex);
+                throw new ApiException(ErrorCodes.BILL_MARK_AS_PAID_ERROR, userMessage, technicalDetails, ex, statusCode: 500);
             }
         }
 
@@ -193,14 +193,14 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.BillNotFound(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BILL_NOT_FOUND_ERROR, userMessage, technicalDetails, statusCode: 404);
                 }
 
                 if (!bill.IsPaid)
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.AlreadyUnpaid(billId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_ALREADY_UNPAID_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BILL_ALREADY_UNPAID_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BILL_ALREADY_UNPAID_ERROR, userMessage, technicalDetails, statusCode: 409);
                 }
 
                 List<BalanceEntity> balances = await _balanceContextManager.GetAllAsync(balanceId: bill.BalanceId);
@@ -210,7 +210,7 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(bill.BalanceId);
                     _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails, statusCode: 404);
                 }
 
                 balance.CurrentAmount += bill.Amount;
@@ -222,7 +222,7 @@ namespace NatournaServer.Services.Api
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.UpdateFailed(balance.Id, balance);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_UPDATE_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BALANCE_UPDATE_ERROR, userMessage, technicalDetails, statusCode: 500);
                 }
 
                 bill.IsPaid = false;
@@ -238,7 +238,7 @@ namespace NatournaServer.Services.Api
 
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.MarkAsUnpaidFailed(billId);
                     _logger.LogError("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage);
-                    throw new ApiException(ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails);
+                    throw new ApiException(ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails, statusCode: 500);
                 }
 
                 await _auditService.LogAsync(LogAction.Update, "Bill", billId, new { IsPaid = true, bill.PaymentDate }, new { IsPaid = false, PaymentDate = (DateTime?)null });
@@ -256,7 +256,7 @@ namespace NatournaServer.Services.Api
             {
                 (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.MarkAsUnpaidFailed(billId);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage);
-                throw new ApiException(ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails, ex);
+                throw new ApiException(ErrorCodes.BILL_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails, ex, statusCode: 500);
             }
         }
 
