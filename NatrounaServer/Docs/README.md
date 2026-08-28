@@ -1,4 +1,4 @@
-﻿# 🚀 Building Management - Deployment User Manual
+﻿# 🚀 Natrouna Server - Deployment User Manual
 
 Complete user manual for deploying production and development environments on the same Ubuntu server.
 
@@ -172,8 +172,8 @@ MYSQL_USER=buildinguser
 MYSQL_PASSWORD=ProdUser@2025!
 ASPNETCORE_ENVIRONMENT=Production
 JwtSettings__SecretKey=rlsLBB/CRUksCnfLErhe1kS1DzRr+wzt
-JwtSettings__Issuer=BuildingManagement
-JwtSettings__Audience=BuildingManagementApp
+JwtSettings__Issuer=NatrounaServer
+JwtSettings__Audience=NatrounaServerApp
 JwtSettings__ExpirationMinutes=1440
 ```
 
@@ -250,13 +250,13 @@ Use this when testing new features:
 
 ```powershell
 # Navigate to your project directory
-cd C:\Dev\BuildingManagement
+cd C:\Dev\NatrounaServer
 
 # Build and push with 'dev' tag
 .\deployment\docker-build-push.ps1 build-push -Tag "dev"
 ```
 
-**Result:** Pushes to Docker Hub as `itanirayan/buildingmanagement-api:dev`
+**Result:** Pushes to Docker Hub as `itanirayan/natrouna-server-api:dev`
 
 #### Option 2: Build for Production Only
 
@@ -264,13 +264,13 @@ Use this for stable releases:
 
 ```powershell
 # Navigate to your project directory
-cd C:\Dev\BuildingManagement
+cd C:\Dev\NatrounaServer
 
 # Build and push with 'latest' tag (default)
 .\deployment\docker-build-push.ps1 build-push
 ```
 
-**Result:** Pushes to Docker Hub as `itanirayan/buildingmanagement-api:latest`
+**Result:** Pushes to Docker Hub as `itanirayan/natrouna-server-api:latest`
 
 #### Option 3: Build for Both Environments
 
@@ -474,8 +474,8 @@ Build with -Tag "latest" ──>  :latest tag      ──>   Production pulls :l
 ```
 
 **Key Points:**
-- ✅ Development docker-compose.yml uses `image: itanirayan/buildingmanagement-api:dev`
-- ✅ Production docker-compose.yml uses `image: itanirayan/buildingmanagement-api:latest`
+- ✅ Development docker-compose.yml uses `image: itanirayan/natrouna-server-api:dev`
+- ✅ Production docker-compose.yml uses `image: itanirayan/natrouna-server-api:latest`
 - ✅ Each environment only pulls its configured tag
 - ✅ Building on Windows and pushing updates Docker Hub
 - ✅ Server pulls from Docker Hub when you run `docker compose pull`
@@ -572,30 +572,30 @@ docker compose exec -T mysql mysql \
 ### View All Running Containers
 
 ```bash
-# See all Building Management containers
-docker ps --filter name=buildingmanagement
+# See all Natrouna Server containers
+docker ps --filter name=natrouna-server
 
 # Expected output:
-# buildingmanagement-api-prod
-# buildingmanagement-mysql-prod
-# buildingmanagement-api-dev
-# buildingmanagement-mysql-dev
+# natrouna-server-api-prod
+# natrouna-server-mysql-prod
+# natrouna-server-api-dev
+# natrouna-server-mysql-dev
 ```
 
 ### Check Container Logs
 
 ```bash
 # Production API logs (console output)
-docker logs buildingmanagement-api-prod -f
+docker logs natrouna-server-api-prod -f
 
 # Production MySQL logs
-docker logs buildingmanagement-mysql-prod -f
+docker logs natrouna-server-mysql-prod -f
 
 # Development API logs (console output)
-docker logs buildingmanagement-api-dev -f
+docker logs natrouna-server-api-dev -f
 
 # Development MySQL logs
-docker logs buildingmanagement-mysql-dev -f
+docker logs natrouna-server-mysql-dev -f
 
 # Or using docker compose (from deployment directory)
 cd /opt/deployment/production
@@ -615,7 +615,7 @@ cd /opt/deployment/production/logs
 ls -lh
 
 # Tail production logs in real-time
-tail -f /opt/deployment/production/logs/BuildingManagement-$(date +%Y%m%d).log
+tail -f /opt/deployment/production/logs/NatrounaServer-$(date +%Y%m%d).log
 
 # Search for errors in production logs
 grep -i "error" /opt/deployment/production/logs/*.log
@@ -625,10 +625,10 @@ cd /opt/deployment/development/logs
 ls -lh
 
 # Tail development logs in real-time
-tail -f /opt/deployment/development/logs/BuildingManagement-$(date +%Y%m%d).log
+tail -f /opt/deployment/development/logs/NatrounaServer-$(date +%Y%m%d).log
 
 # View logs from specific date
-cat /opt/deployment/production/logs/BuildingManagement-20250125.log
+cat /opt/deployment/production/logs/NatrounaServer-20250125.log
 ```
 
 ### Health Checks
@@ -719,7 +719,7 @@ docker compose exec api env | grep ConnectionStrings
 docker login
 
 # Pull manually
-docker pull itanirayan/buildingmanagement-api:latest
+docker pull itanirayan/natrouna-server-api:latest
 
 # Then restart
 docker compose up -d
@@ -757,7 +757,7 @@ sudo apt update
 sudo apt install nginx -y
 ```
 
-**Production configuration** (`/etc/nginx/sites-available/buildingmanagement-prod`):
+**Production configuration** (`/etc/nginx/sites-available/natrouna-server-prod`):
 
 ```nginx
 server {
@@ -774,7 +774,7 @@ server {
 }
 ```
 
-**Development configuration** (`/etc/nginx/sites-available/buildingmanagement-dev`):
+**Development configuration** (`/etc/nginx/sites-available/natrouna-server-dev`):
 
 ```nginx
 server {
@@ -795,10 +795,10 @@ Enable sites:
 
 ```bash
 # Enable production
-sudo ln -s /etc/nginx/sites-available/buildingmanagement-prod /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/natrouna-server-prod /etc/nginx/sites-enabled/
 
 # Enable development
-sudo ln -s /etc/nginx/sites-available/buildingmanagement-dev /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/natrouna-server-dev /etc/nginx/sites-enabled/
 
 # Test configuration
 sudo nginx -t
@@ -847,7 +847,7 @@ docker compose pull && docker compose up -d
 docker compose logs -f
 
 # Application logs (file-based)
-tail -f logs/BuildingManagement-$(date +%Y%m%d).log
+tail -f logs/NatrounaServer-$(date +%Y%m%d).log
 
 # Status
 docker compose ps
@@ -878,7 +878,7 @@ docker compose pull && docker compose up -d
 docker compose logs -f
 
 # Application logs (file-based)
-tail -f logs/BuildingManagement-$(date +%Y%m%d).log
+tail -f logs/NatrounaServer-$(date +%Y%m%d).log
 
 # Status
 docker compose ps
@@ -894,10 +894,10 @@ docker compose exec mysql mysql -u buildinguser -pDevUser@2025!
 
 ```bash
 # View all containers
-docker ps -a --filter name=buildingmanagement
+docker ps -a --filter name=natrouna-server
 
 # View all volumes
-docker volume ls | grep buildingmanagement
+docker volume ls | grep natrouna-server
 
 # View all networks
 docker network ls | grep building
@@ -1004,8 +1004,8 @@ crontab -e
 ┌─────────────────────────────────────────────────────────────────┐
 │                       DOCKER HUB                                │
 │                                                                 │
-│  itanirayan/buildingmanagement-api:dev     ← Development       │
-│  itanirayan/buildingmanagement-api:latest  ← Production        │
+│  itanirayan/natrouna-server-api:dev     ← Development       │
+│  itanirayan/natrouna-server-api:latest  ← Production        │
 │                                                                 │
 └────────────────┬───────────────────┬────────────────────────────┘
                  │                   │
@@ -1030,7 +1030,7 @@ crontab -e
 ```powershell
 # ===== ON WINDOWS =====
 # Navigate to project
-cd C:\Dev\BuildingManagement
+cd C:\Dev\NatrounaServer
 
 # Build and push to Docker Hub with 'dev' tag
 .\deployment\docker-build-push.ps1 build-push -Tag "dev"
@@ -1066,7 +1066,7 @@ curl http://localhost:9080/swagger
 
 ```powershell
 # ===== ON WINDOWS =====
-cd C:\Dev\BuildingManagement
+cd C:\Dev\NatrounaServer
 
 # Build and push to Docker Hub with 'latest' tag
 .\deployment\docker-build-push.ps1 build-push
@@ -1108,7 +1108,7 @@ curl http://localhost:8080/health
 
 ```powershell
 # ===== ON WINDOWS =====
-cd C:\Dev\BuildingManagement
+cd C:\Dev\NatrounaServer
 
 # Build and push dev version
 .\deployment\docker-build-push.ps1 build-push -Tag "dev"
@@ -1140,7 +1140,7 @@ curl -X POST http://localhost:9080/api/auth/login \
 
 # Check logs for errors
 cd /opt/deployment/development
-grep -i "error" logs/BuildingManagement-$(date +%Y%m%d).log
+grep -i "error" logs/NatrounaServer-$(date +%Y%m%d).log
 ```
 
 **Step 3: If Tests Pass, Deploy to Production**
@@ -1213,8 +1213,8 @@ docker compose exec mysql mysql -u buildinguser -pDevUser@2025! -e "USE binayati
 
 | Environment | API Container | MySQL Container |
 |-------------|--------------|-----------------|
-| Production | `buildingmanagement-api-prod` | `buildingmanagement-mysql-prod` |
-| Development | `buildingmanagement-api-dev` | `buildingmanagement-mysql-dev` |
+| Production | `natrouna-server-api-prod` | `natrouna-server-mysql-prod` |
+| Development | `natrouna-server-api-dev` | `natrouna-server-mysql-dev` |
 
 ### Volume Names
 
@@ -1255,11 +1255,11 @@ cd /opt/deployment/production
 docker compose down
 
 # 2. Pull specific version
-docker pull itanirayan/buildingmanagement-api:v1.0.0
+docker pull itanirayan/natrouna-server-api:v1.0.0
 
 # 3. Update docker-compose.yml to use specific tag
 nano docker-compose.yml
-# Change: image: itanirayan/buildingmanagement-api:v1.0.0
+# Change: image: itanirayan/natrouna-server-api:v1.0.0
 
 # 4. Start with old version
 docker compose up -d
@@ -1313,13 +1313,13 @@ docker volume prune
 docker compose logs
 
 # View specific container logs
-docker logs buildingmanagement-api-prod -f
-docker logs buildingmanagement-api-dev -f
+docker logs natrouna-server-api-prod -f
+docker logs natrouna-server-api-dev -f
 ```
 
 **Log File Naming:**
-- Format: `BuildingManagement-YYYYMMDD.log`
-- Example: `BuildingManagement-20250125.log`
+- Format: `NatrounaServer-YYYYMMDD.log`
+- Example: `NatrounaServer-20250125.log`
 - Rolling: Daily (new file each day)
 - Retention: 30 days
 
@@ -1330,14 +1330,14 @@ cd /opt/deployment/production/logs
 ls -lh
 
 # View latest production log
-tail -f /opt/deployment/production/logs/BuildingManagement-$(date +%Y%m%d).log
+tail -f /opt/deployment/production/logs/NatrounaServer-$(date +%Y%m%d).log
 
 # Development logs
 cd /opt/deployment/development/logs
 ls -lh
 
 # View latest development log
-tail -f /opt/deployment/development/logs/BuildingManagement-$(date +%Y%m%d).log
+tail -f /opt/deployment/development/logs/NatrounaServer-$(date +%Y%m%d).log
 ```
 
 ### Monitoring Commands
@@ -1390,12 +1390,12 @@ cd /opt/deployment/development
 docker compose up -d
 
 # Check everything is running
-docker ps --filter name=buildingmanagement
+docker ps --filter name=natrouna-server
 ```
 
 ---
 
 *Last updated: January 2025*  
-*Project: Building Management System*  
-*Docker Hub: itanirayan/buildingmanagement-api*  
+*Project: Natrouna Server System*  
+*Docker Hub: itanirayan/natrouna-server-api*  
 *Server Setup: Ubuntu 20.04+ with Docker*
