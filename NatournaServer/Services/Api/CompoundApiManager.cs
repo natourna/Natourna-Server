@@ -2,6 +2,7 @@ using NatournaServer.Constants.Log;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
+using NatournaServer.Models.Api.Requests.Compound;
 using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Services.Api
@@ -27,16 +28,16 @@ namespace NatournaServer.Services.Api
             return await _contextManager.GetByIdAsync(id);
         }
 
-        public async Task<CompoundEntity> CreateCompoundAsync(CompoundEntity compound)
+        public async Task<CompoundEntity> CreateCompoundAsync(CompoundRequest compound)
         {
-            var created = await _contextManager.CreateAsync(compound);
+            var created = await _contextManager.CreateAsync(MapToEntity(compound));
 
             await _auditService.LogAsync(LogAction.Create, "Compound", created.Id, null, new { created.Name, created.Address });
 
             return created;
         }
 
-        public async Task<CompoundEntity?> UpdateCompoundAsync(int id, CompoundEntity compound)
+        public async Task<CompoundEntity?> UpdateCompoundAsync(int id, CompoundRequest compound)
         {
             var existing = await GetCompoundByIdAsync(id);
             if (existing == null)
@@ -50,7 +51,7 @@ namespace NatournaServer.Services.Api
                 existing.Address
             };
 
-            var updated = await _contextManager.UpdateAsync(id, compound);
+            var updated = await _contextManager.UpdateAsync(id, MapToEntity(compound));
 
             if (updated != null)
             {
@@ -58,6 +59,11 @@ namespace NatournaServer.Services.Api
             }
 
             return updated;
+        }
+
+        private static CompoundEntity MapToEntity(CompoundRequest request)
+        {
+            return new CompoundEntity(0, request.Name, request.Address, request.ActiveApartments);
         }
 
         public async Task<bool> DeleteCompoundAsync(int id)
