@@ -34,7 +34,7 @@ public static class ContextManagerExtension
         var service = scope.ServiceProvider;
         var context = service.GetRequiredService<BuildingManagementContext>();
 
-        if (context.Database.IsMySql())
+        if (context.Database.IsNpgsql())
         {
             if (isDev)
             {
@@ -48,20 +48,20 @@ public static class ContextManagerExtension
     }
 
     /// <summary>
-    /// Add MySQL database context to the service collection
+    /// Add PostgreSQL database context to the service collection
     /// </summary>
-    public static void AddMySqlService(this IServiceCollection services, IConfiguration configuration)
+    public static void AddPostgreSqlService(this IServiceCollection services, IConfiguration configuration)
     {
         string? connectionString = configuration.GetConnectionString("DefaultConnection");
 
         if (string.IsNullOrEmpty(connectionString))
         {
-            throw new CustomException("MYSQL-CONTEXT-01", "Connection string 'DefaultConnection' not found.");
+            throw new CustomException("POSTGRESQL-CONTEXT-01", "Connection string 'DefaultConnection' not found.");
         }
 
         services.AddDbContext<BuildingManagementContext>(options =>
         {
-            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+            options.UseNpgsql(connectionString);
         });
     }
 }

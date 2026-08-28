@@ -9,7 +9,7 @@ try
     builder.Host.AddSeriLog();
     builder.Services.AddControllers();
     builder.Services.AddHttpContextAccessor(); // Required for AuditService
-    builder.Services.AddMySqlService(builder.Configuration);
+    builder.Services.AddPostgreSqlService(builder.Configuration);
     builder.Services.AddApiManagers();
     builder.Services.AddContextManagers();
     builder.Services.AddSwaggerServices();
