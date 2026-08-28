@@ -1,18 +1,17 @@
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Requests.Balance;
+using NatournaServer.Models.Api.Response.Balance;
 
 namespace NatournaServer.Interfaces.Api
 {
     public interface IBalanceApiManager
     {
-        Task<List<BalanceEntity>> GetAllBalancesAsync();
+        Task<List<BalanceResponse>> GetAllBalancesAsync(int? compoundId);
 
-        Task<BalanceEntity?> GetBalanceByIdAsync(int id);
+        Task<BalanceResponse?> GetBalanceByIdAsync(int id);
 
-        Task<List<BalanceEntity>> GetBalancesByCompoundIdAsync(int compoundId);
+        Task<BalanceResponse> CreateBalanceAsync(BalanceRequest request);
 
-        Task<BalanceEntity> CreateBalanceAsync(BalanceEntity balance);
-
-        Task<BalanceEntity?> UpdateBalanceAsync(int id, BalanceEntity balance);
+        Task<BalanceResponse?> UpdateBalanceAsync(int id, BalanceRequest request);
 
         Task<bool> DeleteBalanceAsync(int id);
     }
