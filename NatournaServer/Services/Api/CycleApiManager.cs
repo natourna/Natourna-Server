@@ -8,6 +8,7 @@ using NatournaServer.Interfaces.Services;
 using NatournaServer.Models.Api.Requests.Cycle;
 using NatournaServer.Models.Api.Requests.Payment;
 using NatournaServer.Models.Api.Response.Cycle;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Entities;
 using System.Text.Json;
 
@@ -34,10 +35,23 @@ namespace NatournaServer.Services.Api
             _logger = logger;
         }
 
-        public async Task<List<CycleResponse>> GetAllCyclesAsync()
+        public async Task<PagedResponse<CycleResponse>> GetCyclesAsync(int page, int pageSize)
         {
-            List<CycleEntity> cycles = await _cycleContextManager.GetAllAsync();
-            return cycles.Select(MapToResponse).ToList();
+            (List<CycleEntity> items, int totalCount) = await _cycleContextManager.GetPagedAsync(page, pageSize);
+
+            return new PagedResponse<CycleResponse>
+            {
+                Items = items.Select(MapToResponse).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
+        }
+
+        public async Task<CycleResponse?> GetActiveCycleAsync()
+        {
+            CycleEntity? cycle = await _cycleContextManager.GetActiveAsync();
+            return cycle != null ? MapToResponse(cycle) : null;
         }
 
         public async Task<CycleResponse?> GetCycleByIdAsync(int id)
@@ -46,13 +60,10 @@ namespace NatournaServer.Services.Api
             return cycle != null ? MapToResponse(cycle) : null;
         }
 
-        public async Task<CycleEntity> CreateCycleAsync(CycleRequest request)
+        public async Task<CycleResponse> CreateCycleAsync(CycleRequest request)
         {
             try
             {
-                _logger.LogInformation("Creating cycle - Label: {Label}, Cycle: {CycleType}, Amount: {Amount}",
-                    request.Label, request.Cycle, request.Amount);
-
                 if (request.StartDate.Date > request.EndDate.Date)
                 {
                     (string userMessage, string technicalDetails) = ErrorMessageBuilder.Cycle.InvalidDateRange(request.StartDate, request.EndDate);
@@ -86,11 +97,23 @@ namespace NatournaServer.Services.Api
                     }
                 }
 
+                if (request.ApartmentIds != null)
+                {
+                    foreach (int apartmentId in request.ApartmentIds)
+                    {
+                        ApartmentEntity? apartment = await _apartmentContextManager.GetByIdAsync(apartmentId);
+                        if (apartment == null)
+                        {
+                            throw new ApiException(ErrorCodes.PAYMENT_APARTMENT_INVALID_ERROR, "The requested apartment does not exist", $"ApartmentId: {apartmentId}");
+                        }
+                    }
+                }
+
                 var allocations = request.BalanceAllocations.Select(a => new { balanceId = a.BalanceId, percentage = a.Percentage }).ToList();
 
                 string balanceAllocationsJson = JsonSerializer.Serialize(allocations);
 
-                CycleEntity cycle = new (request.Label, request.Cycle, request.StartDate.Date, request.EndDate.Date, request.Amount)
+                CycleEntity cycle = new(request.Label, request.Cycle, request.StartDate.Date, request.EndDate.Date, request.Amount)
                 {
                     Description = request.Description,
                     ApartmentIdsCsv = request.ApartmentIds == null || request.ApartmentIds.Count == 0 ? null : string.Join(',', request.ApartmentIds),
@@ -98,16 +121,17 @@ namespace NatournaServer.Services.Api
                     BalanceAllocationsJson = balanceAllocationsJson
                 };
 
-
                 CycleEntity createdCycle = await _cycleContextManager.CreateAsync(cycle);
 
                 await GeneratePaymentsForCycle(createdCycle.Id, request);
 
                 await _auditService.LogAsync(LogAction.Create, "Cycle", createdCycle.Id, null, new { createdCycle.Label, createdCycle.Cycle, createdCycle.Amount, createdCycle.StartDate, createdCycle.EndDate, ApartmentCount = request.ApartmentIds?.Count ?? 0 });
 
-                _logger.LogInformation("Successfully created cycle {CycleId} with label '{Label}' and {AllocationCount} balance allocations", createdCycle.Id, createdCycle.Label, request.BalanceAllocations.Count);
+                _logger.LogInformation("Created cycle {CycleId} with label '{Label}' and {AllocationCount} balance allocations", createdCycle.Id, createdCycle.Label, request.BalanceAllocations.Count);
 
-                return await _cycleContextManager.GetByIdAsync(createdCycle.Id) ?? createdCycle;
+                CycleEntity? reloaded = await _cycleContextManager.GetByIdAsync(createdCycle.Id);
+
+                return MapToResponse(reloaded ?? createdCycle);
             }
             catch (ApiException)
             {
@@ -124,8 +148,6 @@ namespace NatournaServer.Services.Api
         {
             try
             {
-                _logger.LogInformation("Generating payments for cycle {CycleId}", cycleId);
-
                 List<int> apartmentIds;
                 if (request.ApartmentIds != null && request.ApartmentIds.Count > 0)
                 {
@@ -146,7 +168,7 @@ namespace NatournaServer.Services.Api
                     foreach (DateTime occurrence in occurrences)
                     {
                         string label = $"{request.Label} - {occurrence:MMMM yyyy}";
-                        PaymentEntity payment = new (label, request.Amount, aptId)
+                        PaymentEntity payment = new(label, request.Amount, aptId)
                         {
                             PaymentDate = null,
                             DueDate = occurrence,
@@ -159,19 +181,17 @@ namespace NatournaServer.Services.Api
                         await ApplyBalanceAllocationsToPayment(createdPayment, request.BalanceAllocations);
                     }
                 }
-
-                _logger.LogInformation("Successfully created {PaymentCount} payments with allocations for cycle {CycleId}", occurrences.Count * apartmentIds.Count, cycleId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to generate payments for cycle {CycleId}, Error:{Message}", cycleId, ex.Message);
+                _logger.LogError(ex, "Failed to generate payments for cycle {CycleId}", cycleId);
                 throw;
             }
         }
 
         private static List<DateTime> CalculatePaymentOccurrences(PaymentCycle cycleType, DateTime startDate, DateTime endDate)
         {
-            List<DateTime> occurrences = new ();
+            List<DateTime> occurrences = new();
             DateTime current = startDate.Date;
             DateTime end = endDate.Date;
 
@@ -228,7 +248,6 @@ namespace NatournaServer.Services.Api
             return occurrences;
         }
 
-
         private async Task ApplyBalanceAllocationsToPayment(PaymentEntity payment, List<PaymentAllocationRequest> allocations)
         {
             try
@@ -239,7 +258,7 @@ namespace NatournaServer.Services.Api
                 {
                     decimal allocatedAmount = payment.Amount * (allocation.Percentage / 100m);
 
-                    PaymentAllocationEntity paymentAllocation = new ()
+                    PaymentAllocationEntity paymentAllocation = new()
                     {
                         PaymentId = payment.Id,
                         BalanceId = allocation.BalanceId,
@@ -259,7 +278,7 @@ namespace NatournaServer.Services.Api
             }
         }
 
-        public async Task<CycleEntity?> UpdateCycleAsync(int id, CycleEntity cycle)
+        public async Task<CycleResponse?> UpdateCycleAsync(int id, CycleUpdateRequest request)
         {
             CycleEntity? existing = await _cycleContextManager.GetByIdAsync(id);
 
@@ -275,14 +294,16 @@ namespace NatournaServer.Services.Api
                 existing.IsActive
             };
 
-            CycleEntity? updated = await _cycleContextManager.UpdateAsync(id, cycle);
+            CycleEntity? updated = await _cycleContextManager.UpdateAsync(id, request.Label, request.Description, request.IsActive);
 
-            if (updated != null)
+            if (updated == null)
             {
-                await _auditService.LogAsync(LogAction.Update, "Cycle", id, oldValues, new { updated.Label, updated.Amount, updated.IsActive });
+                return null;
             }
 
-            return updated;
+            await _auditService.LogAsync(LogAction.Update, "Cycle", id, oldValues, new { updated.Label, updated.Amount, updated.IsActive });
+
+            return MapToResponse(updated);
         }
 
         public async Task<bool> DeleteCycleAsync(int id)

@@ -1,18 +1,20 @@
 using NatournaServer.Models.Api.Requests.Cycle;
 using NatournaServer.Models.Api.Response.Cycle;
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Response.Paging;
 
 namespace NatournaServer.Interfaces.Api
 {
     public interface ICycleApiManager
     {
-        Task<List<CycleResponse>> GetAllCyclesAsync();
+        Task<PagedResponse<CycleResponse>> GetCyclesAsync(int page, int pageSize);
+
+        Task<CycleResponse?> GetActiveCycleAsync();
 
         Task<CycleResponse?> GetCycleByIdAsync(int id);
 
-        Task<CycleEntity> CreateCycleAsync(CycleRequest request);
+        Task<CycleResponse> CreateCycleAsync(CycleRequest request);
 
-        Task<CycleEntity?> UpdateCycleAsync(int id, CycleEntity cycle);
+        Task<CycleResponse?> UpdateCycleAsync(int id, CycleUpdateRequest request);
 
         Task<bool> DeleteCycleAsync(int id);
     }
