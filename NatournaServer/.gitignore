@@ -35,9 +35,6 @@ artifacts/
 *.nupkg
 **/packages/*
 
-# Migrations (optional - comment out if you want to track them)
-**/Migrations/*
-
 # Docker
 docker-compose.override.yml
 
