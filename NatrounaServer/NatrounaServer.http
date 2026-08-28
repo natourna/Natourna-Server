@@ -1,6 +1,0 @@
-@NatrounaServer_HostAddress = http://localhost:5162
-
-GET {{NatrounaServer_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
