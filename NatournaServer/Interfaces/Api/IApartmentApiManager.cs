@@ -1,19 +1,18 @@
+using NatournaServer.Models.Api.Requests.Apartment;
 using NatournaServer.Models.Api.Response.Apartment;
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Response.Paging;
 
 namespace NatournaServer.Interfaces.Api
 {
     public interface IApartmentApiManager
     {
-        Task<List<ApartmentResponse>> GetAllApartmentsAsync();
+        Task<PagedResponse<ApartmentResponse>> GetApartmentsAsync(int page, int pageSize, int? buildingId, string? search);
 
         Task<ApartmentResponse?> GetApartmentByIdAsync(int id);
 
-        Task<List<ApartmentResponse>> GetApartmentsByBuildingIdAsync(int buildingId);
+        Task<ApartmentResponse> CreateApartmentAsync(ApartmentRequest request);
 
-        Task<ApartmentResponse> CreateApartmentAsync(ApartmentEntity apartment);
-
-        Task<ApartmentResponse?> UpdateApartmentAsync(int id, ApartmentEntity apartment);
+        Task<ApartmentResponse?> UpdateApartmentAsync(int id, ApartmentRequest request);
 
         Task<bool> DeleteApartmentAsync(int id);
 

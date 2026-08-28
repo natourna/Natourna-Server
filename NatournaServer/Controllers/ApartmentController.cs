@@ -1,6 +1,9 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
+using NatournaServer.Models.Api.Requests.Apartment;
+using NatournaServer.Models.Api.Requests.Paging;
 using NatournaServer.Models.Api.Response.Apartment;
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Response.Paging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,19 +21,13 @@ namespace NatournaServer.Controllers
             _apartmentManager = apartmentManager;
         }
 
-        /// <summary>
-        /// Get all apartments with building names - Any authenticated user
-        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<ApartmentResponse>>> GetAllApartments()
+        public async Task<ActionResult<PagedResponse<ApartmentResponse>>> GetApartments([FromQuery] PagedQuery paging, [FromQuery] int? buildingId, [FromQuery] string? search)
         {
-            List<ApartmentResponse> apartments = await _apartmentManager.GetAllApartmentsAsync();
+            var apartments = await _apartmentManager.GetApartmentsAsync(paging.Page, paging.PageSize, buildingId, search);
             return Ok(apartments);
         }
 
-        /// <summary>
-        /// Get apartment by ID with building name - Any authenticated user
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<ApartmentResponse>> GetApartmentById(int id)
         {
@@ -44,35 +41,19 @@ namespace NatournaServer.Controllers
             return Ok(apartment);
         }
 
-        /// <summary>
-        /// Get apartments by building ID with building names - Any authenticated user
-        /// </summary>
-        [HttpGet("building/{buildingId}")]
-        public async Task<ActionResult<List<ApartmentResponse>>> GetApartmentsByBuildingId(int buildingId)
-        {
-            List<ApartmentResponse> apartments = await _apartmentManager.GetApartmentsByBuildingIdAsync(buildingId);
-            return Ok(apartments);
-        }
-
-        /// <summary>
-        /// Create apartment - Admin only
-        /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApartmentResponse>> CreateApartment(ApartmentEntity apartment)
+        [Authorize(Roles = RoleNames.Admin)]
+        public async Task<ActionResult<ApartmentResponse>> CreateApartment([FromBody] ApartmentRequest request)
         {
-            ApartmentResponse createdApartment = await _apartmentManager.CreateApartmentAsync(apartment);
+            ApartmentResponse createdApartment = await _apartmentManager.CreateApartmentAsync(request);
             return CreatedAtAction(nameof(GetApartmentById), new { id = createdApartment.Id }, createdApartment);
         }
 
-        /// <summary>
-        /// Update apartment - Admin only
-        /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ApartmentResponse>> UpdateApartment(int id, ApartmentEntity apartment)
+        [Authorize(Roles = RoleNames.Admin)]
+        public async Task<ActionResult<ApartmentResponse>> UpdateApartment(int id, [FromBody] ApartmentRequest request)
         {
-            ApartmentResponse? updatedApartment = await _apartmentManager.UpdateApartmentAsync(id, apartment);
+            ApartmentResponse? updatedApartment = await _apartmentManager.UpdateApartmentAsync(id, request);
 
             if (updatedApartment == null)
             {
@@ -82,11 +63,8 @@ namespace NatournaServer.Controllers
             return Ok(updatedApartment);
         }
 
-        /// <summary>
-        /// Delete apartment - Admin only
-        /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeleteApartment(int id)
         {
             bool result = await _apartmentManager.DeleteApartmentAsync(id);
@@ -99,11 +77,8 @@ namespace NatournaServer.Controllers
             return NoContent();
         }
 
-        /// <summary>
-        /// Set apartment active status - Admin only
-        /// </summary>
         [HttpPatch("{id}/active")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<ApartmentResponse>> SetApartmentActive(int id, [FromBody] bool isActive)
         {
             ApartmentResponse? apartment = await _apartmentManager.SetApartmentActiveAsync(id, isActive);

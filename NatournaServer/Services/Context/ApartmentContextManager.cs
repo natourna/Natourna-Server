@@ -14,29 +14,53 @@ namespace NatournaServer.Services.Context
             _context = context;
         }
 
-        public async Task<List<ApartmentEntity>> GetAllAsync(int? apartmentId = null, int? buildingId = null, bool? isActive = null)
+        public async Task<(List<ApartmentEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, int? buildingId = null, string? search = null)
         {
             var query = _context.Apartments
                 .Include(a => a.Building)
                 .AsQueryable();
-
-            // Apply filters
-            if (apartmentId.HasValue)
-            {
-                query = query.Where(a => a.Id == apartmentId.Value);
-            }
 
             if (buildingId.HasValue)
             {
                 query = query.Where(a => a.BuildingId == buildingId.Value);
             }
 
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                string term = search.Trim().ToLower();
+                query = query.Where(a =>
+                    a.ApartmentInfo.ToLower().Contains(term)
+                    || (a.Owner != null && a.Owner.ToLower().Contains(term))
+                    || (a.Tenant != null && a.Tenant.ToLower().Contains(term)));
+            }
+
+            int totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderBy(a => a.BuildingId)
+                .ThenBy(a => a.ApartmentInfo)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        public async Task<List<ApartmentEntity>> GetAllAsync(bool? isActive = null)
+        {
+            var query = _context.Apartments
+                .Include(a => a.Building)
+                .AsQueryable();
+
             if (isActive.HasValue)
             {
                 query = query.Where(a => a.IsActive == isActive.Value);
             }
 
-            return await query.ToListAsync();
+            return await query
+                .OrderBy(a => a.BuildingId)
+                .ThenBy(a => a.ApartmentInfo)
+                .ToListAsync();
         }
 
         public async Task<ApartmentEntity?> GetByIdAsync(int id)
@@ -46,20 +70,11 @@ namespace NatournaServer.Services.Context
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
-        public async Task<List<ApartmentEntity>> GetByBuildingIdAsync(int buildingId)
-        {
-            return await _context.Apartments
-                .Include(a => a.Building)
-                .Where(a => a.BuildingId == buildingId)
-                .ToListAsync();
-        }
-
         public async Task<ApartmentEntity> CreateAsync(ApartmentEntity apartment)
         {
             _context.Apartments.Add(apartment);
             await _context.SaveChangesAsync();
 
-            // Reload with building information
             return await _context.Apartments
                 .Include(a => a.Building)
                 .FirstAsync(a => a.Id == apartment.Id);
@@ -81,7 +96,6 @@ namespace NatournaServer.Services.Context
 
             await _context.SaveChangesAsync();
 
-            // Reload with building information
             return await _context.Apartments
                 .Include(a => a.Building)
                 .FirstAsync(a => a.Id == id);
@@ -109,7 +123,6 @@ namespace NatournaServer.Services.Context
 
             await _context.SaveChangesAsync();
 
-            // Reload with building information
             return await _context.Apartments
                 .Include(a => a.Building)
                 .FirstAsync(a => a.Id == id);

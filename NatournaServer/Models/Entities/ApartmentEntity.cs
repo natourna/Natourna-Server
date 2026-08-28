@@ -12,30 +12,33 @@ namespace NatournaServer.Models.Entities
         public int Id { get; set; }
 
         [Required]
+        [MaxLength(100)]
         public string ApartmentInfo { get; set; }
 
+        [MaxLength(255)]
         public string? Owner { get; set; }
 
+        [MaxLength(255)]
         public string? Tenant { get; set; }
 
         [Required]
         public bool? IsActive { get; set; }
 
-        public int Floor { get; set; }
+        [MaxLength(50)]
+        public string Floor { get; set; }
 
         [RequiredInt]
         public int BuildingId { get; set; }
 
         [ForeignKey("BuildingId")]
-        [JsonIgnore]  // Added back - prevents circular reference
+        [JsonIgnore]
         public BuildingEntity? Building { get; set; }
 
         [JsonIgnore]
         public ICollection<PaymentEntity> Payments { get; set; }
 
-        public ApartmentEntity(int id, string apartmentInfo, int floor, bool? isActive, int buildingId)
+        public ApartmentEntity(string apartmentInfo, string floor, bool? isActive, int buildingId)
         {
-            Id = id;
             ApartmentInfo = apartmentInfo;
             Floor = floor;
             IsActive = isActive;

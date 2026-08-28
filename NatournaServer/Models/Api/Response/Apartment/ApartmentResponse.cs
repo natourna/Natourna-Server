@@ -12,7 +12,7 @@ namespace NatournaServer.Models.Api.Response.Apartment
 
         public bool? IsActive { get; set; }
 
-        public int Floor { get; set; }
+        public string Floor { get; set; } = string.Empty;
 
         public int BuildingId { get; set; }
 
