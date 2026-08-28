@@ -1,5 +1,5 @@
-﻿using NatournaServer.Models.Api.Response.User;
-using NatournaServer.Models.Entities;
+﻿using NatournaServer.Models.Api.Requests.User;
+using NatournaServer.Models.Api.Response.User;
 
 namespace NatournaServer.Interfaces.Api
 {
@@ -11,9 +11,9 @@ namespace NatournaServer.Interfaces.Api
 
         Task<UserResponse?> GetUserByEmailAsync(string email);
 
-        Task<UserResponse> CreateUserAsync(UserEntity user);
+        Task<UserResponse> CreateUserAsync(CreateUserRequest user);
 
-        Task<UserResponse?> UpdateUserAsync(int id, UserEntity user);
+        Task<UserResponse?> UpdateUserAsync(int id, UpdateUserRequest user);
 
         Task<bool> DeleteUserAsync(int id);
     }

@@ -1,7 +1,7 @@
 using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Response.User;
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Requests.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -68,14 +68,14 @@ namespace NatournaServer.Controllers
 
         [HttpPost]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<UserResponse>> CreateUser(UserEntity user)
+        public async Task<ActionResult<UserResponse>> CreateUser(CreateUserRequest user)
         {
             var createdUser = await _userManager.CreateUserAsync(user);
             return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<UserResponse>> UpdateUser(int id, UserEntity user)
+        public async Task<ActionResult<UserResponse>> UpdateUser(int id, UpdateUserRequest user)
         {
             var existingUser = await _userManager.GetUserByIdAsync(id);
             if (existingUser == null)

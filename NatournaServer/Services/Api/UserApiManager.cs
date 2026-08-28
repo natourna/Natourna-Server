@@ -5,6 +5,7 @@ using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Authentication;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
+using NatournaServer.Models.Api.Requests.User;
 using NatournaServer.Models.Api.Response.User;
 using NatournaServer.Models.Entities;
 
@@ -43,20 +44,24 @@ namespace NatournaServer.Services.Api
             return user == null ? null : MapToResponse(user, user.Role!.Name);
         }
 
-        public async Task<UserResponse> CreateUserAsync(UserEntity user)
+        public async Task<UserResponse> CreateUserAsync(CreateUserRequest user)
         {
             var role = await GetRoleOrThrowAsync(user.RoleId, ErrorCodes.USER_CREATE_ERROR);
 
-            user.Password = _passwordHashingService.HashPassword(user.Password);
+            var passwordHash = _passwordHashingService.HashPassword(user.Password);
+            var userEntity = new UserEntity(0, user.Email, passwordHash, user.PhoneNumber, user.RoleId)
+            {
+                IsActive = user.IsActive
+            };
 
-            var created = await _contextManager.CreateAsync(user);
+            var created = await _contextManager.CreateAsync(userEntity);
 
             await _auditService.LogAsync(LogAction.Create, "User", created.Id, null, new { created.Email, Role = role.Name, created.IsActive });
 
             return MapToResponse(created, role.Name);
         }
 
-        public async Task<UserResponse?> UpdateUserAsync(int id, UserEntity user)
+        public async Task<UserResponse?> UpdateUserAsync(int id, UpdateUserRequest user)
         {
             var existing = await _contextManager.GetByIdAsync(id);
             if (existing == null)
@@ -64,10 +69,14 @@ namespace NatournaServer.Services.Api
 
             var role = await GetRoleOrThrowAsync(user.RoleId, ErrorCodes.USER_UPDATE_ERROR);
 
-            if (!string.IsNullOrEmpty(user.Password))
+            var passwordHash = string.IsNullOrEmpty(user.Password)
+                ? string.Empty
+                : _passwordHashingService.HashPassword(user.Password);
+
+            var userEntity = new UserEntity(0, user.Email, passwordHash, user.PhoneNumber, user.RoleId)
             {
-                user.Password = _passwordHashingService.HashPassword(user.Password);
-            }
+                IsActive = user.IsActive
+            };
 
             var oldValues = new
             {
@@ -79,7 +88,7 @@ namespace NatournaServer.Services.Api
             var oldRoleId = existing.RoleId;
             var oldIsActive = existing.IsActive;
 
-            var updated = await _contextManager.UpdateAsync(id, user);
+            var updated = await _contextManager.UpdateAsync(id, userEntity);
             if (updated == null)
                 return null;
 
