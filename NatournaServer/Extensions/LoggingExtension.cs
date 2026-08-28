@@ -33,35 +33,4 @@ public static class LoggingExtension
 
         return app;
     }
-
-    public static IApplicationBuilder UseGlobalExceptionLogging(this IApplicationBuilder app)
-    {
-        app.Use(async (context, next) =>
-        {
-            var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("GlobalExceptionLogger");
-            try
-            {
-                await next();
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Unhandled exception occurred while processing request");
-                context.Response.StatusCode = 500;
-                context.Response.ContentType = "application/json";
-
-                var errorResponse = new
-                {
-                    error = ex.Message,
-                    innerException = ex.InnerException?.Message,
-#if DEBUG
-                    stackTrace = ex.StackTrace
-#endif
-                };
-
-                var json = System.Text.Json.JsonSerializer.Serialize(errorResponse);
-                await context.Response.WriteAsync(json);
-            }
-        });
-        return app;
-    }
 }
