@@ -1,5 +1,7 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Requests.Compound;
+using NatournaServer.Models.Api.Response.Compound;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,21 +19,15 @@ namespace NatournaServer.Controllers
             _compoundManager = compoundManager;
         }
 
-        /// <summary>
-        /// Get all compounds - Any authenticated user
-        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<CompoundEntity>>> GetAllCompounds()
+        public async Task<ActionResult<List<CompoundResponse>>> GetAllCompounds()
         {
             var compounds = await _compoundManager.GetAllCompoundsAsync();
             return Ok(compounds);
         }
 
-        /// <summary>
-        /// Get compound by ID - Any authenticated user
-        /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<CompoundEntity>> GetCompoundById(int id)
+        public async Task<ActionResult<CompoundResponse>> GetCompoundById(int id)
         {
             var compound = await _compoundManager.GetCompoundByIdAsync(id);
 
@@ -43,25 +39,19 @@ namespace NatournaServer.Controllers
             return Ok(compound);
         }
 
-        /// <summary>
-        /// Create compound - Admin only
-        /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<CompoundEntity>> CreateCompound(CompoundEntity compound)
+        [Authorize(Roles = RoleNames.Admin)]
+        public async Task<ActionResult<CompoundResponse>> CreateCompound([FromBody] CompoundRequest request)
         {
-            var createdCompound = await _compoundManager.CreateCompoundAsync(compound);
+            var createdCompound = await _compoundManager.CreateCompoundAsync(request);
             return CreatedAtAction(nameof(GetCompoundById), new { id = createdCompound.Id }, createdCompound);
         }
 
-        /// <summary>
-        /// Update compound - Admin only
-        /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<CompoundEntity>> UpdateCompound(int id, CompoundEntity compound)
+        [Authorize(Roles = RoleNames.Admin)]
+        public async Task<ActionResult<CompoundResponse>> UpdateCompound(int id, [FromBody] CompoundRequest request)
         {
-            var updatedCompound = await _compoundManager.UpdateCompoundAsync(id, compound);
+            var updatedCompound = await _compoundManager.UpdateCompoundAsync(id, request);
 
             if (updatedCompound == null)
             {
@@ -71,11 +61,8 @@ namespace NatournaServer.Controllers
             return Ok(updatedCompound);
         }
 
-        /// <summary>
-        /// Delete compound - Admin only
-        /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeleteCompound(int id)
         {
             var result = await _compoundManager.DeleteCompoundAsync(id);

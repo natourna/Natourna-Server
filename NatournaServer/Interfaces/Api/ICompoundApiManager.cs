@@ -1,16 +1,17 @@
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Requests.Compound;
+using NatournaServer.Models.Api.Response.Compound;
 
 namespace NatournaServer.Interfaces.Api
 {
     public interface ICompoundApiManager
     {
-        Task<List<CompoundEntity>> GetAllCompoundsAsync();
+        Task<List<CompoundResponse>> GetAllCompoundsAsync();
 
-        Task<CompoundEntity?> GetCompoundByIdAsync(int id);
+        Task<CompoundResponse?> GetCompoundByIdAsync(int id);
 
-        Task<CompoundEntity> CreateCompoundAsync(CompoundEntity compound);
+        Task<CompoundResponse> CreateCompoundAsync(CompoundRequest request);
 
-        Task<CompoundEntity?> UpdateCompoundAsync(int id, CompoundEntity compound);
+        Task<CompoundResponse?> UpdateCompoundAsync(int id, CompoundRequest request);
 
         Task<bool> DeleteCompoundAsync(int id);
     }

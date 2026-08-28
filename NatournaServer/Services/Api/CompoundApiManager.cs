@@ -2,6 +2,8 @@ using NatournaServer.Constants.Log;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
+using NatournaServer.Models.Api.Requests.Compound;
+using NatournaServer.Models.Api.Response.Compound;
 using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Services.Api
@@ -17,28 +19,32 @@ namespace NatournaServer.Services.Api
             _auditService = auditService;
         }
 
-        public async Task<List<CompoundEntity>> GetAllCompoundsAsync()
+        public async Task<List<CompoundResponse>> GetAllCompoundsAsync()
         {
-            return await _contextManager.GetAllAsync();
+            var compounds = await _contextManager.GetAllAsync();
+            return compounds.Select(MapToResponse).ToList();
         }
 
-        public async Task<CompoundEntity?> GetCompoundByIdAsync(int id)
+        public async Task<CompoundResponse?> GetCompoundByIdAsync(int id)
         {
-            return await _contextManager.GetByIdAsync(id);
+            var compound = await _contextManager.GetByIdAsync(id);
+            return compound == null ? null : MapToResponse(compound);
         }
 
-        public async Task<CompoundEntity> CreateCompoundAsync(CompoundEntity compound)
+        public async Task<CompoundResponse> CreateCompoundAsync(CompoundRequest request)
         {
+            var compound = new CompoundEntity(request.Name, request.Address);
+
             var created = await _contextManager.CreateAsync(compound);
 
             await _auditService.LogAsync(LogAction.Create, "Compound", created.Id, null, new { created.Name, created.Address });
 
-            return created;
+            return MapToResponse(created);
         }
 
-        public async Task<CompoundEntity?> UpdateCompoundAsync(int id, CompoundEntity compound)
+        public async Task<CompoundResponse?> UpdateCompoundAsync(int id, CompoundRequest request)
         {
-            var existing = await GetCompoundByIdAsync(id);
+            var existing = await _contextManager.GetByIdAsync(id);
             if (existing == null)
             {
                 return null;
@@ -50,19 +56,21 @@ namespace NatournaServer.Services.Api
                 existing.Address
             };
 
-            var updated = await _contextManager.UpdateAsync(id, compound);
+            var updated = await _contextManager.UpdateAsync(id, new CompoundEntity(request.Name, request.Address));
 
-            if (updated != null)
+            if (updated == null)
             {
-                await _auditService.LogAsync(LogAction.Update, "Compound", id, oldValues, new { updated.Name, updated.Address });
+                return null;
             }
 
-            return updated;
+            await _auditService.LogAsync(LogAction.Update, "Compound", id, oldValues, new { updated.Name, updated.Address });
+
+            return MapToResponse(updated);
         }
 
         public async Task<bool> DeleteCompoundAsync(int id)
         {
-            var existing = await GetCompoundByIdAsync(id);
+            var existing = await _contextManager.GetByIdAsync(id);
             if (existing == null)
             {
                 return false;
@@ -71,6 +79,19 @@ namespace NatournaServer.Services.Api
             await _auditService.LogAsync(LogAction.Delete, "Compound", id, new { existing.Name }, null);
 
             return await _contextManager.DeleteAsync(id);
+        }
+
+        private static CompoundResponse MapToResponse(CompoundEntity compound)
+        {
+            return new CompoundResponse
+            {
+                Id = compound.Id,
+                Name = compound.Name,
+                Address = compound.Address,
+                ActiveApartments = compound.Buildings.SelectMany(b => b.Apartments).Count(a => a.IsActive == true),
+                CreatedAt = compound.CreatedAt,
+                UpdatedAt = compound.UpdatedAt
+            };
         }
     }
 }

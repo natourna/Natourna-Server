@@ -1,5 +1,4 @@
-﻿using NatournaServer.Models.Validation;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
@@ -12,13 +11,12 @@ namespace NatournaServer.Models.Entities
         public int Id { get; set; }
 
         [Required]
+        [MaxLength(100)]
         public string Name { get; set; }
 
         [Required]
+        [MaxLength(255)]
         public string Address { get; set; }
-
-        [RequiredInt]
-        public int ActiveApartments { get; set; }
 
         [JsonIgnore]
         public ICollection<BuildingEntity> Buildings { get; set; }
@@ -26,12 +24,10 @@ namespace NatournaServer.Models.Entities
         [JsonIgnore]
         public ICollection<BalanceEntity> Balances { get; set; }
 
-        public CompoundEntity(int id, string name, string address, int activeApartments)
+        public CompoundEntity(string name, string address)
         {
-            Id = id;
             Name = name;
             Address = address;
-            ActiveApartments = activeApartments;
             Buildings = [];
             Balances = [];
             CreatedAt = DateTime.UtcNow;

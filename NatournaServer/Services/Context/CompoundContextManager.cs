@@ -18,6 +18,8 @@ namespace NatournaServer.Services.Context
         {
             return await _context.Compounds
                 .Include(c => c.Buildings)
+                .ThenInclude(b => b.Apartments)
+                .OrderBy(c => c.Name)
                 .ToListAsync();
         }
 
@@ -25,6 +27,7 @@ namespace NatournaServer.Services.Context
         {
             return await _context.Compounds
                 .Include(c => c.Buildings)
+                .ThenInclude(b => b.Apartments)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
@@ -43,7 +46,6 @@ namespace NatournaServer.Services.Context
 
             existingCompound.Name = compound.Name;
             existingCompound.Address = compound.Address;
-            existingCompound.ActiveApartments = compound.ActiveApartments;
             existingCompound.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
