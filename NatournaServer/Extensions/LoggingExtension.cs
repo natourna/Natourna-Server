@@ -4,6 +4,8 @@ namespace NatournaServer.Extensions;
 
 public static class LoggingExtension
 {
+    private static readonly string[] SensitiveBodyPaths = ["/api/Auth", "/api/User"];
+
     public static IApplicationBuilder UseRequestLogging(this IApplicationBuilder app)
     {
         app.Use(async (context, next) =>
@@ -14,7 +16,9 @@ public static class LoggingExtension
 
             string body = string.Empty;
 
-            if (context.Request.ContentLength > 0 && context.Request.Body.CanRead)
+            var isSensitivePath = SensitiveBodyPaths.Any(path => context.Request.Path.StartsWithSegments(path));
+
+            if (context.Request.ContentLength > 0 && context.Request.Body.CanRead && !isSensitivePath)
             {
                 context.Request.Body.Position = 0;
                 using var reader = new StreamReader(context.Request.Body, Encoding.UTF8, leaveOpen: true);
@@ -22,7 +26,7 @@ public static class LoggingExtension
                 context.Request.Body.Position = 0;
             }
 
-            logger.LogInformation($"HTTP {context.Request.Method} {context.Request.Path} Body: {body}");
+            logger.LogInformation("HTTP {Method} {Path} Body: {Body}", context.Request.Method, context.Request.Path, body);
 
             await next();
         });
