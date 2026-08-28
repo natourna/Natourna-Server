@@ -4,7 +4,9 @@ using NatournaServer.Exceptions;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
+using NatournaServer.Models.Api.Requests.Paging;
 using NatournaServer.Models.Api.Requests.Payment;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Api.Response.Payment;
 using NatournaServer.Models.Entities;
 
@@ -27,10 +29,17 @@ namespace NatournaServer.Services.Api
             _logger = logger;
         }
 
-        public async Task<List<PaymentResponse>> GetAllPaymentsAsync()
+        public async Task<PagedResponse<PaymentResponse>> GetPagedPaymentsAsync(PagedQuery query, int? apartmentId = null, int? cycleId = null, bool? isPaid = null)
         {
-            List<PaymentEntity> payments = await _paymentContextManager.GetAllAsync();
-            return payments.Select(MapToResponse).ToList();
+            var (items, totalCount) = await _paymentContextManager.GetPagedAsync(query.Page, query.PageSize, apartmentId, cycleId, isPaid);
+
+            return new PagedResponse<PaymentResponse>
+            {
+                Items = items.Select(MapToResponse).ToList(),
+                Page = query.Page,
+                PageSize = query.PageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<PaymentResponse?> GetPaymentByIdAsync(int id)
@@ -39,17 +48,6 @@ namespace NatournaServer.Services.Api
             return payment != null ? MapToResponse(payment) : null;
         }
 
-        public async Task<List<PaymentResponse>> GetPaymentsByApartmentIdAsync(int apartmentId)
-        {
-            List<PaymentEntity> payments = await _paymentContextManager.GetAllAsync(apartmentId: apartmentId);
-            return payments.Select(MapToResponse).ToList();
-        }
-
-        public async Task<List<PaymentResponse>> GetPaymentsByCycleIdAsync(int cycleId)
-        {
-            List<PaymentEntity> payments = await _paymentContextManager.GetAllAsync(cycleId: cycleId);
-            return payments.Select(MapToResponse).ToList();
-        }
 
         public async Task<PaymentResponse> CreatePaymentAsync(PaymentRequest request)
         {

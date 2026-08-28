@@ -24,28 +24,7 @@ namespace NatournaServer.Services.Context
             {
                 _logger.LogInformation("Getting all payments with filters - PaymentId: {PaymentId}, ApartmentId: {ApartmentId}, CycleId: {CycleId}, IsPaid: {IsPaid}", paymentId, apartmentId, cycleId, isPaid);
 
-                var query = _context.Payments.Include(p => p.Apartment).Include(p => p.Cycle).Include(p => p.PaymentAllocations).AsQueryable();
-
-                // Apply filters
-                if (paymentId.HasValue)
-                {
-                    query = query.Where(p => p.Id == paymentId.Value);
-                }
-
-                if (apartmentId.HasValue)
-                {
-                    query = query.Where(p => p.ApartmentId == apartmentId.Value);
-                }
-
-                if (cycleId.HasValue)
-                {
-                    query = query.Where(p => p.CycleId == cycleId.Value);
-                }
-
-                if (isPaid.HasValue)
-                {
-                    query = query.Where(p => p.IsPaid == isPaid.Value);
-                }
+                var query = BuildQuery(paymentId, apartmentId, cycleId, isPaid);
 
                 return await query.ToListAsync();
             }
@@ -57,6 +36,61 @@ namespace NatournaServer.Services.Context
 
                 throw new ContextException(ErrorCodes.PAYMENT_GET_ALL_ERROR, userMessage, technicalDetails, ex);
             }
+        }
+
+        public async Task<(List<PaymentEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, int? apartmentId = null, int? cycleId = null, bool? isPaid = null)
+        {
+            try
+            {
+                _logger.LogInformation("Getting paged payments - Page: {Page}, PageSize: {PageSize}, ApartmentId: {ApartmentId}, CycleId: {CycleId}, IsPaid: {IsPaid}", page, pageSize, apartmentId, cycleId, isPaid);
+
+                var query = BuildQuery(null, apartmentId, cycleId, isPaid);
+
+                var totalCount = await query.CountAsync();
+                var items = await query
+                    .OrderByDescending(p => p.DueDate)
+                    .ThenByDescending(p => p.Id)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return (items, totalCount);
+            }
+            catch (Exception ex)
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.GetAllFailed(null, apartmentId, cycleId, isPaid);
+
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}. {TechnicalDetails}", ErrorCodes.PAYMENT_GET_ALL_ERROR, userMessage, technicalDetails);
+
+                throw new ContextException(ErrorCodes.PAYMENT_GET_ALL_ERROR, userMessage, technicalDetails, ex);
+            }
+        }
+
+        private IQueryable<PaymentEntity> BuildQuery(int? paymentId, int? apartmentId, int? cycleId, bool? isPaid)
+        {
+            var query = _context.Payments.Include(p => p.Apartment).Include(p => p.Cycle).Include(p => p.PaymentAllocations).AsQueryable();
+
+            if (paymentId.HasValue)
+            {
+                query = query.Where(p => p.Id == paymentId.Value);
+            }
+
+            if (apartmentId.HasValue)
+            {
+                query = query.Where(p => p.ApartmentId == apartmentId.Value);
+            }
+
+            if (cycleId.HasValue)
+            {
+                query = query.Where(p => p.CycleId == cycleId.Value);
+            }
+
+            if (isPaid.HasValue)
+            {
+                query = query.Where(p => p.IsPaid == isPaid.Value);
+            }
+
+            return query;
         }
 
         public async Task<PaymentEntity?> GetByIdAsync(int id)
