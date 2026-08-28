@@ -8,6 +8,6 @@ namespace NatournaServer.Models.Configurations
 
         public string Audience { get; set; } = string.Empty;
 
-        public int ExpirationMinutes { get; set; } = 1;
+        public int ExpirationMinutes { get; set; } = 60;
     }
 }

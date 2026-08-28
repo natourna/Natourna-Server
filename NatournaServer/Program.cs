@@ -15,6 +15,8 @@ try
     builder.Services.AddSwaggerServices();
     builder.Services.AddAuthenticationService(builder.Configuration);
     builder.Services.AddBootstrapConfiguration(builder.Configuration);
+    builder.Services.AddCorsPolicy(builder.Configuration);
+    builder.Services.AddRateLimiting();
     builder.WebHost.AddListenPort(builder.Configuration);
 
     var app = builder.Build();
@@ -24,13 +26,16 @@ try
     await app.Services.SeedBootstrapAdminAsync();
 
     app.UseExceptionHandling();
+    app.UseSecurityHeaders();
     app.UseRequestLogging();
     app.UseSwaggerServices();
+
+    app.UseCors();
 
     app.UseAuthentication();
     app.UseAuthorization();
 
-    app.UseCors("AllowLocalhost4200");
+    app.UseRateLimiter();
 
     app.MapControllers();
 
