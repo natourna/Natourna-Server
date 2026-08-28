@@ -14,14 +14,16 @@ namespace NatournaServer.Services.Api
     {
         private readonly IUserContextManager _userContextManager;
         private readonly IJwtAuthenticationService _jwtService;
+        private readonly IPasswordHashingService _passwordHashingService;
         private readonly IAuditService _auditService;
         private readonly JwtConfiguration _jwtSettings;
         private readonly ILogger<AuthApiManager> _logger;
 
-        public AuthApiManager(IUserContextManager userContextManager, IJwtAuthenticationService jwtService, IAuditService auditService, IOptions<JwtConfiguration> jwtSettings, ILogger<AuthApiManager> logger)
+        public AuthApiManager(IUserContextManager userContextManager, IJwtAuthenticationService jwtService, IPasswordHashingService passwordHashingService, IAuditService auditService, IOptions<JwtConfiguration> jwtSettings, ILogger<AuthApiManager> logger)
         {
             _userContextManager = userContextManager;
             _jwtService = jwtService;
+            _passwordHashingService = passwordHashingService;
             _auditService = auditService;
             _jwtSettings = jwtSettings.Value;
             _logger = logger;
@@ -45,8 +47,8 @@ namespace NatournaServer.Services.Api
                 return null;
             }
 
-            // Validate password (in production, use BCrypt or similar)
-            if (user.Password != request.Password)
+            // Validate password against the stored hash
+            if (!_passwordHashingService.VerifyPassword(user.Password, request.Password))
             {
                 _logger.LogWarning("Failed login attempt for user: {Email}", request.Username);
                 return null;
