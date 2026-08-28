@@ -12,7 +12,7 @@ namespace NatournaServer.Interfaces.Api
 
         Task<CycleEntity> CreateCycleAsync(CycleRequest request);
 
-        Task<CycleEntity?> UpdateCycleAsync(int id, CycleEntity cycle);
+        Task<CycleEntity?> UpdateCycleAsync(int id, CycleUpdateRequest cycle);
 
         Task<bool> DeleteCycleAsync(int id);
     }

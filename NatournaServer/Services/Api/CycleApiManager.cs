@@ -259,7 +259,7 @@ namespace NatournaServer.Services.Api
             }
         }
 
-        public async Task<CycleEntity?> UpdateCycleAsync(int id, CycleEntity cycle)
+        public async Task<CycleEntity?> UpdateCycleAsync(int id, CycleUpdateRequest cycle)
         {
             CycleEntity? existing = await _cycleContextManager.GetByIdAsync(id);
 
@@ -268,6 +268,14 @@ namespace NatournaServer.Services.Api
                 return null;
             }
 
+            CycleEntity cycleEntity = new(cycle.Label, cycle.Cycle, cycle.StartDate, cycle.EndDate, cycle.Amount)
+            {
+                Description = cycle.Description,
+                IsActive = cycle.IsActive,
+                ApartmentIdsCsv = existing.ApartmentIdsCsv,
+                BalanceAllocationsJson = existing.BalanceAllocationsJson
+            };
+
             var oldValues = new
             {
                 existing.Label,
@@ -275,7 +283,7 @@ namespace NatournaServer.Services.Api
                 existing.IsActive
             };
 
-            CycleEntity? updated = await _cycleContextManager.UpdateAsync(id, cycle);
+            CycleEntity? updated = await _cycleContextManager.UpdateAsync(id, cycleEntity);
 
             if (updated != null)
             {
