@@ -3,6 +3,8 @@ using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
 using NatournaServer.Models.Api.Requests.Apartment;
+using NatournaServer.Models.Api.Requests.Paging;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Api.Response.Apartment;
 using NatournaServer.Models.Entities;
 
@@ -19,10 +21,17 @@ namespace NatournaServer.Services.Api
             _auditService = auditService;
         }
 
-        public async Task<List<ApartmentResponse>> GetAllApartmentsAsync()
+        public async Task<PagedResponse<ApartmentResponse>> GetPagedApartmentsAsync(PagedQuery query, int? buildingId = null, bool? isActive = null, string? search = null)
         {
-            List<ApartmentEntity> apartments = await _contextManager.GetAllAsync();
-            return apartments.Select(MapToResponse).ToList();
+            var (items, totalCount) = await _contextManager.GetPagedAsync(query.Page, query.PageSize, buildingId, isActive, search);
+
+            return new PagedResponse<ApartmentResponse>
+            {
+                Items = items.Select(MapToResponse).ToList(),
+                Page = query.Page,
+                PageSize = query.PageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<ApartmentResponse?> GetApartmentByIdAsync(int id)
@@ -109,9 +118,6 @@ namespace NatournaServer.Services.Api
             return null;
         }
 
-        /// <summary>
-        /// Maps ApartmentEntity to ApartmentResponse DTO
-        /// </summary>
         private static ApartmentEntity MapToEntity(ApartmentRequest request)
         {
             return new ApartmentEntity(0, request.ApartmentInfo, request.Floor, request.IsActive, request.BuildingId)

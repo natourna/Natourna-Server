@@ -2,6 +2,8 @@ using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Response.Apartment;
 using NatournaServer.Models.Api.Requests.Apartment;
+using NatournaServer.Models.Api.Requests.Paging;
+using NatournaServer.Models.Api.Response.Paging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,9 +25,9 @@ namespace NatournaServer.Controllers
         /// Get all apartments with building names - Any authenticated user
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<ApartmentResponse>>> GetAllApartments()
+        public async Task<ActionResult<PagedResponse<ApartmentResponse>>> GetAllApartments([FromQuery] PagedQuery query, [FromQuery] int? buildingId = null, [FromQuery] bool? isActive = null, [FromQuery] string? search = null)
         {
-            List<ApartmentResponse> apartments = await _apartmentManager.GetAllApartmentsAsync();
+            var apartments = await _apartmentManager.GetPagedApartmentsAsync(query, buildingId, isActive, search);
             return Ok(apartments);
         }
 

@@ -1,11 +1,13 @@
 using NatournaServer.Models.Api.Response.Apartment;
 using NatournaServer.Models.Api.Requests.Apartment;
+using NatournaServer.Models.Api.Requests.Paging;
+using NatournaServer.Models.Api.Response.Paging;
 
 namespace NatournaServer.Interfaces.Api
 {
     public interface IApartmentApiManager
     {
-        Task<List<ApartmentResponse>> GetAllApartmentsAsync();
+        Task<PagedResponse<ApartmentResponse>> GetPagedApartmentsAsync(PagedQuery query, int? buildingId = null, bool? isActive = null, string? search = null);
 
         Task<ApartmentResponse?> GetApartmentByIdAsync(int id);
 
