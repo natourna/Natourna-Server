@@ -1,5 +1,6 @@
 using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
+using NatournaServer.Models.Api.Requests.Balance;
 using NatournaServer.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -58,13 +59,8 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<BalanceEntity>> CreateBalance(BalanceEntity balance)
+        public async Task<ActionResult<BalanceEntity>> CreateBalance(BalanceRequest balance)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var createdBalance = await _balanceApiManager.CreateBalanceAsync(balance);
             return CreatedAtAction(nameof(GetBalanceById), new { id = createdBalance.Id }, createdBalance);
         }
@@ -74,13 +70,8 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<BalanceEntity>> UpdateBalance(int id, BalanceEntity balance)
+        public async Task<ActionResult<BalanceEntity>> UpdateBalance(int id, BalanceRequest balance)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var updatedBalance = await _balanceApiManager.UpdateBalanceAsync(id, balance);
             if (updatedBalance == null)
             {

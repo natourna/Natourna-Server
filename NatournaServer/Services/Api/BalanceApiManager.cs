@@ -2,6 +2,7 @@ using NatournaServer.Constants.Log;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
+using NatournaServer.Models.Api.Requests.Balance;
 using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Services.Api
@@ -33,16 +34,16 @@ namespace NatournaServer.Services.Api
             return await _balanceContextManager.GetAllAsync(compoundId: compoundId);
         }
 
-        public async Task<BalanceEntity> CreateBalanceAsync(BalanceEntity balance)
+        public async Task<BalanceEntity> CreateBalanceAsync(BalanceRequest balance)
         {
-            var created = await _balanceContextManager.CreateAsync(balance);
+            var created = await _balanceContextManager.CreateAsync(MapToEntity(balance));
 
             await _auditService.LogAsync(LogAction.Create, "Balance", created.Id, null, new { created.CompoundId, created.CurrentAmount, created.Label });
 
             return created;
         }
 
-        public async Task<BalanceEntity?> UpdateBalanceAsync(int id, BalanceEntity balance)
+        public async Task<BalanceEntity?> UpdateBalanceAsync(int id, BalanceRequest balance)
         {
             var existing = await GetBalanceByIdAsync(id);
             if (existing == null)
@@ -55,7 +56,7 @@ namespace NatournaServer.Services.Api
                 existing.Label
             };
 
-            var updated = await _balanceContextManager.UpdateAsync(id, balance);
+            var updated = await _balanceContextManager.UpdateAsync(id, MapToEntity(balance));
 
             if (updated != null)
             {
@@ -63,6 +64,14 @@ namespace NatournaServer.Services.Api
             }
 
             return updated;
+        }
+
+        private static BalanceEntity MapToEntity(BalanceRequest request)
+        {
+            return new BalanceEntity(request.Label, request.CompoundId)
+            {
+                CurrentAmount = request.CurrentAmount
+            };
         }
 
         public async Task<bool> DeleteBalanceAsync(int id)
