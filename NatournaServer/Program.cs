@@ -15,6 +15,7 @@ try
     builder.Services.AddSwaggerServices();
     builder.Services.AddAuthenticationService(builder.Configuration);
     builder.Services.AddBootstrapConfiguration(builder.Configuration);
+    builder.Services.AddCorsPolicy(builder.Configuration);
     builder.WebHost.AddListenPort(builder.Configuration);
 
     var app = builder.Build();
@@ -27,10 +28,10 @@ try
     app.UseRequestLogging();
     app.UseSwaggerServices();
 
+    app.UseCors();
+
     app.UseAuthentication();
     app.UseAuthorization();
-
-    app.UseCors("AllowLocalhost4200");
 
     app.MapControllers();
 
