@@ -1,7 +1,9 @@
 ﻿using NatournaServer.Authentication;
 using NatournaServer.Interfaces.Authentication;
 using NatournaServer.Models.Configurations;
+using NatournaServer.Models.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -16,6 +18,8 @@ namespace NatournaServer.Extensions
 
             // Register JWT Service
             services.AddScoped<IJwtAuthenticationService, JwtAuthenticationService>();
+
+            services.AddScoped<IPasswordHasher<UserEntity>, PasswordHasher<UserEntity>>();
 
             // Get JWT settings for authentication configuration
             var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtConfiguration>();

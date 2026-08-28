@@ -7,8 +7,6 @@ namespace NatournaServer.Interfaces.Api
     {
         Task<LoginResponse?> LoginAsync(LoginRequest request);
 
-        Task<LoginResponse?> RefreshTokenAsync(string username);
-
-        bool ValidateToken(string token);
+        Task<LoginResponse?> RefreshTokenAsync(int userId);
     }
 }

@@ -3,6 +3,8 @@ using NatournaServer.Models.Api.Requests.Login;
 using NatournaServer.Models.Api.Response.Login;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Claims;
 
 namespace NatournaServer.Controllers
 {
@@ -11,18 +13,15 @@ namespace NatournaServer.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthApiManager _authManager;
-        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(
-            IAuthApiManager authManager,
-            ILogger<AuthController> logger)
+        public AuthController(IAuthApiManager authManager)
         {
             _authManager = authManager;
-            _logger = logger;
         }
 
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("auth")]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
         {
             var response = await _authManager.LoginAsync(request);
@@ -39,14 +38,14 @@ namespace NatournaServer.Controllers
         [Authorize]
         public async Task<ActionResult<LoginResponse>> RefreshToken()
         {
-            var username = User.Identity?.Name;
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(username))
+            if (!int.TryParse(userIdClaim, out int userId))
             {
                 return Unauthorized(new { message = "Invalid token" });
             }
 
-            var response = await _authManager.RefreshTokenAsync(username);
+            var response = await _authManager.RefreshTokenAsync(userId);
 
             if (response == null)
             {
@@ -54,13 +53,6 @@ namespace NatournaServer.Controllers
             }
 
             return Ok(response);
-        }
-
-        [HttpGet("validate")]
-        [Authorize]
-        public ActionResult ValidateToken()
-        {
-            return Ok(new { message = "Token is valid", username = User.Identity?.Name });
         }
     }
 }
