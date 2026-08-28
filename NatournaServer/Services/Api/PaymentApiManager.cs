@@ -5,6 +5,7 @@ using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
 using NatournaServer.Models.Api.Requests.Payment;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Api.Response.Payment;
 using NatournaServer.Models.Entities;
 
@@ -15,22 +16,31 @@ namespace NatournaServer.Services.Api
         private readonly IPaymentContextManager _paymentContextManager;
         private readonly IPaymentAllocationContextManager _paymentAllocationContextManager;
         private readonly IBalanceContextManager _balanceContextManager;
+        private readonly IApartmentContextManager _apartmentContextManager;
         private readonly IAuditService _auditService;
         private readonly ILogger<PaymentApiManager> _logger;
 
-        public PaymentApiManager(IPaymentContextManager paymentContextManager, IPaymentAllocationContextManager paymentAllocationContextManager, IBalanceContextManager balanceContextManager, IAuditService auditService, ILogger<PaymentApiManager> logger)
+        public PaymentApiManager(IPaymentContextManager paymentContextManager, IPaymentAllocationContextManager paymentAllocationContextManager, IBalanceContextManager balanceContextManager, IApartmentContextManager apartmentContextManager, IAuditService auditService, ILogger<PaymentApiManager> logger)
         {
             _paymentContextManager = paymentContextManager;
             _paymentAllocationContextManager = paymentAllocationContextManager;
             _balanceContextManager = balanceContextManager;
+            _apartmentContextManager = apartmentContextManager;
             _auditService = auditService;
             _logger = logger;
         }
 
-        public async Task<List<PaymentResponse>> GetAllPaymentsAsync()
+        public async Task<PagedResponse<PaymentResponse>> GetPaymentsAsync(int page, int pageSize, int? apartmentId, bool? isPaid, DateTime? dueBefore)
         {
-            List<PaymentEntity> payments = await _paymentContextManager.GetAllAsync();
-            return payments.Select(MapToResponse).ToList();
+            (List<PaymentEntity> items, int totalCount) = await _paymentContextManager.GetPagedAsync(page, pageSize, apartmentId, isPaid, dueBefore);
+
+            return new PagedResponse<PaymentResponse>
+            {
+                Items = items.Select(MapToResponse).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<PaymentResponse?> GetPaymentByIdAsync(int id)
@@ -39,24 +49,10 @@ namespace NatournaServer.Services.Api
             return payment != null ? MapToResponse(payment) : null;
         }
 
-        public async Task<List<PaymentResponse>> GetPaymentsByApartmentIdAsync(int apartmentId)
-        {
-            List<PaymentEntity> payments = await _paymentContextManager.GetAllAsync(apartmentId: apartmentId);
-            return payments.Select(MapToResponse).ToList();
-        }
-
-        public async Task<List<PaymentResponse>> GetPaymentsByCycleIdAsync(int cycleId)
-        {
-            List<PaymentEntity> payments = await _paymentContextManager.GetAllAsync(cycleId: cycleId);
-            return payments.Select(MapToResponse).ToList();
-        }
-
         public async Task<PaymentResponse> CreatePaymentAsync(PaymentRequest request)
         {
             try
             {
-                _logger.LogInformation("Creating payment with balance allocations - Amount: {Amount}, ApartmentId: {ApartmentId}", request.Amount, request.ApartmentId);
-
                 decimal totalPercentage = request.Allocations.Sum(a => a.Percentage);
                 if (totalPercentage != 100)
                 {
@@ -65,11 +61,13 @@ namespace NatournaServer.Services.Api
                     throw new ApiException(ErrorCodes.PAYMENT_INVALID_ALLOCATIONS_ERROR, userMessage, technicalDetails);
                 }
 
+                await EnsureApartmentExistsAsync(request.ApartmentId);
+
                 foreach (int balanceId in request.Allocations.Select(x => x.BalanceId))
                 {
-                    List<BalanceEntity> balances = await _balanceContextManager.GetAllAsync(balanceId: balanceId);
+                    BalanceEntity? balance = await _balanceContextManager.GetByIdAsync(balanceId);
 
-                    if (balances.Count == 0)
+                    if (balance == null)
                     {
                         (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(balanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
@@ -104,13 +102,13 @@ namespace NatournaServer.Services.Api
 
                 await _paymentAllocationContextManager.CreateRangeAsync(paymentAllocations);
 
-                _logger.LogInformation("Successfully saved {AllocationCount} payment allocations", paymentAllocations.Count);
-
                 await _auditService.LogAsync(LogAction.Create, "Payment", createdPayment.Id, null, new { createdPayment.Amount, createdPayment.ApartmentId, createdPayment.IsPaid, AllocationCount = request.Allocations.Count });
 
-                _logger.LogInformation("Successfully created payment {PaymentId} with {AllocationCount} balance allocations", createdPayment.Id, request.Allocations.Count);
+                _logger.LogInformation("Created payment {PaymentId} with {AllocationCount} balance allocations", createdPayment.Id, request.Allocations.Count);
 
-                return MapToResponse(createdPayment);
+                PaymentEntity? reloaded = await _paymentContextManager.GetByIdAsync(createdPayment.Id);
+
+                return MapToResponse(reloaded ?? createdPayment);
             }
             catch (ApiException)
             {
@@ -124,7 +122,7 @@ namespace NatournaServer.Services.Api
             }
         }
 
-        public async Task<PaymentResponse?> UpdatePaymentAsync(int id, PaymentEntity payment)
+        public async Task<PaymentResponse?> UpdatePaymentAsync(int id, PaymentUpdateRequest request)
         {
             PaymentEntity? existing = await _paymentContextManager.GetByIdAsync(id);
 
@@ -132,6 +130,8 @@ namespace NatournaServer.Services.Api
             {
                 return null;
             }
+
+            await EnsureApartmentExistsAsync(request.ApartmentId);
 
             var oldValues = new
             {
@@ -141,7 +141,7 @@ namespace NatournaServer.Services.Api
                 existing.DueDate
             };
 
-            PaymentEntity? updated = await _paymentContextManager.UpdateAsync(id, payment);
+            PaymentEntity? updated = await _paymentContextManager.UpdateAsync(id, request.Label, request.Amount, request.DueDate, request.ApartmentId);
 
             if (updated != null)
             {
@@ -171,8 +171,6 @@ namespace NatournaServer.Services.Api
         {
             try
             {
-                _logger.LogInformation("Marking payment {PaymentId} as paid", paymentId);
-
                 PaymentEntity? payment = await _paymentContextManager.GetByIdAsync(paymentId);
 
                 if (payment == null)
@@ -201,11 +199,12 @@ namespace NatournaServer.Services.Api
 
                 foreach (PaymentAllocationEntity allocation in allocations)
                 {
-                    List<BalanceEntity> balances = await _balanceContextManager.GetAllAsync(balanceId: allocation.BalanceId);
-                    BalanceEntity? balance = balances.FirstOrDefault();
+                    BalanceEntity? balance = await _balanceContextManager.GetByIdAsync(allocation.BalanceId);
 
                     if (balance == null)
                     {
+                        await RollbackBalanceUpdates(balanceUpdates, subtract: true);
+
                         (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(allocation.BalanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
                         throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
@@ -226,15 +225,10 @@ namespace NatournaServer.Services.Api
                     }
 
                     balanceUpdates.Add((balance.Id, allocation.AllocatedAmount));
-
-                    _logger.LogInformation("Added {Amount:C} to balance {BalanceId} (Payment {PaymentId})", allocation.AllocatedAmount, balance.Id, paymentId);
                 }
 
-                payment.IsPaid = true;
-                payment.PaymentDate = DateTime.UtcNow;
-                payment.UpdatedAt = DateTime.UtcNow;
-
-                PaymentEntity? updatedPayment = await _paymentContextManager.UpdateAsync(paymentId, payment);
+                DateTime paymentDate = DateTime.UtcNow;
+                PaymentEntity? updatedPayment = await _paymentContextManager.SetPaidStatusAsync(paymentId, true, paymentDate);
 
                 if (updatedPayment == null)
                 {
@@ -245,9 +239,9 @@ namespace NatournaServer.Services.Api
                     throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_PAID_ERROR, userMessage, technicalDetails);
                 }
 
-                await _auditService.LogAsync(LogAction.Update, "Payment", paymentId, new { IsPaid = false, PaymentDate = (DateTime?)null }, new { IsPaid = true, payment.PaymentDate });
+                await _auditService.LogAsync(LogAction.Update, "Payment", paymentId, new { IsPaid = false, PaymentDate = (DateTime?)null }, new { IsPaid = true, PaymentDate = paymentDate });
 
-                _logger.LogInformation("Successfully marked payment {PaymentId} as paid on {PaymentDate} and added funds to {BalanceCount} balances", paymentId, payment.PaymentDate, allocations.Count);
+                _logger.LogInformation("Marked payment {PaymentId} as paid and credited {BalanceCount} balances", paymentId, allocations.Count);
 
                 return MapToResponse(updatedPayment);
             }
@@ -267,8 +261,6 @@ namespace NatournaServer.Services.Api
         {
             try
             {
-                _logger.LogInformation("Marking payment {PaymentId} as unpaid", paymentId);
-
                 PaymentEntity? payment = await _paymentContextManager.GetByIdAsync(paymentId);
 
                 if (payment == null)
@@ -302,6 +294,8 @@ namespace NatournaServer.Services.Api
 
                     if (balance == null)
                     {
+                        await RollbackBalanceUpdates(balanceUpdates, subtract: false);
+
                         (string userMessage, string technicalDetails) = ErrorMessageBuilder.Balance.NotFound(allocation.BalanceId);
                         _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage);
                         throw new ApiException(ErrorCodes.BALANCE_NOT_FOUND_ERROR, userMessage, technicalDetails);
@@ -322,15 +316,9 @@ namespace NatournaServer.Services.Api
                     }
 
                     balanceUpdates.Add((balance.Id, allocation.AllocatedAmount));
-
-                    _logger.LogInformation("Deducted {Amount:C} from balance {BalanceId} (Payment {PaymentId})", allocation.AllocatedAmount, balance.Id, paymentId);
                 }
 
-                payment.IsPaid = false;
-                payment.PaymentDate = null;
-                payment.UpdatedAt = DateTime.UtcNow;
-
-                PaymentEntity? updatedPayment = await _paymentContextManager.UpdateAsync(paymentId, payment);
+                PaymentEntity? updatedPayment = await _paymentContextManager.SetPaidStatusAsync(paymentId, false, null);
 
                 if (updatedPayment == null)
                 {
@@ -343,8 +331,7 @@ namespace NatournaServer.Services.Api
 
                 await _auditService.LogAsync(LogAction.Update, "Payment", paymentId, new { IsPaid = true, payment.PaymentDate }, new { IsPaid = false, PaymentDate = (DateTime?)null });
 
-                _logger.LogInformation("Successfully marked payment {PaymentId} as unpaid and deducted funds from {BalanceCount} balances",
-                    paymentId, allocations.Count);
+                _logger.LogInformation("Marked payment {PaymentId} as unpaid and debited {BalanceCount} balances", paymentId, allocations.Count);
 
                 return MapToResponse(updatedPayment);
             }
@@ -357,6 +344,15 @@ namespace NatournaServer.Services.Api
                 (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.MarkAsUnpaidFailed(paymentId);
                 _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage);
                 throw new ApiException(ErrorCodes.PAYMENT_MARK_AS_UNPAID_ERROR, userMessage, technicalDetails, ex);
+            }
+        }
+
+        private async Task EnsureApartmentExistsAsync(int apartmentId)
+        {
+            var apartment = await _apartmentContextManager.GetByIdAsync(apartmentId);
+            if (apartment == null)
+            {
+                throw new ApiException(ErrorCodes.PAYMENT_APARTMENT_INVALID_ERROR, "The requested apartment does not exist", $"ApartmentId: {apartmentId}");
             }
         }
 
@@ -381,8 +377,6 @@ namespace NatournaServer.Services.Api
 
                         balance.UpdatedAt = DateTime.UtcNow;
                         await _balanceContextManager.UpdateAsync(balance.Id, balance);
-
-                        _logger.LogInformation("Rolled back balance {BalanceId} by {Amount:C}", balanceId, amount);
                     }
                 }
                 catch (Exception ex)

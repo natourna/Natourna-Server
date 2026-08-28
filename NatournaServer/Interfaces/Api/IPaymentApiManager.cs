@@ -1,20 +1,18 @@
 using NatournaServer.Models.Api.Requests.Payment;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Api.Response.Payment;
-using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Interfaces.Api
 {
     public interface IPaymentApiManager
     {
-        Task<List<PaymentResponse>> GetAllPaymentsAsync();
+        Task<PagedResponse<PaymentResponse>> GetPaymentsAsync(int page, int pageSize, int? apartmentId, bool? isPaid, DateTime? dueBefore);
 
         Task<PaymentResponse?> GetPaymentByIdAsync(int id);
 
-        Task<List<PaymentResponse>> GetPaymentsByApartmentIdAsync(int apartmentId);
-
         Task<PaymentResponse> CreatePaymentAsync(PaymentRequest request);
 
-        Task<PaymentResponse?> UpdatePaymentAsync(int id, PaymentEntity payment);
+        Task<PaymentResponse?> UpdatePaymentAsync(int id, PaymentUpdateRequest request);
 
         Task<bool> DeletePaymentAsync(int id);
 

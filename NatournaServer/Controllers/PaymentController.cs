@@ -1,7 +1,9 @@
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
+using NatournaServer.Models.Api.Requests.Paging;
 using NatournaServer.Models.Api.Requests.Payment;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Api.Response.Payment;
-using NatournaServer.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,19 +21,13 @@ namespace NatournaServer.Controllers
             _paymentApiManager = paymentApiManager;
         }
 
-        /// <summary>
-        /// Get all payments - Any authenticated user
-        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<PaymentResponse>>> GetAllPayments()
+        public async Task<ActionResult<PagedResponse<PaymentResponse>>> GetPayments([FromQuery] PagedQuery paging, [FromQuery] int? apartmentId, [FromQuery] bool? isPaid, [FromQuery] DateTime? dueBefore)
         {
-            var payments = await _paymentApiManager.GetAllPaymentsAsync();
+            var payments = await _paymentApiManager.GetPaymentsAsync(paging.Page, paging.PageSize, apartmentId, isPaid, dueBefore);
             return Ok(payments);
         }
 
-        /// <summary>
-        /// Get payment by ID - Any authenticated user
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<PaymentResponse>> GetPaymentById(int id)
         {
@@ -44,40 +40,19 @@ namespace NatournaServer.Controllers
             return Ok(payment);
         }
 
-        /// <summary>
-        /// Get payments by apartment ID - Any authenticated user
-        /// </summary>
-        [HttpGet("apartment/{apartmentId}")]
-        public async Task<ActionResult<List<PaymentResponse>>> GetPaymentsByApartmentId(int apartmentId)
-        {
-            List<PaymentResponse> payments = await _paymentApiManager.GetPaymentsByApartmentIdAsync(apartmentId);
-            return Ok(payments);
-        }
-
-        /// <summary>
-        /// Create payment - Admin only
-        /// </summary>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<PaymentResponse>> CreatePayment([FromBody] PaymentRequest request)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             PaymentResponse createdPayment = await _paymentApiManager.CreatePaymentAsync(request);
             return CreatedAtAction(nameof(GetPaymentById), new { id = createdPayment.Id }, createdPayment);
         }
 
-        /// <summary>
-        /// Update payment - Admin only
-        /// </summary>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<PaymentResponse>> UpdatePayment(int id, PaymentEntity payment)
+        [Authorize(Roles = RoleNames.Admin)]
+        public async Task<ActionResult<PaymentResponse>> UpdatePayment(int id, [FromBody] PaymentUpdateRequest request)
         {
-            PaymentResponse? updatedPayment = await _paymentApiManager.UpdatePaymentAsync(id, payment);
+            PaymentResponse? updatedPayment = await _paymentApiManager.UpdatePaymentAsync(id, request);
             if (updatedPayment == null)
             {
                 return NotFound();
@@ -86,11 +61,8 @@ namespace NatournaServer.Controllers
             return Ok(updatedPayment);
         }
 
-        /// <summary>
-        /// Delete payment - Admin only
-        /// </summary>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult> DeletePayment(int id)
         {
             bool result = await _paymentApiManager.DeletePaymentAsync(id);
@@ -103,22 +75,16 @@ namespace NatournaServer.Controllers
             return NoContent();
         }
 
-        /// <summary>
-        /// Mark payment as paid - Admin only
-        /// </summary>
         [HttpPatch("{id}/mark-as-paid")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<PaymentResponse>> MarkPaymentAsPaid(int id)
         {
             PaymentResponse updatedPayment = await _paymentApiManager.MarkPaymentAsPaidAsync(id);
             return Ok(updatedPayment);
         }
 
-        /// <summary>
-        /// Mark payment as unpaid - Admin only
-        /// </summary>
         [HttpPatch("{id}/mark-as-unpaid")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<PaymentResponse>> MarkPaymentAsUnpaid(int id)
         {
             PaymentResponse updatedPayment = await _paymentApiManager.MarkPaymentAsUnpaidAsync(id);
