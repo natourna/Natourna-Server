@@ -14,7 +14,7 @@ namespace NatournaServer.Interfaces.Api
 
         Task<PaymentResponse> CreatePaymentAsync(PaymentRequest request);
 
-        Task<PaymentResponse?> UpdatePaymentAsync(int id, PaymentEntity payment);
+        Task<PaymentResponse?> UpdatePaymentAsync(int id, PaymentUpdateRequest payment);
 
         Task<bool> DeletePaymentAsync(int id);
 

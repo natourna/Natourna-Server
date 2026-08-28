@@ -124,7 +124,7 @@ namespace NatournaServer.Services.Api
             }
         }
 
-        public async Task<PaymentResponse?> UpdatePaymentAsync(int id, PaymentEntity payment)
+        public async Task<PaymentResponse?> UpdatePaymentAsync(int id, PaymentUpdateRequest payment)
         {
             PaymentEntity? existing = await _paymentContextManager.GetByIdAsync(id);
 
@@ -132,6 +132,14 @@ namespace NatournaServer.Services.Api
             {
                 return null;
             }
+
+            PaymentEntity paymentEntity = new(existing.Label, payment.Amount, payment.ApartmentId)
+            {
+                PaymentDate = payment.PaymentDate,
+                DueDate = payment.DueDate,
+                IsPaid = payment.IsPaid,
+                CycleId = payment.CycleId
+            };
 
             var oldValues = new
             {
@@ -141,7 +149,7 @@ namespace NatournaServer.Services.Api
                 existing.DueDate
             };
 
-            PaymentEntity? updated = await _paymentContextManager.UpdateAsync(id, payment);
+            PaymentEntity? updated = await _paymentContextManager.UpdateAsync(id, paymentEntity);
 
             if (updated != null)
             {

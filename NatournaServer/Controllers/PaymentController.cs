@@ -62,11 +62,6 @@ namespace NatournaServer.Controllers
         [Authorize(Roles = RoleNames.Admin)]
         public async Task<ActionResult<PaymentResponse>> CreatePayment([FromBody] PaymentRequest request)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             PaymentResponse createdPayment = await _paymentApiManager.CreatePaymentAsync(request);
             return CreatedAtAction(nameof(GetPaymentById), new { id = createdPayment.Id }, createdPayment);
         }
@@ -76,7 +71,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<PaymentResponse>> UpdatePayment(int id, PaymentEntity payment)
+        public async Task<ActionResult<PaymentResponse>> UpdatePayment(int id, PaymentUpdateRequest payment)
         {
             PaymentResponse? updatedPayment = await _paymentApiManager.UpdatePaymentAsync(id, payment);
             if (updatedPayment == null)
