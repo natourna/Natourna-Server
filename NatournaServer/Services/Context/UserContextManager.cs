@@ -54,10 +54,9 @@ namespace NatournaServer.Services.Context
             existingUser.IsActive = user.IsActive;
             existingUser.UpdatedAt = DateTime.UtcNow;
 
-            // Only update password if it's provided and different
-            if (!string.IsNullOrEmpty(user.Password) && user.Password != existingUser.Password)
+            // Password arrives already hashed from the api layer when a change is requested
+            if (!string.IsNullOrEmpty(user.Password))
             {
-                // In production, you should hash the password here
                 existingUser.Password = user.Password;
             }
 

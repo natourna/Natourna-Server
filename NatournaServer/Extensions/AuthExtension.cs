@@ -17,6 +17,9 @@ namespace NatournaServer.Extensions
             // Register JWT Service
             services.AddScoped<IJwtAuthenticationService, JwtAuthenticationService>();
 
+            // Register Password Hashing Service
+            services.AddSingleton<IPasswordHashingService, PasswordHashingService>();
+
             // Get JWT settings for authentication configuration
             var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtConfiguration>();
 

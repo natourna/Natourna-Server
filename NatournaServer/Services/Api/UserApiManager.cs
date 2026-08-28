@@ -2,6 +2,7 @@
 using NatournaServer.Constants.Log;
 using NatournaServer.Exceptions;
 using NatournaServer.Interfaces.Api;
+using NatournaServer.Interfaces.Authentication;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
 using NatournaServer.Models.Api.Response.User;
@@ -13,12 +14,14 @@ namespace NatournaServer.Services.Api
     {
         private readonly IUserContextManager _contextManager;
         private readonly IRoleContextManager _roleContextManager;
+        private readonly IPasswordHashingService _passwordHashingService;
         private readonly IAuditService _auditService;
 
-        public UserApiManager(IUserContextManager contextManager, IRoleContextManager roleContextManager, IAuditService auditService)
+        public UserApiManager(IUserContextManager contextManager, IRoleContextManager roleContextManager, IPasswordHashingService passwordHashingService, IAuditService auditService)
         {
             _contextManager = contextManager;
             _roleContextManager = roleContextManager;
+            _passwordHashingService = passwordHashingService;
             _auditService = auditService;
         }
 
@@ -44,6 +47,8 @@ namespace NatournaServer.Services.Api
         {
             var role = await GetRoleOrThrowAsync(user.RoleId, ErrorCodes.USER_CREATE_ERROR);
 
+            user.Password = _passwordHashingService.HashPassword(user.Password);
+
             var created = await _contextManager.CreateAsync(user);
 
             await _auditService.LogAsync(LogAction.Create, "User", created.Id, null, new { created.Email, Role = role.Name, created.IsActive });
@@ -58,6 +63,11 @@ namespace NatournaServer.Services.Api
                 return null;
 
             var role = await GetRoleOrThrowAsync(user.RoleId, ErrorCodes.USER_UPDATE_ERROR);
+
+            if (!string.IsNullOrEmpty(user.Password))
+            {
+                user.Password = _passwordHashingService.HashPassword(user.Password);
+            }
 
             var oldValues = new
             {
