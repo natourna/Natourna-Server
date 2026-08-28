@@ -6,6 +6,8 @@ namespace NatournaServer.Interfaces.Context
     {
         Task<List<BillEntity>> GetAllAsync(int? billId = null, int? balanceId = null, bool? isPaid = null, DateTime? dueDateFrom = null, DateTime? dueDateTo = null);
 
+        Task<(List<BillEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, int? balanceId = null, bool? isPaid = null);
+
         Task<BillEntity?> GetByIdAsync(int id);
 
         Task<List<BillEntity>> GetByBalanceIdAsync(int balanceId);

@@ -64,6 +64,44 @@ namespace NatournaServer.Services.Context
             }
         }
 
+        public async Task<(List<BillEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, int? balanceId = null, bool? isPaid = null)
+        {
+            try
+            {
+                _logger.LogInformation("Getting paged bills - Page: {Page}, PageSize: {PageSize}, BalanceId: {BalanceId}, IsPaid: {IsPaid}", page, pageSize, balanceId, isPaid);
+
+                var query = _context.Bills.Include(b => b.Balance).AsQueryable();
+
+                if (balanceId.HasValue)
+                {
+                    query = query.Where(b => b.BalanceId == balanceId.Value);
+                }
+
+                if (isPaid.HasValue)
+                {
+                    query = query.Where(b => b.IsPaid == isPaid.Value);
+                }
+
+                var totalCount = await query.CountAsync();
+                var items = await query
+                    .OrderByDescending(b => b.DueDate)
+                    .ThenByDescending(b => b.Id)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToListAsync();
+
+                return (items, totalCount);
+            }
+            catch (Exception ex)
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.GetAllFailed(balanceId, isPaid, null, null);
+
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}. {TechnicalDetails}", ErrorCodes.BILL_GET_ALL_ERROR, userMessage, technicalDetails);
+
+                throw new ContextException(ErrorCodes.BILL_GET_ALL_ERROR, userMessage, technicalDetails, ex);
+            }
+        }
+
         public async Task<BillEntity?> GetByIdAsync(int id)
         {
             try

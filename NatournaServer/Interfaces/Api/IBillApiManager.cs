@@ -1,11 +1,13 @@
 using NatournaServer.Models.Api.Requests.Bill;
+using NatournaServer.Models.Api.Requests.Paging;
 using NatournaServer.Models.Api.Response.Bill;
+using NatournaServer.Models.Api.Response.Paging;
 
 namespace NatournaServer.Interfaces.Api
 {
     public interface IBillApiManager
     {
-        Task<List<BillResponse>> GetAllBillsAsync();
+        Task<PagedResponse<BillResponse>> GetPagedBillsAsync(PagedQuery query, int? balanceId = null, bool? isPaid = null);
 
         Task<BillResponse?> GetBillByIdAsync(int id);
 

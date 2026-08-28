@@ -5,7 +5,9 @@ using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
 using NatournaServer.Models.Api.Requests.Bill;
+using NatournaServer.Models.Api.Requests.Paging;
 using NatournaServer.Models.Api.Response.Bill;
+using NatournaServer.Models.Api.Response.Paging;
 using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Services.Api
@@ -25,10 +27,17 @@ namespace NatournaServer.Services.Api
             _logger = logger;
         }
 
-        public async Task<List<BillResponse>> GetAllBillsAsync()
+        public async Task<PagedResponse<BillResponse>> GetPagedBillsAsync(PagedQuery query, int? balanceId = null, bool? isPaid = null)
         {
-            List<BillEntity> bills = await _billContextManager.GetAllAsync();
-            return bills.Select(MapToResponse).ToList();
+            var (items, totalCount) = await _billContextManager.GetPagedAsync(query.Page, query.PageSize, balanceId, isPaid);
+
+            return new PagedResponse<BillResponse>
+            {
+                Items = items.Select(MapToResponse).ToList(),
+                Page = query.Page,
+                PageSize = query.PageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<BillResponse?> GetBillByIdAsync(int id)
