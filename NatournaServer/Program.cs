@@ -26,6 +26,7 @@ try
     await app.Services.SeedBootstrapAdminAsync();
 
     app.UseExceptionHandling();
+    app.UseSecurityHeaders();
     app.UseRequestLogging();
     app.UseSwaggerServices();
 

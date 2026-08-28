@@ -54,6 +54,19 @@ public static class SecurityExtension
         return services;
     }
 
+    public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app)
+    {
+        app.Use(async (context, next) =>
+        {
+            context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            context.Response.Headers["X-Frame-Options"] = "DENY";
+            context.Response.Headers["Referrer-Policy"] = "no-referrer";
+            await next();
+        });
+
+        return app;
+    }
+
     private static string ClientKey(HttpContext context)
     {
         return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
