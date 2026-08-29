@@ -19,7 +19,7 @@ namespace NatournaServer.Authentication
             _logger = logger;
         }
 
-        public string GenerateToken(string username, string userId, string role)
+        public string GenerateToken(string username, string userId, string role, int organizationId)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -29,6 +29,7 @@ namespace NatournaServer.Authentication
                 new Claim(ClaimTypes.Name, username),
                 new Claim(ClaimTypes.NameIdentifier, userId),  // Add UserId claim
                 new Claim(ClaimTypes.Role, role),
+                new Claim(CustomClaimTypes.OrganizationId, organizationId.ToString()),  // Tenant scope
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
             };

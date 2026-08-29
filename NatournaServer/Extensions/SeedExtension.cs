@@ -1,4 +1,5 @@
-﻿using NatournaServer.Constants.User;
+﻿using NatournaServer.Constants.Subscription;
+using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Authentication;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Models.Configurations;
@@ -67,10 +68,29 @@ public static class SeedExtension
             return;
         }
 
+        // The admin must belong to an organization: reuse the first one when the
+        // database was seeded externally, otherwise create it (plus a trial subscription).
+        var organizationContextManager = provider.GetRequiredService<IOrganizationContextManager>();
+        var organization = await organizationContextManager.GetFirstAsync();
+
+        if (organization == null)
+        {
+            organization = await organizationContextManager.CreateAsync(new OrganizationEntity(bootstrap.OrganizationName));
+
+            var subscriptionContextManager = provider.GetRequiredService<ISubscriptionContextManager>();
+            await subscriptionContextManager.CreateAsync(new SubscriptionEntity(organization.Id, SubscriptionStatus.Trial, 7m));
+
+            logger.LogInformation("Seeded bootstrap organization {Name}", organization.Name);
+        }
+
         var passwordHashingService = provider.GetRequiredService<IPasswordHashingService>();
         var passwordHash = passwordHashingService.HashPassword(bootstrap.AdminPassword);
 
-        await userContextManager.CreateAsync(new UserEntity(0, bootstrap.AdminEmail, passwordHash, string.Empty, adminRole.Id));
+        // Seeding runs outside a request (no tenant in scope), so the org is set explicitly
+        await userContextManager.CreateAsync(new UserEntity(0, bootstrap.AdminEmail, passwordHash, string.Empty, adminRole.Id)
+        {
+            OrganizationId = organization.Id
+        });
 
         logger.LogInformation("Seeded bootstrap admin {Email}", bootstrap.AdminEmail);
     }

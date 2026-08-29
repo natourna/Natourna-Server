@@ -5,11 +5,16 @@ using System.Text.Json.Serialization;
 
 namespace NatournaServer.Models.Entities
 {
-    public class CycleEntity : BaseEntity
+    public class CycleEntity : BaseEntity, ITenantEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
+
+        /// <summary>
+        /// Stamped automatically on insert; scoped by a global query filter.
+        /// </summary>
+        public int OrganizationId { get; set; }
 
         [Required]
         public string Label { get; set; }

@@ -8,7 +8,8 @@ try
     // Add services using extensions
     builder.Host.AddSeriLog();
     builder.Services.AddControllers();
-    builder.Services.AddHttpContextAccessor(); // Required for AuditService
+    builder.Services.AddHttpContextAccessor(); // Required for AuditService and HttpTenantContext
+    builder.Services.AddTenancy(builder.Configuration); // Must precede the DbContext, which consumes ITenantContext
     builder.Services.AddPostgreSqlService(builder.Configuration);
     builder.Services.AddApiManagers();
     builder.Services.AddContextManagers();

@@ -1,3 +1,4 @@
+using NatournaServer.Authentication;
 using NatournaServer.Constants.Log;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
@@ -40,12 +41,21 @@ namespace NatournaServer.Services.Audit
                     userId = parsedUserId;
                 }
 
+                // Best-effort tenant stamp - login audits run before authentication and stay null
+                int? organizationId = null;
+                var orgIdClaim = httpContext.User.FindFirst(CustomClaimTypes.OrganizationId)?.Value;
+                if (!string.IsNullOrEmpty(orgIdClaim) && int.TryParse(orgIdClaim, out var parsedOrganizationId))
+                {
+                    organizationId = parsedOrganizationId;
+                }
+
                 var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
                 var userAgent = httpContext.Request.Headers["User-Agent"].ToString();
 
                 var log = new AuditEntity(userEmail, action, entityType)
                 {
                     UserId = userId,
+                    OrganizationId = organizationId,
                     OldValues = oldValues != null ? JsonSerializer.Serialize(oldValues) : null,
                     NewValues = newValues != null ? JsonSerializer.Serialize(newValues) : null,
                     IpAddress = ipAddress,

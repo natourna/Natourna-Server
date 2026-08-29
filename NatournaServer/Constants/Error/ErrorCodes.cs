@@ -82,5 +82,20 @@ namespace NatournaServer.Constants.Error
         public const string USER_CREATE_ERROR = "USR-003";
         public const string USER_UPDATE_ERROR = "USR-004";
         public const string USER_DELETE_ERROR = "USR-005";
+
+        // Organization Context Manager Error Codes (ORG-xxx)
+        public const string ORGANIZATION_GET_BY_ID_ERROR = "ORG-001";
+        public const string ORGANIZATION_CREATE_ERROR = "ORG-002";
+        public const string ORGANIZATION_UPDATE_ERROR = "ORG-003";
+
+        // Organization API Manager Error Codes (ORG-API-xxx)
+        public const string ORGANIZATION_NOT_FOUND_ERROR = "ORG-API-001";
+        public const string ORGANIZATION_REGISTRATION_DISABLED_ERROR = "ORG-API-002";
+        public const string ORGANIZATION_EMAIL_TAKEN_ERROR = "ORG-API-003";
+        public const string ORGANIZATION_REGISTER_ERROR = "ORG-API-004";
+
+        // Subscription Context Manager Error Codes (SUB-xxx)
+        public const string SUBSCRIPTION_GET_ERROR = "SUB-001";
+        public const string SUBSCRIPTION_CREATE_ERROR = "SUB-002";
     }
 }
