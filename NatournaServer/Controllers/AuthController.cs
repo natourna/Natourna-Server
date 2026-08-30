@@ -3,10 +3,8 @@ using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Requests.Login;
 using NatournaServer.Models.Api.Response.Error;
 using NatournaServer.Models.Api.Response.Login;
-using NatournaServer.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace NatournaServer.Controllers
 {
@@ -27,7 +25,6 @@ namespace NatournaServer.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        [EnableRateLimiting(SecurityExtension.AuthRateLimitPolicy)]
         public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
         {
             var response = await _authManager.LoginAsync(request);

@@ -131,7 +131,7 @@ The paying customer is an **Organization** (`OrganizationEntity`); billing is pe
 
 At startup `SeedRolesAsync` guarantees the `User`/`Admin` rows exist. There is deliberately no bootstrap admin seeding — the first admin of an organization is inserted manually during onboarding.
 
-Security middleware in `SecurityExtension.cs`: forwarded headers from the reverse proxy are honored (`UseProxyForwardedHeaders`, first in the pipeline) so rate limiting and audit IPs see the real client; CORS restricted to `Cors:AllowedOrigins` (empty list = nothing allowed); a global 100 req/10 s rate limit **bucketed per authenticated user** (per real client IP when anonymous) with a `Retry-After` header on 429; a 5 req/min `auth` policy on `POST /api/Auth/login`; and `X-Content-Type-Options` / `X-Frame-Options` / `Referrer-Policy` headers.
+Security middleware in `SecurityExtension.cs`: forwarded headers from the reverse proxy are honored (`UseProxyForwardedHeaders`, first in the pipeline) so audit IPs see the real client; CORS restricted to `Cors:AllowedOrigins` (empty list = nothing allowed); and `X-Content-Type-Options` / `X-Frame-Options` / `Referrer-Policy` headers. There is deliberately no rate limiting (it was removed; the client still maps 429 to a friendly message, which is harmless dead code).
 
 ## Onboarding an organization (manual, operator-only)
 
