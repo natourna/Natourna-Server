@@ -38,13 +38,13 @@ namespace NatournaServer.Services.Context
             }
         }
 
-        public async Task<(List<PaymentEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, int? apartmentId = null, int? cycleId = null, bool? isPaid = null)
+        public async Task<(List<PaymentEntity> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, int? apartmentId = null, int? cycleId = null, bool? isPaid = null, bool? overdue = null)
         {
             try
             {
-                _logger.LogInformation("Getting paged payments - Page: {Page}, PageSize: {PageSize}, ApartmentId: {ApartmentId}, CycleId: {CycleId}, IsPaid: {IsPaid}", page, pageSize, apartmentId, cycleId, isPaid);
+                _logger.LogInformation("Getting paged payments - Page: {Page}, PageSize: {PageSize}, ApartmentId: {ApartmentId}, CycleId: {CycleId}, IsPaid: {IsPaid}, Overdue: {Overdue}", page, pageSize, apartmentId, cycleId, isPaid, overdue);
 
-                var query = BuildQuery(null, apartmentId, cycleId, isPaid);
+                var query = BuildQuery(null, apartmentId, cycleId, isPaid, overdue);
 
                 var totalCount = await query.CountAsync();
                 var items = await query
@@ -66,7 +66,7 @@ namespace NatournaServer.Services.Context
             }
         }
 
-        private IQueryable<PaymentEntity> BuildQuery(int? paymentId, int? apartmentId, int? cycleId, bool? isPaid)
+        private IQueryable<PaymentEntity> BuildQuery(int? paymentId, int? apartmentId, int? cycleId, bool? isPaid, bool? overdue = null)
         {
             var query = _context.Payments.Include(p => p.Apartment).Include(p => p.Cycle).Include(p => p.PaymentAllocations).AsQueryable();
 
@@ -88,6 +88,14 @@ namespace NatournaServer.Services.Context
             if (isPaid.HasValue)
             {
                 query = query.Where(p => p.IsPaid == isPaid.Value);
+            }
+
+            if (overdue.HasValue)
+            {
+                DateTime today = DateTime.UtcNow.Date;
+                query = overdue.Value
+                    ? query.Where(p => !p.IsPaid && p.DueDate != null && p.DueDate < today)
+                    : query.Where(p => p.IsPaid || p.DueDate == null || p.DueDate >= today);
             }
 
             return query;

@@ -26,9 +26,9 @@ namespace NatournaServer.Controllers
         /// Get all payments - Any authenticated user
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<PagedResponse<PaymentResponse>>> GetAllPayments([FromQuery] PagedQuery query, [FromQuery] int? cycleId = null, [FromQuery] bool? isPaid = null)
+        public async Task<ActionResult<PagedResponse<PaymentResponse>>> GetAllPayments([FromQuery] PagedQuery query, [FromQuery] int? cycleId = null, [FromQuery] bool? isPaid = null, [FromQuery] bool? overdue = null)
         {
-            var payments = await _paymentApiManager.GetPagedPaymentsAsync(query, cycleId: cycleId, isPaid: isPaid);
+            var payments = await _paymentApiManager.GetPagedPaymentsAsync(query, cycleId: cycleId, isPaid: isPaid, overdue: overdue);
             return Ok(payments);
         }
 
