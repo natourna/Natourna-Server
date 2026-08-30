@@ -8,6 +8,8 @@ namespace NatournaServer.Models.Api.Requests.Payment
         [Required]
         public int ApartmentId { get; set; }
 
+        [Required]
+        [MaxLength(200)]
         public string Label { get; set; }
 
         [Required]

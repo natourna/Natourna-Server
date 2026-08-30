@@ -83,19 +83,33 @@ namespace NatournaServer.Constants.Error
         public const string USER_UPDATE_ERROR = "USR-004";
         public const string USER_DELETE_ERROR = "USR-005";
 
+        // User API Manager Error Codes (USR-API-xxx)
+        public const string USER_EMAIL_TAKEN_ERROR = "USR-API-001";
+
+        // Apartment API Manager Error Codes (APT-API-xxx)
+        public const string APARTMENT_HAS_PAYMENTS_ERROR = "APT-API-001";
+        public const string APARTMENT_NOT_FOUND_ERROR = "APT-API-002";
+
+        // Building API Manager Error Codes (BLD-API-xxx)
+        public const string BUILDING_HAS_PAYMENTS_ERROR = "BLD-API-001";
+        public const string BUILDING_NOT_FOUND_ERROR = "BLD-API-002";
+
+        // Compound API Manager Error Codes (CMP-API-xxx)
+        public const string COMPOUND_HAS_ACTIVITY_ERROR = "CMP-API-001";
+        public const string COMPOUND_NOT_FOUND_ERROR = "CMP-API-002";
+
+        // Balance API Manager Error Codes (BAL-API-xxx, continued)
+        public const string BALANCE_IN_USE_ERROR = "BAL-API-002";
+
+        // Cycle API Manager Error Codes (CYC-API-xxx)
+        public const string CYCLE_HAS_PAYMENTS_ERROR = "CYC-API-001";
+        public const string CYCLE_NOT_FOUND_ERROR = "CYC-API-002";
+
         // Organization Context Manager Error Codes (ORG-xxx)
         public const string ORGANIZATION_GET_BY_ID_ERROR = "ORG-001";
-        public const string ORGANIZATION_CREATE_ERROR = "ORG-002";
-        public const string ORGANIZATION_UPDATE_ERROR = "ORG-003";
-
-        // Organization API Manager Error Codes (ORG-API-xxx)
-        public const string ORGANIZATION_NOT_FOUND_ERROR = "ORG-API-001";
-        public const string ORGANIZATION_REGISTRATION_DISABLED_ERROR = "ORG-API-002";
-        public const string ORGANIZATION_EMAIL_TAKEN_ERROR = "ORG-API-003";
-        public const string ORGANIZATION_REGISTER_ERROR = "ORG-API-004";
+        public const string ORGANIZATION_UPDATE_ERROR = "ORG-002";
 
         // Subscription Context Manager Error Codes (SUB-xxx)
         public const string SUBSCRIPTION_GET_ERROR = "SUB-001";
-        public const string SUBSCRIPTION_CREATE_ERROR = "SUB-002";
     }
 }

@@ -4,11 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace NatournaServer.Models.Entities
 {
-    /// <summary>
-    /// The paying customer (tenant). Every tenant entity carries an OrganizationId
-    /// pointing here; a single-building customer is an organization whose compound
-    /// contains exactly one building.
-    /// </summary>
+    /// <summary>The paying customer (tenant); a single-building customer is an organization whose compound contains exactly one building.</summary>
     public class OrganizationEntity : BaseEntity
     {
         [Key]
@@ -19,10 +15,7 @@ namespace NatournaServer.Models.Entities
         [MaxLength(200)]
         public string Name { get; set; }
 
-        /// <summary>
-        /// LBP per 1 USD, maintained by the org admin. Used by the client for
-        /// dual USD/LBP display; null means USD-only display.
-        /// </summary>
+        /// <summary>LBP per 1 USD for dual currency display; null means USD-only.</summary>
         public decimal? LbpExchangeRate { get; set; }
 
         public bool IsActive { get; set; } = true;

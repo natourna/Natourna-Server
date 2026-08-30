@@ -1,12 +1,9 @@
 using NatournaServer.Constants.User;
-using NatournaServer.Extensions;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Requests.Organization;
-using NatournaServer.Models.Api.Response.Login;
 using NatournaServer.Models.Api.Response.Organization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace NatournaServer.Controllers
 {
@@ -53,19 +50,6 @@ namespace NatournaServer.Controllers
             }
 
             return Ok(organization);
-        }
-
-        /// <summary>
-        /// Self-service signup: organization + trial subscription + admin + compound + buildings.
-        /// Gated by Registration:Enabled (404 when off). Returns an auto-login token.
-        /// </summary>
-        [HttpPost("register")]
-        [AllowAnonymous]
-        [EnableRateLimiting(SecurityExtension.AuthRateLimitPolicy)]
-        public async Task<ActionResult<LoginResponse>> Register(RegisterOrganizationRequest request)
-        {
-            LoginResponse response = await _organizationManager.RegisterAsync(request);
-            return Ok(response);
         }
     }
 }

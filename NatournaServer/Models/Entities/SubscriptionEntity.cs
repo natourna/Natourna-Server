@@ -5,10 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace NatournaServer.Models.Entities
 {
-    /// <summary>
-    /// One subscription per organization. The monthly cost is computed as
-    /// PricePerBuilding x number of buildings in the organization - never stored.
-    /// </summary>
+    /// <summary>One per organization; monthly cost = PricePerBuilding x building count, computed and never stored.</summary>
     public class SubscriptionEntity : BaseEntity
     {
         [Key]
@@ -24,9 +21,7 @@ namespace NatournaServer.Models.Entities
 
         public SubscriptionStatus Status { get; set; } = SubscriptionStatus.Trial;
 
-        /// <summary>
-        /// USD per building per month.
-        /// </summary>
+        /// <summary>USD per building per month.</summary>
         public decimal PricePerBuilding { get; set; } = 7m;
 
         public DateTime StartDate { get; set; }

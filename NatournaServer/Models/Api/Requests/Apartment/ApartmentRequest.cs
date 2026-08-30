@@ -6,10 +6,13 @@ namespace NatournaServer.Models.Api.Requests.Apartment
     public class ApartmentRequest
     {
         [Required]
+        [MaxLength(100)]
         public string ApartmentInfo { get; set; } = string.Empty;
 
+        [MaxLength(200)]
         public string? Owner { get; set; }
 
+        [MaxLength(200)]
         public string? Tenant { get; set; }
 
         public bool IsActive { get; set; } = true;

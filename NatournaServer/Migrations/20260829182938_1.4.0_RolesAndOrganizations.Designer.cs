@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NatournaServer.Migrations
 {
     [DbContext(typeof(NatournaServerContext))]
-    [Migration("20260828214526_1.4.0_RolesTable")]
-    partial class _140_RolesTable
+    [Migration("20260829182938_1.4.0_RolesAndOrganizations")]
+    partial class _140_RolesAndOrganizations
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,6 +49,9 @@ namespace NatournaServer.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("OrganizationId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Owner")
                         .HasColumnType("text");
 
@@ -63,6 +66,8 @@ namespace NatournaServer.Migrations
                     b.HasIndex("BuildingId");
 
                     b.HasIndex("IsActive");
+
+                    b.HasIndex("OrganizationId");
 
                     b.ToTable("Apartments");
                 });
@@ -100,6 +105,9 @@ namespace NatournaServer.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int?>("OrganizationId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -121,6 +129,8 @@ namespace NatournaServer.Migrations
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("EntityType");
+
+                    b.HasIndex("OrganizationId");
 
                     b.HasIndex("UserEmail");
 
@@ -151,12 +161,17 @@ namespace NatournaServer.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("OrganizationId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CompoundId");
+
+                    b.HasIndex("OrganizationId");
 
                     b.ToTable("Balances");
                 });
@@ -189,6 +204,9 @@ namespace NatournaServer.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("OrganizationId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("PaymentDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -200,6 +218,8 @@ namespace NatournaServer.Migrations
                     b.HasIndex("BalanceId");
 
                     b.HasIndex("IsPaid");
+
+                    b.HasIndex("OrganizationId");
 
                     b.ToTable("Bills");
                 });
@@ -228,12 +248,17 @@ namespace NatournaServer.Migrations
                     b.Property<int>("NumberOfApartments")
                         .HasColumnType("integer");
 
+                    b.Property<int>("OrganizationId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CompoundId");
+
+                    b.HasIndex("OrganizationId");
 
                     b.ToTable("Buildings");
                 });
@@ -260,12 +285,17 @@ namespace NatournaServer.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("OrganizationId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("OrganizationId");
 
                     b.ToTable("Compounds");
                 });
@@ -307,6 +337,9 @@ namespace NatournaServer.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("OrganizationId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -319,9 +352,42 @@ namespace NatournaServer.Migrations
 
                     b.HasIndex("IsActive");
 
+                    b.HasIndex("OrganizationId");
+
                     b.HasIndex("StartDate");
 
                     b.ToTable("Cycles");
+                });
+
+            modelBuilder.Entity("NatournaServer.Models.Entities.OrganizationEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("LbpExchangeRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Organizations");
                 });
 
             modelBuilder.Entity("NatournaServer.Models.Entities.PaymentAllocationEntity", b =>
@@ -342,6 +408,9 @@ namespace NatournaServer.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("OrganizationId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PaymentId")
                         .HasColumnType("integer");
 
@@ -355,6 +424,8 @@ namespace NatournaServer.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BalanceId");
+
+                    b.HasIndex("OrganizationId");
 
                     b.HasIndex("PaymentId");
 
@@ -392,6 +463,9 @@ namespace NatournaServer.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("OrganizationId")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("PaymentDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -407,6 +481,8 @@ namespace NatournaServer.Migrations
                     b.HasIndex("DueDate");
 
                     b.HasIndex("IsPaid");
+
+                    b.HasIndex("OrganizationId");
 
                     b.ToTable("Payments");
                 });
@@ -438,6 +514,41 @@ namespace NatournaServer.Migrations
                     b.ToTable("Roles");
                 });
 
+            modelBuilder.Entity("NatournaServer.Models.Entities.SubscriptionEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("OrganizationId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PricePerBuilding")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganizationId")
+                        .IsUnique();
+
+                    b.ToTable("Subscriptions");
+                });
+
             modelBuilder.Entity("NatournaServer.Models.Entities.UserEntity", b =>
                 {
                     b.Property<int>("Id")
@@ -455,6 +566,9 @@ namespace NatournaServer.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("OrganizationId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -475,6 +589,8 @@ namespace NatournaServer.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
+                    b.HasIndex("OrganizationId");
+
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users");
@@ -488,6 +604,12 @@ namespace NatournaServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("NatournaServer.Models.Entities.OrganizationEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Building");
                 });
 
@@ -499,6 +621,12 @@ namespace NatournaServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("NatournaServer.Models.Entities.OrganizationEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Compound");
                 });
 
@@ -507,6 +635,12 @@ namespace NatournaServer.Migrations
                     b.HasOne("NatournaServer.Models.Entities.BalanceEntity", "Balance")
                         .WithMany("Bills")
                         .HasForeignKey("BalanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NatournaServer.Models.Entities.OrganizationEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -521,7 +655,31 @@ namespace NatournaServer.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("NatournaServer.Models.Entities.OrganizationEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Compound");
+                });
+
+            modelBuilder.Entity("NatournaServer.Models.Entities.CompoundEntity", b =>
+                {
+                    b.HasOne("NatournaServer.Models.Entities.OrganizationEntity", null)
+                        .WithMany("Compounds")
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("NatournaServer.Models.Entities.CycleEntity", b =>
+                {
+                    b.HasOne("NatournaServer.Models.Entities.OrganizationEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("NatournaServer.Models.Entities.PaymentAllocationEntity", b =>
@@ -529,6 +687,12 @@ namespace NatournaServer.Migrations
                     b.HasOne("NatournaServer.Models.Entities.BalanceEntity", "Balance")
                         .WithMany("PaymentAllocations")
                         .HasForeignKey("BalanceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("NatournaServer.Models.Entities.OrganizationEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -556,13 +720,36 @@ namespace NatournaServer.Migrations
                         .HasForeignKey("CycleId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("NatournaServer.Models.Entities.OrganizationEntity", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Apartment");
 
                     b.Navigation("Cycle");
                 });
 
+            modelBuilder.Entity("NatournaServer.Models.Entities.SubscriptionEntity", b =>
+                {
+                    b.HasOne("NatournaServer.Models.Entities.OrganizationEntity", "Organization")
+                        .WithOne("Subscription")
+                        .HasForeignKey("NatournaServer.Models.Entities.SubscriptionEntity", "OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Organization");
+                });
+
             modelBuilder.Entity("NatournaServer.Models.Entities.UserEntity", b =>
                 {
+                    b.HasOne("NatournaServer.Models.Entities.OrganizationEntity", null)
+                        .WithMany("Users")
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("NatournaServer.Models.Entities.RoleEntity", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
@@ -599,6 +786,15 @@ namespace NatournaServer.Migrations
             modelBuilder.Entity("NatournaServer.Models.Entities.CycleEntity", b =>
                 {
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("NatournaServer.Models.Entities.OrganizationEntity", b =>
+                {
+                    b.Navigation("Compounds");
+
+                    b.Navigation("Subscription");
+
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("NatournaServer.Models.Entities.PaymentEntity", b =>

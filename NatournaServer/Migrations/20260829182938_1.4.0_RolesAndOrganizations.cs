@@ -7,11 +7,16 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NatournaServer.Migrations
 {
     /// <inheritdoc />
-    public partial class _150_Organizations : Migration
+    public partial class _140_RolesAndOrganizations : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.RenameColumn(
+                name: "Role",
+                table: "Users",
+                newName: "RoleId");
+
             migrationBuilder.AddColumn<int>(
                 name: "OrganizationId",
                 table: "Users",
@@ -99,6 +104,21 @@ namespace NatournaServer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Roles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Roles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Subscriptions",
                 columns: table => new
                 {
@@ -122,12 +142,15 @@ namespace NatournaServer.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            // ================================================================
-            // BACKFILL: adopt pre-existing single-tenant data into one default
-            // organization (named after the first compound) so the foreign keys
-            // added below hold. A fresh, empty database passes through untouched.
-            // ================================================================
+            // Backfill for databases upgrading with data; a fresh empty database passes through untouched.
+            // 1. Roles must exist before the Users.RoleId FK lands (ids match SeedRolesAsync order: User, Admin).
+            // 2. Pre-existing single-tenant rows are adopted into one organization named after the first compound.
             migrationBuilder.Sql(@"
+                INSERT INTO ""Roles"" (""Id"", ""Name"", ""CreatedAt"", ""UpdatedAt"")
+                SELECT x.id, x.name, NOW(), NOW() FROM (VALUES (1, 'User'), (2, 'Admin')) AS x(id, name)
+                WHERE EXISTS (SELECT 1 FROM ""Users"");
+                SELECT setval(pg_get_serial_sequence('""Roles""', 'Id'), (SELECT COALESCE(MAX(""Id""), 1) FROM ""Roles""));
+
                 INSERT INTO ""Organizations"" (""Name"", ""IsActive"", ""CreatedAt"", ""UpdatedAt"")
                 SELECT COALESCE((SELECT ""Name"" FROM ""Compounds"" ORDER BY ""Id"" LIMIT 1), 'Default Organization'), TRUE, NOW(), NOW()
                 WHERE EXISTS (SELECT 1 FROM ""Compounds"") OR EXISTS (SELECT 1 FROM ""Users"");
@@ -150,9 +173,20 @@ namespace NatournaServer.Migrations
             ");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Users_Email",
+                table: "Users",
+                column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_OrganizationId",
                 table: "Users",
                 column: "OrganizationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_RoleId",
+                table: "Users",
+                column: "RoleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_OrganizationId",
@@ -198,6 +232,12 @@ namespace NatournaServer.Migrations
                 name: "IX_Apartments_OrganizationId",
                 table: "Apartments",
                 column: "OrganizationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Roles_Name",
+                table: "Roles",
+                column: "Name",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Subscriptions_OrganizationId",
@@ -276,6 +316,14 @@ namespace NatournaServer.Migrations
                 principalTable: "Organizations",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Users_Roles_RoleId",
+                table: "Users",
+                column: "RoleId",
+                principalTable: "Roles",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
@@ -317,6 +365,13 @@ namespace NatournaServer.Migrations
                 name: "FK_Users_Organizations_OrganizationId",
                 table: "Users");
 
+            migrationBuilder.DropForeignKey(
+                name: "FK_Users_Roles_RoleId",
+                table: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Roles");
+
             migrationBuilder.DropTable(
                 name: "Subscriptions");
 
@@ -324,7 +379,15 @@ namespace NatournaServer.Migrations
                 name: "Organizations");
 
             migrationBuilder.DropIndex(
+                name: "IX_Users_Email",
+                table: "Users");
+
+            migrationBuilder.DropIndex(
                 name: "IX_Users_OrganizationId",
+                table: "Users");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Users_RoleId",
                 table: "Users");
 
             migrationBuilder.DropIndex(
@@ -402,6 +465,11 @@ namespace NatournaServer.Migrations
             migrationBuilder.DropColumn(
                 name: "OrganizationId",
                 table: "Apartments");
+
+            migrationBuilder.RenameColumn(
+                name: "RoleId",
+                table: "Users",
+                newName: "Role");
         }
     }
 }

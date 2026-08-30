@@ -4,7 +4,8 @@ namespace NatournaServer.Extensions;
 
 public static class LoggingExtension
 {
-    private static readonly string[] SensitiveBodyPaths = ["/api/Auth", "/api/User"];
+    // Requests whose bodies carry credentials and must never be written to the logs
+    private static readonly string[] SensitiveBodyPaths = ["/api/Auth", "/api/User", "/api/Organization"];
 
     public static IApplicationBuilder UseRequestLogging(this IApplicationBuilder app)
     {

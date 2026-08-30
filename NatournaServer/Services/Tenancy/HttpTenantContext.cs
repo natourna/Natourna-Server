@@ -3,10 +3,7 @@ using NatournaServer.Interfaces.Tenancy;
 
 namespace NatournaServer.Services.Tenancy
 {
-    /// <summary>
-    /// Resolves the current organization from the "orgId" claim of the
-    /// authenticated JWT. Returns null outside an authenticated request.
-    /// </summary>
+    /// <summary>Resolves the current organization from the JWT "orgId" claim; null outside an authenticated request.</summary>
     public class HttpTenantContext : ITenantContext
     {
         private readonly IHttpContextAccessor _httpContextAccessor;

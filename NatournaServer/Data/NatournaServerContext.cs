@@ -13,11 +13,8 @@ namespace NatournaServer.Data
     /// </summary>
     public class NatournaServerContext : DbContext
     {
-        /// <summary>
-        /// Organization of the current request; null outside an authenticated request
-        /// (login, health checks, startup seeding), in which case the query filters are permissive.
-        /// Kept as a context field so EF parameterizes the filters per context instance.
-        /// </summary>
+        // Current request's organization (null = no tenant in scope, filters permissive).
+        // Kept as a context field so EF parameterizes the query filters per context instance.
         private readonly int? _tenantOrganizationId;
 
         public DbSet<OrganizationEntity> Organizations { get; set; }
@@ -51,11 +48,7 @@ namespace NatournaServer.Data
             _tenantOrganizationId = tenantContext.OrganizationId;
         }
 
-        /// <summary>
-        /// Stamps OrganizationId on newly added tenant entities from the current request.
-        /// Throws when neither the entity nor the request carries an organization -
-        /// that always indicates a code path that forgot to set it explicitly (e.g. seeding).
-        /// </summary>
+        /// <summary>Stamps OrganizationId on added tenant entities; throws when neither the entity nor the request carries one.</summary>
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             StampTenantOnAddedEntities();

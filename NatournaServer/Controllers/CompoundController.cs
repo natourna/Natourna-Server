@@ -1,7 +1,7 @@
 using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Requests.Compound;
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Response.Compound;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +23,7 @@ namespace NatournaServer.Controllers
         /// Get all compounds - Any authenticated user
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<CompoundEntity>>> GetAllCompounds()
+        public async Task<ActionResult<List<CompoundResponse>>> GetAllCompounds()
         {
             var compounds = await _compoundManager.GetAllCompoundsAsync();
             return Ok(compounds);
@@ -33,7 +33,7 @@ namespace NatournaServer.Controllers
         /// Get compound by ID - Any authenticated user
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<CompoundEntity>> GetCompoundById(int id)
+        public async Task<ActionResult<CompoundResponse>> GetCompoundById(int id)
         {
             var compound = await _compoundManager.GetCompoundByIdAsync(id);
 
@@ -50,7 +50,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<CompoundEntity>> CreateCompound(CompoundRequest compound)
+        public async Task<ActionResult<CompoundResponse>> CreateCompound(CompoundRequest compound)
         {
             var createdCompound = await _compoundManager.CreateCompoundAsync(compound);
             return CreatedAtAction(nameof(GetCompoundById), new { id = createdCompound.Id }, createdCompound);
@@ -61,7 +61,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<CompoundEntity>> UpdateCompound(int id, CompoundRequest compound)
+        public async Task<ActionResult<CompoundResponse>> UpdateCompound(int id, CompoundRequest compound)
         {
             var updatedCompound = await _compoundManager.UpdateCompoundAsync(id, compound);
 

@@ -6,10 +6,6 @@ namespace NatournaServer.Interfaces.Context
     {
         Task<OrganizationEntity?> GetByIdAsync(int id);
 
-        Task<OrganizationEntity?> GetFirstAsync();
-
-        Task<OrganizationEntity> CreateAsync(OrganizationEntity organization);
-
         Task<OrganizationEntity?> UpdateAsync(int id, string name, decimal? lbpExchangeRate);
     }
 }

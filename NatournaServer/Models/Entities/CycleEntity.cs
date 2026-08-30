@@ -11,9 +11,7 @@ namespace NatournaServer.Models.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        /// <summary>
-        /// Stamped automatically on insert; scoped by a global query filter.
-        /// </summary>
+        /// <summary>Stamped automatically on insert; scoped by a global query filter.</summary>
         public int OrganizationId { get; set; }
 
         [Required]

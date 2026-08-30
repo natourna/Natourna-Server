@@ -1,5 +1,4 @@
 using NatournaServer.Models.Api.Requests.Organization;
-using NatournaServer.Models.Api.Response.Login;
 using NatournaServer.Models.Api.Response.Organization;
 
 namespace NatournaServer.Interfaces.Api
@@ -9,7 +8,5 @@ namespace NatournaServer.Interfaces.Api
         Task<OrganizationResponse?> GetMyOrganizationAsync();
 
         Task<OrganizationResponse?> UpdateSettingsAsync(UpdateOrganizationSettingsRequest request);
-
-        Task<LoginResponse> RegisterAsync(RegisterOrganizationRequest request);
     }
 }

@@ -28,6 +28,12 @@ namespace NatournaServer.Extensions
                 throw new InvalidOperationException("JWT settings are not properly configured");
             }
 
+            // HS256 needs a 256-bit key; anything shorter fails at token generation with a cryptic error
+            if (jwtSettings.SecretKey.Length < 32)
+            {
+                throw new InvalidOperationException("JwtSettings:SecretKey must be at least 32 characters");
+            }
+
             var key = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
 
             services.AddAuthentication(options =>

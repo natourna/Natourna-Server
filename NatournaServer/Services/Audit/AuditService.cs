@@ -56,8 +56,8 @@ namespace NatournaServer.Services.Audit
                 {
                     UserId = userId,
                     OrganizationId = organizationId,
-                    OldValues = oldValues != null ? JsonSerializer.Serialize(oldValues) : null,
-                    NewValues = newValues != null ? JsonSerializer.Serialize(newValues) : null,
+                    OldValues = Truncate(oldValues != null ? JsonSerializer.Serialize(oldValues) : null, 500),
+                    NewValues = Truncate(newValues != null ? JsonSerializer.Serialize(newValues) : null, 500),
                     IpAddress = ipAddress,
                     UserAgent = userAgent,
                     EntityId = entityId
@@ -71,6 +71,17 @@ namespace NatournaServer.Services.Audit
             {
                 _logger.LogError(ex, "Failed to create audit log for action: {Action}, entity: {EntityType}", action, entityType);
             }
+        }
+
+        // Old/NewValues columns are capped at 500 chars; a lost tail beats a lost audit row
+        private static string? Truncate(string? value, int maxLength)
+        {
+            if (value == null || value.Length <= maxLength)
+            {
+                return value;
+            }
+
+            return value[..maxLength];
         }
     }
 }

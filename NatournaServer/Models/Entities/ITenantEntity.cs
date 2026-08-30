@@ -1,10 +1,6 @@
 namespace NatournaServer.Models.Entities
 {
-    /// <summary>
-    /// Implemented by every entity that belongs to a single organization.
-    /// The context applies a global query filter on OrganizationId and stamps
-    /// it automatically on insert (see NatournaServerContext).
-    /// </summary>
+    /// <summary>Implemented by every organization-owned entity; OrganizationId is stamped on insert and scoped by a global query filter.</summary>
     public interface ITenantEntity
     {
         int OrganizationId { get; set; }

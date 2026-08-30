@@ -8,6 +8,7 @@ namespace NatournaServer.Models.Api.Requests.Cycle
     public class CycleRequest
     {
         [Required]
+        [MaxLength(200)]
         public string Label { get; set; } = string.Empty;
 
         public string? Description { get; set; }

@@ -53,9 +53,9 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<CycleEntity>> CreateCycle([FromBody] CycleRequest request)
+        public async Task<ActionResult<CycleResponse>> CreateCycle([FromBody] CycleRequest request)
         {
-            CycleEntity createdCycle = await _cycleApiManager.CreateCycleAsync(request);
+            CycleResponse createdCycle = await _cycleApiManager.CreateCycleAsync(request);
 
             return CreatedAtAction(nameof(GetCycleById), new { id = createdCycle.Id }, createdCycle);
         }
@@ -65,9 +65,9 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<CycleEntity>> UpdateCycle(int id, CycleUpdateRequest cycle)
+        public async Task<ActionResult<CycleResponse>> UpdateCycle(int id, CycleUpdateRequest cycle)
         {
-            CycleEntity? updatedCycle = await _cycleApiManager.UpdateCycleAsync(id, cycle);
+            CycleResponse? updatedCycle = await _cycleApiManager.UpdateCycleAsync(id, cycle);
 
             if (updatedCycle == null)
             {

@@ -33,29 +33,5 @@ namespace NatournaServer.Services.Context
                 throw new ContextException(ErrorCodes.SUBSCRIPTION_GET_ERROR, userMessage, technicalDetails, ex);
             }
         }
-
-        public async Task<SubscriptionEntity> CreateAsync(SubscriptionEntity subscription)
-        {
-            try
-            {
-                _logger.LogInformation("Creating subscription for organization {OrganizationId}", subscription.OrganizationId);
-
-                _context.Subscriptions.Add(subscription);
-
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Successfully created subscription with ID {SubscriptionId}", subscription.Id);
-
-                return subscription;
-            }
-            catch (Exception ex)
-            {
-                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Organization.SubscriptionCreateFailed(subscription.OrganizationId);
-
-                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.SUBSCRIPTION_CREATE_ERROR, userMessage);
-
-                throw new ContextException(ErrorCodes.SUBSCRIPTION_CREATE_ERROR, userMessage, technicalDetails, ex);
-            }
-        }
     }
 }

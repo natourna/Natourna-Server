@@ -1,10 +1,6 @@
 namespace NatournaServer.Interfaces.Tenancy
 {
-    /// <summary>
-    /// Exposes the organization the current request belongs to.
-    /// Null when there is no authenticated request (login, health checks,
-    /// startup seeding) - the context's query filters are permissive in that case.
-    /// </summary>
+    /// <summary>Organization of the current request; null outside an authenticated request (login, health checks, seeding).</summary>
     public interface ITenantContext
     {
         int? OrganizationId { get; }

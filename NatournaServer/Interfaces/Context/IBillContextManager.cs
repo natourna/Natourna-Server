@@ -12,6 +12,8 @@ namespace NatournaServer.Interfaces.Context
 
         Task<List<BillEntity>> GetByBalanceIdAsync(int balanceId);
 
+        Task<bool> AnyAsync(int? balanceId = null, int? compoundId = null);
+
         Task<BillEntity> CreateAsync(BillEntity bill);
 
         Task<BillEntity?> UpdateAsync(int id, BillEntity bill);

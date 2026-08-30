@@ -34,46 +34,6 @@ namespace NatournaServer.Services.Context
             }
         }
 
-        public async Task<OrganizationEntity?> GetFirstAsync()
-        {
-            try
-            {
-                return await _context.Organizations.OrderBy(o => o.Id).FirstOrDefaultAsync();
-            }
-            catch (Exception ex)
-            {
-                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Organization.GetByIdFailed(0);
-
-                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.ORGANIZATION_GET_BY_ID_ERROR, userMessage);
-
-                throw new ContextException(ErrorCodes.ORGANIZATION_GET_BY_ID_ERROR, userMessage, technicalDetails, ex);
-            }
-        }
-
-        public async Task<OrganizationEntity> CreateAsync(OrganizationEntity organization)
-        {
-            try
-            {
-                _logger.LogInformation("Creating organization - Name: {Name}", organization.Name);
-
-                _context.Organizations.Add(organization);
-
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation("Successfully created organization with ID {OrganizationId}", organization.Id);
-
-                return organization;
-            }
-            catch (Exception ex)
-            {
-                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Organization.CreateFailed(organization.Name);
-
-                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.ORGANIZATION_CREATE_ERROR, userMessage);
-
-                throw new ContextException(ErrorCodes.ORGANIZATION_CREATE_ERROR, userMessage, technicalDetails, ex);
-            }
-        }
-
         public async Task<OrganizationEntity?> UpdateAsync(int id, string name, decimal? lbpExchangeRate)
         {
             try

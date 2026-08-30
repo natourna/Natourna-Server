@@ -1,8 +1,11 @@
+using NatournaServer.Constants.Error;
 using NatournaServer.Constants.Log;
+using NatournaServer.Exceptions;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
 using NatournaServer.Models.Api.Requests.Compound;
+using NatournaServer.Models.Api.Response.Compound;
 using NatournaServer.Models.Entities;
 
 namespace NatournaServer.Services.Api
@@ -10,36 +13,50 @@ namespace NatournaServer.Services.Api
     public class CompoundApiManager : ICompoundApiManager
     {
         private readonly ICompoundContextManager _contextManager;
+        private readonly IPaymentContextManager _paymentContextManager;
+        private readonly IBillContextManager _billContextManager;
         private readonly IAuditService _auditService;
+        private readonly ILogger<CompoundApiManager> _logger;
 
-        public CompoundApiManager(ICompoundContextManager contextManager, IAuditService auditService)
+        public CompoundApiManager(
+            ICompoundContextManager contextManager,
+            IPaymentContextManager paymentContextManager,
+            IBillContextManager billContextManager,
+            IAuditService auditService,
+            ILogger<CompoundApiManager> logger)
         {
             _contextManager = contextManager;
+            _paymentContextManager = paymentContextManager;
+            _billContextManager = billContextManager;
             _auditService = auditService;
+            _logger = logger;
         }
 
-        public async Task<List<CompoundEntity>> GetAllCompoundsAsync()
+        public async Task<List<CompoundResponse>> GetAllCompoundsAsync()
         {
-            return await _contextManager.GetAllAsync();
+            List<CompoundEntity> compounds = await _contextManager.GetAllAsync();
+            return compounds.Select(MapToResponse).ToList();
         }
 
-        public async Task<CompoundEntity?> GetCompoundByIdAsync(int id)
+        public async Task<CompoundResponse?> GetCompoundByIdAsync(int id)
         {
-            return await _contextManager.GetByIdAsync(id);
+            CompoundEntity? compound = await _contextManager.GetByIdAsync(id);
+            return compound == null ? null : MapToResponse(compound);
         }
 
-        public async Task<CompoundEntity> CreateCompoundAsync(CompoundRequest compound)
+        public async Task<CompoundResponse> CreateCompoundAsync(CompoundRequest compound)
         {
-            var created = await _contextManager.CreateAsync(MapToEntity(compound));
+            CompoundEntity created = await _contextManager.CreateAsync(MapToEntity(compound));
 
             await _auditService.LogAsync(LogAction.Create, "Compound", created.Id, null, new { created.Name, created.Address });
 
-            return created;
+            return MapToResponse(created);
         }
 
-        public async Task<CompoundEntity?> UpdateCompoundAsync(int id, CompoundRequest compound)
+        public async Task<CompoundResponse?> UpdateCompoundAsync(int id, CompoundRequest compound)
         {
-            var existing = await GetCompoundByIdAsync(id);
+            CompoundEntity? existing = await _contextManager.GetByIdAsync(id);
+
             if (existing == null)
             {
                 return null;
@@ -51,14 +68,39 @@ namespace NatournaServer.Services.Api
                 existing.Address
             };
 
-            var updated = await _contextManager.UpdateAsync(id, MapToEntity(compound));
+            CompoundEntity? updated = await _contextManager.UpdateAsync(id, MapToEntity(compound));
 
-            if (updated != null)
+            if (updated == null)
             {
-                await _auditService.LogAsync(LogAction.Update, "Compound", id, oldValues, new { updated.Name, updated.Address });
+                return null;
             }
 
-            return updated;
+            await _auditService.LogAsync(LogAction.Update, "Compound", id, oldValues, new { updated.Name, updated.Address });
+
+            return MapToResponse(updated);
+        }
+
+        public async Task<bool> DeleteCompoundAsync(int id)
+        {
+            CompoundEntity? existing = await _contextManager.GetByIdAsync(id);
+
+            if (existing == null)
+            {
+                return false;
+            }
+
+            // The cascade stops at Restrict FKs (payments under apartments, bills under balances);
+            // refuse with a clear 409 instead of a raw database error mid-cascade
+            if (await _paymentContextManager.AnyAsync(compoundId: id) || await _billContextManager.AnyAsync(compoundId: id))
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Reference.InUse("Compound", id, "payments or bills");
+                _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.COMPOUND_HAS_ACTIVITY_ERROR, userMessage);
+                throw new ApiException(ErrorCodes.COMPOUND_HAS_ACTIVITY_ERROR, userMessage, technicalDetails, statusCode: 409);
+            }
+
+            await _auditService.LogAsync(LogAction.Delete, "Compound", id, new { existing.Name }, null);
+
+            return await _contextManager.DeleteAsync(id);
         }
 
         private static CompoundEntity MapToEntity(CompoundRequest request)
@@ -66,17 +108,17 @@ namespace NatournaServer.Services.Api
             return new CompoundEntity(0, request.Name, request.Address, request.ActiveApartments);
         }
 
-        public async Task<bool> DeleteCompoundAsync(int id)
+        private static CompoundResponse MapToResponse(CompoundEntity compound)
         {
-            var existing = await GetCompoundByIdAsync(id);
-            if (existing == null)
+            return new CompoundResponse
             {
-                return false;
-            }
-
-            await _auditService.LogAsync(LogAction.Delete, "Compound", id, new { existing.Name }, null);
-
-            return await _contextManager.DeleteAsync(id);
+                Id = compound.Id,
+                Name = compound.Name,
+                Address = compound.Address,
+                ActiveApartments = compound.ActiveApartments,
+                CreatedAt = compound.CreatedAt,
+                UpdatedAt = compound.UpdatedAt
+            };
         }
     }
 }

@@ -350,6 +350,33 @@ namespace NatournaServer.Exceptions
             }
         }
 
+        public static class Reference
+        {
+            public static (string userMessage, string technicalDetails) NotFound(string entityName, int id)
+            {
+                return (
+                    $"{entityName} with ID {id} was not found",
+                    $"{entityName}Id: {id}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) InUse(string entityName, int id, string dependents)
+            {
+                return (
+                    $"Cannot delete this {entityName.ToLowerInvariant()} because it still has {dependents}",
+                    $"{entityName}Id: {id}, Blocking dependents: {dependents}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) EmailTaken(string email)
+            {
+                return (
+                    "An account with this email already exists",
+                    $"Email: '{email}'"
+                );
+            }
+        }
+
         public static class Organization
         {
             public static (string userMessage, string technicalDetails) GetByIdFailed(int id)
@@ -357,22 +384,6 @@ namespace NatournaServer.Exceptions
                 return (
                     "Failed to retrieve the organization",
                     $"OrganizationId: {id}"
-                );
-            }
-
-            public static (string userMessage, string technicalDetails) NotFound(int id)
-            {
-                return (
-                    "Organization was not found",
-                    $"OrganizationId: {id}"
-                );
-            }
-
-            public static (string userMessage, string technicalDetails) CreateFailed(string name)
-            {
-                return (
-                    $"Failed to create organization '{name}'",
-                    $"Name: '{name}'"
                 );
             }
 
@@ -384,42 +395,10 @@ namespace NatournaServer.Exceptions
                 );
             }
 
-            public static (string userMessage, string technicalDetails) RegistrationDisabled()
-            {
-                return (
-                    "Registration is not open",
-                    "Registration:Enabled is false"
-                );
-            }
-
-            public static (string userMessage, string technicalDetails) EmailTaken(string email)
-            {
-                return (
-                    "An account with this email already exists",
-                    $"Email: '{email}'"
-                );
-            }
-
-            public static (string userMessage, string technicalDetails) RegisterFailed(string organizationName)
-            {
-                return (
-                    "Failed to register the organization",
-                    $"OrganizationName: '{organizationName}'"
-                );
-            }
-
             public static (string userMessage, string technicalDetails) SubscriptionGetFailed(int organizationId)
             {
                 return (
                     "Failed to retrieve the subscription",
-                    $"OrganizationId: {organizationId}"
-                );
-            }
-
-            public static (string userMessage, string technicalDetails) SubscriptionCreateFailed(int organizationId)
-            {
-                return (
-                    "Failed to create the subscription",
                     $"OrganizationId: {organizationId}"
                 );
             }

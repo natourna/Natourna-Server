@@ -6,6 +6,8 @@ namespace NatournaServer.Interfaces.Context
     {
         Task<List<PaymentAllocationEntity>> GetAllAsync(int? allocationId = null, int? paymentId = null, int? balanceId = null);
 
+        Task<bool> AnyAsync(int? balanceId = null, int? compoundId = null);
+
         Task<PaymentAllocationEntity> CreateAsync(PaymentAllocationEntity allocation);
 
         Task CreateRangeAsync(List<PaymentAllocationEntity> allocations);
