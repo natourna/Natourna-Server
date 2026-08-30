@@ -10,6 +10,7 @@ public static class ApiManagerExtension
     public static IServiceCollection AddApiManagers(this IServiceCollection services)
     {
         services.AddScoped<IAuthApiManager, AuthApiManager>();
+        services.AddScoped<IOrganizationApiManager, OrganizationApiManager>();
         services.AddScoped<ICompoundApiManager, CompoundApiManager>();
         services.AddScoped<IBuildingApiManager, BuildingApiManager>();
         services.AddScoped<IApartmentApiManager, ApartmentApiManager>();

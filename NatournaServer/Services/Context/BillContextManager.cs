@@ -134,6 +134,34 @@ namespace NatournaServer.Services.Context
             }
         }
 
+        public async Task<bool> AnyAsync(int? balanceId = null, int? compoundId = null)
+        {
+            try
+            {
+                var query = _context.Bills.AsQueryable();
+
+                if (balanceId.HasValue)
+                {
+                    query = query.Where(b => b.BalanceId == balanceId.Value);
+                }
+
+                if (compoundId.HasValue)
+                {
+                    query = query.Where(b => b.Balance!.CompoundId == compoundId.Value);
+                }
+
+                return await query.AnyAsync();
+            }
+            catch (Exception ex)
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Bill.GetAllFailed(balanceId, null, null, null);
+
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.BILL_GET_ALL_ERROR, userMessage);
+
+                throw new ContextException(ErrorCodes.BILL_GET_ALL_ERROR, userMessage, technicalDetails, ex);
+            }
+        }
+
         public async Task<BillEntity> CreateAsync(BillEntity bill)
         {
             try

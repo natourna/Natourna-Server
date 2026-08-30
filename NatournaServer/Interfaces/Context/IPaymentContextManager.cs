@@ -12,6 +12,10 @@ namespace NatournaServer.Interfaces.Context
 
         Task<PaymentEntity> CreateAsync(PaymentEntity payment);
 
+        Task<List<PaymentEntity>> CreateRangeAsync(List<PaymentEntity> payments);
+
+        Task<bool> AnyAsync(int? apartmentId = null, int? cycleId = null, int? buildingId = null, int? compoundId = null);
+
         Task<PaymentEntity?> UpdateAsync(int id, PaymentEntity payment);
 
         Task<bool> DeleteAsync(int id);

@@ -57,6 +57,34 @@ namespace NatournaServer.Services.Context
             }
         }
 
+        public async Task<bool> AnyAsync(int? balanceId = null, int? compoundId = null)
+        {
+            try
+            {
+                var query = _context.PaymentAllocations.AsQueryable();
+
+                if (balanceId.HasValue)
+                {
+                    query = query.Where(pa => pa.BalanceId == balanceId.Value);
+                }
+
+                if (compoundId.HasValue)
+                {
+                    query = query.Where(pa => pa.Balance!.CompoundId == compoundId.Value);
+                }
+
+                return await query.AnyAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[{ErrorCode}] Failed to check payment allocations", ErrorCodes.PAYMENT_GET_ALL_ERROR);
+                throw new ContextException(ErrorCodes.PAYMENT_GET_ALL_ERROR,
+                    "Failed to check payment allocations",
+                    $"Filters - BalanceId: {balanceId}, CompoundId: {compoundId}",
+                    ex);
+            }
+        }
+
         public async Task<PaymentAllocationEntity> CreateAsync(PaymentAllocationEntity allocation)
         {
             try

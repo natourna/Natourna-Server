@@ -1,7 +1,7 @@
 using NatournaServer.Constants.User;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Models.Api.Requests.Balance;
-using NatournaServer.Models.Entities;
+using NatournaServer.Models.Api.Response.Balance;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +23,7 @@ namespace NatournaServer.Controllers
         /// Get all balances - Any authenticated user
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<List<BalanceEntity>>> GetAllBalances()
+        public async Task<ActionResult<List<BalanceResponse>>> GetAllBalances()
         {
             var balances = await _balanceApiManager.GetAllBalancesAsync();
             return Ok(balances);
@@ -33,7 +33,7 @@ namespace NatournaServer.Controllers
         /// Get balance by ID - Any authenticated user
         /// </summary>
         [HttpGet("{id}")]
-        public async Task<ActionResult<BalanceEntity>> GetBalanceById(int id)
+        public async Task<ActionResult<BalanceResponse>> GetBalanceById(int id)
         {
             var balance = await _balanceApiManager.GetBalanceByIdAsync(id);
             if (balance == null)
@@ -48,7 +48,7 @@ namespace NatournaServer.Controllers
         /// Get balances by compound ID - Any authenticated user
         /// </summary>
         [HttpGet("compound/{compoundId}")]
-        public async Task<ActionResult<List<BalanceEntity>>> GetBalancesByCompoundIdAsync(int compoundId)
+        public async Task<ActionResult<List<BalanceResponse>>> GetBalancesByCompoundIdAsync(int compoundId)
         {
             var balances = await _balanceApiManager.GetBalancesByCompoundIdAsync(compoundId);
             return Ok(balances);
@@ -59,7 +59,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPost]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<BalanceEntity>> CreateBalance(BalanceRequest balance)
+        public async Task<ActionResult<BalanceResponse>> CreateBalance(BalanceRequest balance)
         {
             var createdBalance = await _balanceApiManager.CreateBalanceAsync(balance);
             return CreatedAtAction(nameof(GetBalanceById), new { id = createdBalance.Id }, createdBalance);
@@ -70,7 +70,7 @@ namespace NatournaServer.Controllers
         /// </summary>
         [HttpPut("{id}")]
         [Authorize(Roles = RoleNames.Admin)]
-        public async Task<ActionResult<BalanceEntity>> UpdateBalance(int id, BalanceRequest balance)
+        public async Task<ActionResult<BalanceResponse>> UpdateBalance(int id, BalanceRequest balance)
         {
             var updatedBalance = await _balanceApiManager.UpdateBalanceAsync(id, balance);
             if (updatedBalance == null)

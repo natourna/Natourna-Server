@@ -8,13 +8,13 @@ try
     // Add services using extensions
     builder.Host.AddSeriLog();
     builder.Services.AddControllers();
-    builder.Services.AddHttpContextAccessor(); // Required for AuditService
+    builder.Services.AddHttpContextAccessor(); // Required for AuditService and HttpTenantContext
+    builder.Services.AddTenancy(); // Must precede the DbContext, which consumes ITenantContext
     builder.Services.AddPostgreSqlService(builder.Configuration);
     builder.Services.AddApiManagers();
     builder.Services.AddContextManagers();
     builder.Services.AddSwaggerServices();
     builder.Services.AddAuthenticationService(builder.Configuration);
-    builder.Services.AddBootstrapConfiguration(builder.Configuration);
     builder.Services.AddCorsPolicy(builder.Configuration);
     builder.Services.AddRateLimiting();
     builder.WebHost.AddListenPort(builder.Configuration);
@@ -23,8 +23,8 @@ try
 
     await app.Services.AddContextService(app.Environment.IsDevelopment());
     await app.Services.SeedRolesAsync();
-    await app.Services.SeedBootstrapAdminAsync();
 
+    app.UseProxyForwardedHeaders();
     app.UseExceptionHandling();
     app.UseSecurityHeaders();
     app.UseRequestLogging();
@@ -41,10 +41,22 @@ try
 
     await app.RunAsync();
 }
+catch (HostAbortedException)
+{
+    // Thrown by EF Core design-time tools (dotnet ef) after capturing the service provider - not a failure
+    throw;
+}
 catch (Exception ex)
 {
     string errorMsg = $"Startup failed : {ex.Message}";
     Console.WriteLine(errorMsg);
 
     Log.Error(ex, "{ErrorMessage}", errorMsg);
+
+    // Non-zero exit so the container orchestrator restarts a failed boot instead of reporting success
+    Environment.ExitCode = 1;
+}
+finally
+{
+    Log.CloseAndFlush();
 }

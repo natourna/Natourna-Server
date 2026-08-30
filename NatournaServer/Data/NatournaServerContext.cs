@@ -1,4 +1,6 @@
-﻿using NatournaServer.Models.Entities;
+﻿using NatournaServer.Exceptions;
+using NatournaServer.Interfaces.Tenancy;
+using NatournaServer.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace NatournaServer.Data
@@ -6,9 +8,18 @@ namespace NatournaServer.Data
     /// <summary>
     /// Database context for Natourna Server System.
     /// Manages all entities and their relationships for building, apartment, payment, and financial operations.
+    /// Tenant isolation: every ITenantEntity carries an OrganizationId that is stamped on insert and
+    /// enforced on reads through global query filters driven by the current request's "orgId" claim.
     /// </summary>
     public class NatournaServerContext : DbContext
     {
+        // Current request's organization (null = no tenant in scope, filters permissive).
+        // Kept as a context field so EF parameterizes the query filters per context instance.
+        private readonly int? _tenantOrganizationId;
+
+        public DbSet<OrganizationEntity> Organizations { get; set; }
+
+        public DbSet<SubscriptionEntity> Subscriptions { get; set; }
 
         public DbSet<CompoundEntity> Compounds { get; set; }
 
@@ -32,11 +43,134 @@ namespace NatournaServer.Data
 
         public DbSet<AuditEntity> Audits { get; set; }
 
-        public NatournaServerContext(DbContextOptions<NatournaServerContext> options) : base(options) { }
+        public NatournaServerContext(DbContextOptions<NatournaServerContext> options, ITenantContext tenantContext) : base(options)
+        {
+            _tenantOrganizationId = tenantContext.OrganizationId;
+        }
+
+        /// <summary>Stamps OrganizationId on added tenant entities; throws when neither the entity nor the request carries one.</summary>
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            StampTenantOnAddedEntities();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        public override int SaveChanges()
+        {
+            StampTenantOnAddedEntities();
+            return base.SaveChanges();
+        }
+
+        private void StampTenantOnAddedEntities()
+        {
+            foreach (var entry in ChangeTracker.Entries<ITenantEntity>())
+            {
+                if (entry.State != EntityState.Added || entry.Entity.OrganizationId != 0)
+                {
+                    continue;
+                }
+
+                if (_tenantOrganizationId == null)
+                {
+                    throw new CustomException(
+                        "TENANT-01",
+                        $"Cannot insert {entry.Entity.GetType().Name} without an organization: no tenant in scope and OrganizationId was not set explicitly.");
+                }
+
+                entry.Entity.OrganizationId = _tenantOrganizationId.Value;
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // ========================================
+            // TENANCY: ORGANIZATION RELATIONSHIPS
+            // ========================================
+
+            // Organization -> Compounds (One-to-Many)
+            modelBuilder.Entity<OrganizationEntity>()
+                .HasMany(o => o.Compounds)
+                .WithOne()
+                .HasForeignKey(c => c.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Organization -> Users (One-to-Many)
+            modelBuilder.Entity<OrganizationEntity>()
+                .HasMany(o => o.Users)
+                .WithOne()
+                .HasForeignKey(u => u.OrganizationId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Organization -> Subscription (One-to-One)
+            modelBuilder.Entity<OrganizationEntity>()
+                .HasOne(o => o.Subscription)
+                .WithOne(s => s.Organization)
+                .HasForeignKey<SubscriptionEntity>(s => s.OrganizationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Referential integrity for the remaining tenant tables (no navigation needed)
+            modelBuilder.Entity<BuildingEntity>()
+                .HasOne<OrganizationEntity>().WithMany()
+                .HasForeignKey(b => b.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ApartmentEntity>()
+                .HasOne<OrganizationEntity>().WithMany()
+                .HasForeignKey(a => a.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<BalanceEntity>()
+                .HasOne<OrganizationEntity>().WithMany()
+                .HasForeignKey(bal => bal.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<BillEntity>()
+                .HasOne<OrganizationEntity>().WithMany()
+                .HasForeignKey(b => b.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PaymentEntity>()
+                .HasOne<OrganizationEntity>().WithMany()
+                .HasForeignKey(p => p.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<PaymentAllocationEntity>()
+                .HasOne<OrganizationEntity>().WithMany()
+                .HasForeignKey(pa => pa.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CycleEntity>()
+                .HasOne<OrganizationEntity>().WithMany()
+                .HasForeignKey(c => c.OrganizationId).OnDelete(DeleteBehavior.Restrict);
+
+            // ========================================
+            // TENANCY: GLOBAL QUERY FILTERS
+            // ========================================
+            // Permissive when no tenant is in scope (login lookups, startup seeding);
+            // every authorized request carries the orgId claim and is strictly scoped.
+
+            modelBuilder.Entity<CompoundEntity>()
+                .HasQueryFilter(c => _tenantOrganizationId == null || c.OrganizationId == _tenantOrganizationId);
+
+            modelBuilder.Entity<BuildingEntity>()
+                .HasQueryFilter(b => _tenantOrganizationId == null || b.OrganizationId == _tenantOrganizationId);
+
+            modelBuilder.Entity<ApartmentEntity>()
+                .HasQueryFilter(a => _tenantOrganizationId == null || a.OrganizationId == _tenantOrganizationId);
+
+            modelBuilder.Entity<BalanceEntity>()
+                .HasQueryFilter(bal => _tenantOrganizationId == null || bal.OrganizationId == _tenantOrganizationId);
+
+            modelBuilder.Entity<BillEntity>()
+                .HasQueryFilter(b => _tenantOrganizationId == null || b.OrganizationId == _tenantOrganizationId);
+
+            modelBuilder.Entity<PaymentEntity>()
+                .HasQueryFilter(p => _tenantOrganizationId == null || p.OrganizationId == _tenantOrganizationId);
+
+            modelBuilder.Entity<PaymentAllocationEntity>()
+                .HasQueryFilter(pa => _tenantOrganizationId == null || pa.OrganizationId == _tenantOrganizationId);
+
+            modelBuilder.Entity<CycleEntity>()
+                .HasQueryFilter(c => _tenantOrganizationId == null || c.OrganizationId == _tenantOrganizationId);
+
+            modelBuilder.Entity<UserEntity>()
+                .HasQueryFilter(u => _tenantOrganizationId == null || u.OrganizationId == _tenantOrganizationId);
 
             // ========================================
             // BUILDING STRUCTURE RELATIONSHIPS
@@ -131,6 +265,18 @@ namespace NatournaServer.Data
             // ========================================
             // INDEXES FOR PERFORMANCE
             // ========================================
+
+            // Tenancy indexes - every tenant table is filtered by OrganizationId on each query
+            modelBuilder.Entity<CompoundEntity>().HasIndex(c => c.OrganizationId);
+            modelBuilder.Entity<BuildingEntity>().HasIndex(b => b.OrganizationId);
+            modelBuilder.Entity<ApartmentEntity>().HasIndex(a => a.OrganizationId);
+            modelBuilder.Entity<BalanceEntity>().HasIndex(bal => bal.OrganizationId);
+            modelBuilder.Entity<BillEntity>().HasIndex(b => b.OrganizationId);
+            modelBuilder.Entity<PaymentEntity>().HasIndex(p => p.OrganizationId);
+            modelBuilder.Entity<PaymentAllocationEntity>().HasIndex(pa => pa.OrganizationId);
+            modelBuilder.Entity<CycleEntity>().HasIndex(c => c.OrganizationId);
+            modelBuilder.Entity<UserEntity>().HasIndex(u => u.OrganizationId);
+            modelBuilder.Entity<AuditEntity>().HasIndex(l => l.OrganizationId);
 
             // Compound indexes
             modelBuilder.Entity<CompoundEntity>()
@@ -244,6 +390,14 @@ namespace NatournaServer.Data
 
             modelBuilder.Entity<CycleEntity>()
                 .Property(c => c.Amount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<OrganizationEntity>()
+                .Property(o => o.LbpExchangeRate)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<SubscriptionEntity>()
+                .Property(s => s.PricePerBuilding)
                 .HasPrecision(18, 2);
         }
     }

@@ -10,9 +10,9 @@ namespace NatournaServer.Interfaces.Api
 
         Task<CycleResponse?> GetCycleByIdAsync(int id);
 
-        Task<CycleEntity> CreateCycleAsync(CycleRequest request);
+        Task<CycleResponse> CreateCycleAsync(CycleRequest request);
 
-        Task<CycleEntity?> UpdateCycleAsync(int id, CycleUpdateRequest cycle);
+        Task<CycleResponse?> UpdateCycleAsync(int id, CycleUpdateRequest cycle);
 
         Task<bool> DeleteCycleAsync(int id);
     }

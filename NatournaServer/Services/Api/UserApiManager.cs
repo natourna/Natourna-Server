@@ -57,6 +57,8 @@ namespace NatournaServer.Services.Api
         {
             var role = await GetRoleOrThrowAsync(user.RoleId, ErrorCodes.USER_CREATE_ERROR);
 
+            await EnsureEmailIsFreeAsync(user.Email);
+
             var passwordHash = _passwordHashingService.HashPassword(user.Password);
             var userEntity = new UserEntity(0, user.Email, passwordHash, user.PhoneNumber, user.RoleId)
             {
@@ -77,6 +79,12 @@ namespace NatournaServer.Services.Api
                 return null;
 
             var role = await GetRoleOrThrowAsync(user.RoleId, ErrorCodes.USER_UPDATE_ERROR);
+
+            // Email is globally unique; only re-check when it actually changes
+            if (!string.Equals(existing.Email, user.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                await EnsureEmailIsFreeAsync(user.Email);
+            }
 
             var passwordHash = string.IsNullOrEmpty(user.Password)
                 ? string.Empty
@@ -128,6 +136,17 @@ namespace NatournaServer.Services.Api
             await _auditService.LogAsync(LogAction.Delete, "User", id, new { existing.Email, Role = existing.Role!.Name }, null);
 
             return await _contextManager.DeleteAsync(id);
+        }
+
+        private async Task EnsureEmailIsFreeAsync(string email)
+        {
+            var existing = await _contextManager.GetByEmailAsync(email);
+
+            if (existing != null)
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Reference.EmailTaken(email);
+                throw new ApiException(ErrorCodes.USER_EMAIL_TAKEN_ERROR, userMessage, technicalDetails, statusCode: 409);
+            }
         }
 
         private async Task<RoleEntity> GetRoleOrThrowAsync(int roleId, string errorCode)

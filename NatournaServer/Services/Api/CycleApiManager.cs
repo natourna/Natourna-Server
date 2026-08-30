@@ -20,16 +20,18 @@ namespace NatournaServer.Services.Api
         private readonly IPaymentAllocationContextManager _paymentAllocationContextManager;
         private readonly IBalanceContextManager _balanceContextManager;
         private readonly IApartmentContextManager _apartmentContextManager;
+        private readonly ITransactionManager _transactionManager;
         private readonly IAuditService _auditService;
         private readonly ILogger<CycleApiManager> _logger;
 
-        public CycleApiManager(ICycleContextManager cycleContextManager, IPaymentContextManager paymentContextManager, IPaymentAllocationContextManager paymentAllocationContextManager, IBalanceContextManager balanceContextManager, IApartmentContextManager apartmentContextManager, IAuditService auditService, ILogger<CycleApiManager> logger)
+        public CycleApiManager(ICycleContextManager cycleContextManager, IPaymentContextManager paymentContextManager, IPaymentAllocationContextManager paymentAllocationContextManager, IBalanceContextManager balanceContextManager, IApartmentContextManager apartmentContextManager, ITransactionManager transactionManager, IAuditService auditService, ILogger<CycleApiManager> logger)
         {
             _cycleContextManager = cycleContextManager;
             _paymentContextManager = paymentContextManager;
             _paymentAllocationContextManager = paymentAllocationContextManager;
             _balanceContextManager = balanceContextManager;
             _apartmentContextManager = apartmentContextManager;
+            _transactionManager = transactionManager;
             _auditService = auditService;
             _logger = logger;
         }
@@ -46,7 +48,7 @@ namespace NatournaServer.Services.Api
             return cycle != null ? MapToResponse(cycle) : null;
         }
 
-        public async Task<CycleEntity> CreateCycleAsync(CycleRequest request)
+        public async Task<CycleResponse> CreateCycleAsync(CycleRequest request)
         {
             try
             {
@@ -99,15 +101,22 @@ namespace NatournaServer.Services.Api
                 };
 
 
-                CycleEntity createdCycle = await _cycleContextManager.CreateAsync(cycle);
+                List<int> apartmentIds = await ResolveTargetApartmentIdsAsync(request.ApartmentIds);
+                List<DateTime> occurrences = CalculatePaymentOccurrences(request.Cycle, request.StartDate, request.EndDate);
 
-                await GeneratePaymentsForCycle(createdCycle.Id, request);
+                // The cycle and every payment it expands into must land together or not at all
+                CycleEntity createdCycle = await _transactionManager.ExecuteInTransactionAsync(async () =>
+                {
+                    CycleEntity created = await _cycleContextManager.CreateAsync(cycle);
+                    await GeneratePaymentsForCycleAsync(created.Id, apartmentIds, occurrences, request);
+                    return created;
+                });
 
-                await _auditService.LogAsync(LogAction.Create, "Cycle", createdCycle.Id, null, new { createdCycle.Label, createdCycle.Cycle, createdCycle.Amount, createdCycle.StartDate, createdCycle.EndDate, ApartmentCount = request.ApartmentIds?.Count ?? 0 });
+                await _auditService.LogAsync(LogAction.Create, "Cycle", createdCycle.Id, null, new { createdCycle.Label, createdCycle.Cycle, createdCycle.Amount, createdCycle.StartDate, createdCycle.EndDate, ApartmentCount = apartmentIds.Count });
 
                 _logger.LogInformation("Successfully created cycle {CycleId} with label '{Label}' and {AllocationCount} balance allocations", createdCycle.Id, createdCycle.Label, request.BalanceAllocations.Count);
 
-                return await _cycleContextManager.GetByIdAsync(createdCycle.Id) ?? createdCycle;
+                return MapToResponse(await _cycleContextManager.GetByIdAsync(createdCycle.Id) ?? createdCycle);
             }
             catch (ApiException)
             {
@@ -120,53 +129,64 @@ namespace NatournaServer.Services.Api
             }
         }
 
-        private async Task GeneratePaymentsForCycle(int cycleId, CycleRequest request)
+        /// <summary>Resolves the apartments a cycle targets: the requested ids (all must exist) or every active apartment.</summary>
+        private async Task<List<int>> ResolveTargetApartmentIdsAsync(List<int>? requestedIds)
         {
-            try
+            if (requestedIds == null || requestedIds.Count == 0)
             {
-                _logger.LogInformation("Generating payments for cycle {CycleId}", cycleId);
-
-                List<int> apartmentIds;
-                if (request.ApartmentIds != null && request.ApartmentIds.Count > 0)
-                {
-                    apartmentIds = request.ApartmentIds;
-                }
-                else
-                {
-                    List<ApartmentEntity> apartments = await _apartmentContextManager.GetAllAsync(isActive: true);
-                    apartmentIds = apartments.Select(a => a.Id).ToList();
-                }
-
-                List<DateTime> occurrences = CalculatePaymentOccurrences(request.Cycle, request.StartDate, request.EndDate);
-
-                _logger.LogInformation("Creating {OccurrenceCount} payment occurrences for {ApartmentCount} apartments", occurrences.Count, apartmentIds.Count);
-
-                foreach (int aptId in apartmentIds)
-                {
-                    foreach (DateTime occurrence in occurrences)
-                    {
-                        string label = $"{request.Label} - {occurrence:MMMM yyyy}";
-                        PaymentEntity payment = new (label, request.Amount, aptId)
-                        {
-                            PaymentDate = null,
-                            DueDate = occurrence,
-                            IsPaid = false,
-                            CycleId = cycleId
-                        };
-
-                        PaymentEntity createdPayment = await _paymentContextManager.CreateAsync(payment);
-
-                        await ApplyBalanceAllocationsToPayment(createdPayment, request.BalanceAllocations);
-                    }
-                }
-
-                _logger.LogInformation("Successfully created {PaymentCount} payments with allocations for cycle {CycleId}", occurrences.Count * apartmentIds.Count, cycleId);
+                List<ApartmentEntity> activeApartments = await _apartmentContextManager.GetAllAsync(isActive: true);
+                return activeApartments.Select(a => a.Id).ToList();
             }
-            catch (Exception ex)
+
+            List<ApartmentEntity> apartments = await _apartmentContextManager.GetAllAsync();
+            HashSet<int> knownIds = apartments.Select(a => a.Id).ToHashSet();
+            List<int> missing = requestedIds.Where(id => !knownIds.Contains(id)).Distinct().ToList();
+
+            if (missing.Count > 0)
             {
-                _logger.LogError(ex, "Failed to generate payments for cycle {CycleId}, Error:{Message}", cycleId, ex.Message);
-                throw;
+                string missingList = string.Join(", ", missing);
+                _logger.LogWarning("[{ErrorCode}] Cycle references unknown apartments: {Missing}", ErrorCodes.APARTMENT_NOT_FOUND_ERROR, missingList);
+                throw new ApiException(ErrorCodes.APARTMENT_NOT_FOUND_ERROR, $"These apartments were not found: {missingList}", $"Missing apartment ids: {missingList}", statusCode: 404);
             }
+
+            return requestedIds.Distinct().ToList();
+        }
+
+        /// <summary>Expands a cycle into its payments and allocations, inserted as two batches.</summary>
+        private async Task GeneratePaymentsForCycleAsync(int cycleId, List<int> apartmentIds, List<DateTime> occurrences, CycleRequest request)
+        {
+            _logger.LogInformation("Creating {OccurrenceCount} payment occurrences for {ApartmentCount} apartments (cycle {CycleId})", occurrences.Count, apartmentIds.Count, cycleId);
+
+            List<PaymentEntity> payments = apartmentIds
+                .SelectMany(aptId => occurrences.Select(occurrence => new PaymentEntity($"{request.Label} - {occurrence:MMMM yyyy}", request.Amount, aptId)
+                {
+                    PaymentDate = null,
+                    DueDate = occurrence,
+                    IsPaid = false,
+                    CycleId = cycleId
+                }))
+                .ToList();
+
+            if (payments.Count == 0)
+            {
+                return;
+            }
+
+            await _paymentContextManager.CreateRangeAsync(payments);
+
+            List<PaymentAllocationEntity> allocations = payments
+                .SelectMany(payment => request.BalanceAllocations.Select(allocation => new PaymentAllocationEntity
+                {
+                    PaymentId = payment.Id,
+                    BalanceId = allocation.BalanceId,
+                    Percentage = allocation.Percentage,
+                    AllocatedAmount = payment.Amount * (allocation.Percentage / 100m)
+                }))
+                .ToList();
+
+            await _paymentAllocationContextManager.CreateRangeAsync(allocations);
+
+            _logger.LogInformation("Successfully created {PaymentCount} payments with allocations for cycle {CycleId}", payments.Count, cycleId);
         }
 
         private static List<DateTime> CalculatePaymentOccurrences(PaymentCycle cycleType, DateTime startDate, DateTime endDate)
@@ -229,37 +249,7 @@ namespace NatournaServer.Services.Api
         }
 
 
-        private async Task ApplyBalanceAllocationsToPayment(PaymentEntity payment, List<PaymentAllocationRequest> allocations)
-        {
-            try
-            {
-                List<PaymentAllocationEntity> paymentAllocations = new();
-
-                foreach (PaymentAllocationRequest allocation in allocations)
-                {
-                    decimal allocatedAmount = payment.Amount * (allocation.Percentage / 100m);
-
-                    PaymentAllocationEntity paymentAllocation = new ()
-                    {
-                        PaymentId = payment.Id,
-                        BalanceId = allocation.BalanceId,
-                        Percentage = allocation.Percentage,
-                        AllocatedAmount = allocatedAmount
-                    };
-
-                    paymentAllocations.Add(paymentAllocation);
-                }
-
-                await _paymentAllocationContextManager.CreateRangeAsync(paymentAllocations);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to apply balance allocations to payment {PaymentId}", payment.Id);
-                throw;
-            }
-        }
-
-        public async Task<CycleEntity?> UpdateCycleAsync(int id, CycleUpdateRequest cycle)
+        public async Task<CycleResponse?> UpdateCycleAsync(int id, CycleUpdateRequest cycle)
         {
             CycleEntity? existing = await _cycleContextManager.GetByIdAsync(id);
 
@@ -285,12 +275,14 @@ namespace NatournaServer.Services.Api
 
             CycleEntity? updated = await _cycleContextManager.UpdateAsync(id, cycleEntity);
 
-            if (updated != null)
+            if (updated == null)
             {
-                await _auditService.LogAsync(LogAction.Update, "Cycle", id, oldValues, new { updated.Label, updated.Amount, updated.IsActive });
+                return null;
             }
 
-            return updated;
+            await _auditService.LogAsync(LogAction.Update, "Cycle", id, oldValues, new { updated.Label, updated.Amount, updated.IsActive });
+
+            return MapToResponse(updated);
         }
 
         public async Task<bool> DeleteCycleAsync(int id)
@@ -300,6 +292,14 @@ namespace NatournaServer.Services.Api
             if (existing == null)
             {
                 return false;
+            }
+
+            // The Cycle->Payments FK is Restrict; fail with a clear 409 instead of a raw database error
+            if (await _paymentContextManager.AnyAsync(cycleId: id))
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Reference.InUse("Cycle", id, "payments");
+                _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.CYCLE_HAS_PAYMENTS_ERROR, userMessage);
+                throw new ApiException(ErrorCodes.CYCLE_HAS_PAYMENTS_ERROR, userMessage, technicalDetails, statusCode: 409);
             }
 
             await _auditService.LogAsync(LogAction.Delete, "Cycle", id, new { existing.Label, existing.Amount }, null);

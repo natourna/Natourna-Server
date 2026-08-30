@@ -1,4 +1,6 @@
+using NatournaServer.Constants.Error;
 using NatournaServer.Constants.Log;
+using NatournaServer.Exceptions;
 using NatournaServer.Interfaces.Api;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
@@ -13,12 +15,18 @@ namespace NatournaServer.Services.Api
     public class ApartmentApiManager : IApartmentApiManager
     {
         private readonly IApartmentContextManager _contextManager;
+        private readonly IBuildingContextManager _buildingContextManager;
+        private readonly IPaymentContextManager _paymentContextManager;
         private readonly IAuditService _auditService;
+        private readonly ILogger<ApartmentApiManager> _logger;
 
-        public ApartmentApiManager(IApartmentContextManager contextManager, IAuditService auditService)
+        public ApartmentApiManager(IApartmentContextManager contextManager, IBuildingContextManager buildingContextManager, IPaymentContextManager paymentContextManager, IAuditService auditService, ILogger<ApartmentApiManager> logger)
         {
             _contextManager = contextManager;
+            _buildingContextManager = buildingContextManager;
+            _paymentContextManager = paymentContextManager;
             _auditService = auditService;
+            _logger = logger;
         }
 
         public async Task<PagedResponse<ApartmentResponse>> GetPagedApartmentsAsync(PagedQuery query, int? buildingId = null, bool? isActive = null, string? search = null)
@@ -48,6 +56,8 @@ namespace NatournaServer.Services.Api
 
         public async Task<ApartmentResponse> CreateApartmentAsync(ApartmentRequest apartment)
         {
+            await EnsureBuildingExistsAsync(apartment.BuildingId);
+
             ApartmentEntity created = await _contextManager.CreateAsync(MapToEntity(apartment));
 
             await _auditService.LogAsync(LogAction.Create, "Apartment", created.Id, null, new { created.BuildingId, created.ApartmentInfo, created.IsActive });
@@ -63,6 +73,8 @@ namespace NatournaServer.Services.Api
             {
                 return null;
             }
+
+            await EnsureBuildingExistsAsync(apartment.BuildingId);
 
             var oldValues = new
             {
@@ -91,9 +103,29 @@ namespace NatournaServer.Services.Api
                 return false;
             }
 
+            // The Apartment->Payments FK is Restrict; fail with a clear 409 instead of a raw database error
+            if (await _paymentContextManager.AnyAsync(apartmentId: id))
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Reference.InUse("Apartment", id, "payments");
+                _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.APARTMENT_HAS_PAYMENTS_ERROR, userMessage);
+                throw new ApiException(ErrorCodes.APARTMENT_HAS_PAYMENTS_ERROR, userMessage, technicalDetails, statusCode: 409);
+            }
+
             await _auditService.LogAsync(LogAction.Delete, "Apartment", id, new { existing.BuildingId, existing.ApartmentInfo }, null);
 
             return await _contextManager.DeleteAsync(id);
+        }
+
+        private async Task EnsureBuildingExistsAsync(int buildingId)
+        {
+            BuildingEntity? building = await _buildingContextManager.GetByIdAsync(buildingId);
+
+            if (building == null)
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Reference.NotFound("Building", buildingId);
+                _logger.LogWarning("[{ErrorCode}] {ErrorMessage}", ErrorCodes.BUILDING_NOT_FOUND_ERROR, userMessage);
+                throw new ApiException(ErrorCodes.BUILDING_NOT_FOUND_ERROR, userMessage, technicalDetails, statusCode: 404);
+            }
         }
 
         public async Task<ApartmentResponse?> SetApartmentActiveAsync(int id, bool isActive)

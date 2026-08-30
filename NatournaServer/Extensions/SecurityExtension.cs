@@ -1,10 +1,27 @@
-﻿using System.Threading.RateLimiting;
+﻿using Microsoft.AspNetCore.HttpOverrides;
+using System.Threading.RateLimiting;
 
 namespace NatournaServer.Extensions;
 
 public static class SecurityExtension
 {
     public const string AuthRateLimitPolicy = "auth";
+
+    /// <summary>Honors X-Forwarded-For/Proto from the reverse proxy so rate limiting and audit IPs see the real client.</summary>
+    public static IApplicationBuilder UseProxyForwardedHeaders(this IApplicationBuilder app)
+    {
+        var options = new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        };
+
+        // The app is only reachable through the compose network's proxy (Caddy),
+        // whose address is dynamic - so the default loopback-only trust list is cleared.
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+
+        return app.UseForwardedHeaders(options);
+    }
 
     public static IServiceCollection AddCorsPolicy(this IServiceCollection services, IConfiguration configuration)
     {
@@ -31,6 +48,13 @@ public static class SecurityExtension
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            // Tell well-behaved clients when to retry instead of hammering
+            options.OnRejected = (context, _) =>
+            {
+                context.HttpContext.Response.Headers.RetryAfter = "10";
+                return ValueTask.CompletedTask;
+            };
 
             options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
                 RateLimitPartition.GetFixedWindowLimiter(
@@ -69,6 +93,13 @@ public static class SecurityExtension
 
     private static string ClientKey(HttpContext context)
     {
-        return context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        // Authenticated callers get their own bucket (one noisy user cannot starve the others);
+        // anonymous traffic is bucketed by client IP - the real one, thanks to UseProxyForwardedHeaders.
+        if (context.User.Identity?.IsAuthenticated == true && !string.IsNullOrEmpty(context.User.Identity.Name))
+        {
+            return $"user:{context.User.Identity.Name}";
+        }
+
+        return $"ip:{context.Connection.RemoteIpAddress?.ToString() ?? "unknown"}";
     }
 }

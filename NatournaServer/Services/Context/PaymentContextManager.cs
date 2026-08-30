@@ -133,6 +133,64 @@ namespace NatournaServer.Services.Context
             }
         }
 
+        public async Task<List<PaymentEntity>> CreateRangeAsync(List<PaymentEntity> payments)
+        {
+            try
+            {
+                _logger.LogInformation("Creating {PaymentCount} payments in one batch", payments.Count);
+
+                _context.Payments.AddRange(payments);
+
+                await _context.SaveChangesAsync();
+
+                return payments;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[{ErrorCode}] Failed to create {PaymentCount} payments in batch", ErrorCodes.PAYMENT_CREATE_ERROR, payments.Count);
+
+                throw new ContextException(ErrorCodes.PAYMENT_CREATE_ERROR, "Failed to create the payments batch", $"PaymentCount: {payments.Count}", ex);
+            }
+        }
+
+        public async Task<bool> AnyAsync(int? apartmentId = null, int? cycleId = null, int? buildingId = null, int? compoundId = null)
+        {
+            try
+            {
+                var query = _context.Payments.AsQueryable();
+
+                if (apartmentId.HasValue)
+                {
+                    query = query.Where(p => p.ApartmentId == apartmentId.Value);
+                }
+
+                if (cycleId.HasValue)
+                {
+                    query = query.Where(p => p.CycleId == cycleId.Value);
+                }
+
+                if (buildingId.HasValue)
+                {
+                    query = query.Where(p => p.Apartment!.BuildingId == buildingId.Value);
+                }
+
+                if (compoundId.HasValue)
+                {
+                    query = query.Where(p => p.Apartment!.Building!.CompoundId == compoundId.Value);
+                }
+
+                return await query.AnyAsync();
+            }
+            catch (Exception ex)
+            {
+                (string userMessage, string technicalDetails) = ErrorMessageBuilder.Payment.GetAllFailed(apartmentId: apartmentId, cycleId: cycleId);
+
+                _logger.LogError(ex, "[{ErrorCode}] {ErrorMessage}", ErrorCodes.PAYMENT_GET_ALL_ERROR, userMessage);
+
+                throw new ContextException(ErrorCodes.PAYMENT_GET_ALL_ERROR, userMessage, technicalDetails, ex);
+            }
+        }
+
         public async Task<PaymentEntity?> UpdateAsync(int id, PaymentEntity payment)
         {
             try

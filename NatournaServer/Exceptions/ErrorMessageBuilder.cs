@@ -349,5 +349,59 @@ namespace NatournaServer.Exceptions
                 );
             }
         }
+
+        public static class Reference
+        {
+            public static (string userMessage, string technicalDetails) NotFound(string entityName, int id)
+            {
+                return (
+                    $"{entityName} with ID {id} was not found",
+                    $"{entityName}Id: {id}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) InUse(string entityName, int id, string dependents)
+            {
+                return (
+                    $"Cannot delete this {entityName.ToLowerInvariant()} because it still has {dependents}",
+                    $"{entityName}Id: {id}, Blocking dependents: {dependents}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) EmailTaken(string email)
+            {
+                return (
+                    "An account with this email already exists",
+                    $"Email: '{email}'"
+                );
+            }
+        }
+
+        public static class Organization
+        {
+            public static (string userMessage, string technicalDetails) GetByIdFailed(int id)
+            {
+                return (
+                    "Failed to retrieve the organization",
+                    $"OrganizationId: {id}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) UpdateFailed(int id)
+            {
+                return (
+                    "Failed to update the organization",
+                    $"OrganizationId: {id}"
+                );
+            }
+
+            public static (string userMessage, string technicalDetails) SubscriptionGetFailed(int organizationId)
+            {
+                return (
+                    "Failed to retrieve the subscription",
+                    $"OrganizationId: {organizationId}"
+                );
+            }
+        }
     }
 }

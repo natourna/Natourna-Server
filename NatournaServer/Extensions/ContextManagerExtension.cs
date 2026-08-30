@@ -10,6 +10,9 @@ public static class ContextManagerExtension
 {
     public static IServiceCollection AddContextManagers(this IServiceCollection services)
     {
+        services.AddScoped<ITransactionManager, TransactionManager>();
+        services.AddScoped<IOrganizationContextManager, OrganizationContextManager>();
+        services.AddScoped<ISubscriptionContextManager, SubscriptionContextManager>();
         services.AddScoped<ICompoundContextManager, CompoundContextManager>();
         services.AddScoped<IBuildingContextManager, BuildingContextManager>();
         services.AddScoped<IApartmentContextManager, ApartmentContextManager>();

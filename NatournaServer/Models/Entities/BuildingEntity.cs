@@ -5,11 +5,14 @@ using System.Text.Json.Serialization;
 
 namespace NatournaServer.Models.Entities
 {
-    public class BuildingEntity : BaseEntity
+    public class BuildingEntity : BaseEntity, ITenantEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
+
+        /// <summary>Stamped automatically on insert; scoped by a global query filter.</summary>
+        public int OrganizationId { get; set; }
 
         [Required]
         public string Name { get; set; }

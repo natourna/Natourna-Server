@@ -10,6 +10,8 @@ namespace NatournaServer.Models.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
+        public int? OrganizationId { get; set; }
+
         public int? UserId { get; set; }
 
         [Required]

@@ -13,15 +13,17 @@ namespace NatournaServer.Services.Api
     public class AuthApiManager : IAuthApiManager
     {
         private readonly IUserContextManager _userContextManager;
+        private readonly IOrganizationContextManager _organizationContextManager;
         private readonly IJwtAuthenticationService _jwtService;
         private readonly IPasswordHashingService _passwordHashingService;
         private readonly IAuditService _auditService;
         private readonly JwtConfiguration _jwtSettings;
         private readonly ILogger<AuthApiManager> _logger;
 
-        public AuthApiManager(IUserContextManager userContextManager, IJwtAuthenticationService jwtService, IPasswordHashingService passwordHashingService, IAuditService auditService, IOptions<JwtConfiguration> jwtSettings, ILogger<AuthApiManager> logger)
+        public AuthApiManager(IUserContextManager userContextManager, IOrganizationContextManager organizationContextManager, IJwtAuthenticationService jwtService, IPasswordHashingService passwordHashingService, IAuditService auditService, IOptions<JwtConfiguration> jwtSettings, ILogger<AuthApiManager> logger)
         {
             _userContextManager = userContextManager;
+            _organizationContextManager = organizationContextManager;
             _jwtService = jwtService;
             _passwordHashingService = passwordHashingService;
             _auditService = auditService;
@@ -57,9 +59,11 @@ namespace NatournaServer.Services.Api
             // Log successful login
             await _auditService.LogAsync(LogAction.Login, "User", user.Id);
 
-            // Generate JWT token with role and userId
-            var token = _jwtService.GenerateToken(user.Email, user.Id.ToString(), user.Role!.Name);
+            // Generate JWT token with role, userId and organization (tenant scope)
+            var token = _jwtService.GenerateToken(user.Email, user.Id.ToString(), user.Role!.Name, user.OrganizationId);
             var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+
+            var organization = await _organizationContextManager.GetByIdAsync(user.OrganizationId);
 
             _logger.LogInformation("User {Email} with role {Role} logged in successfully", user.Email, user.Role.Name);
 
@@ -67,7 +71,8 @@ namespace NatournaServer.Services.Api
             {
                 Token = token,
                 Username = user.Email,
-                ExpiresAt = expiresAt
+                ExpiresAt = expiresAt,
+                OrganizationName = organization?.Name ?? string.Empty
             };
         }
 
@@ -87,9 +92,11 @@ namespace NatournaServer.Services.Api
                 return null;
             }
 
-            // Generate new token with current role and userId
-            var token = _jwtService.GenerateToken(user.Email, user.Id.ToString(), user.Role!.Name);
+            // Generate new token with current role, userId and organization
+            var token = _jwtService.GenerateToken(user.Email, user.Id.ToString(), user.Role!.Name, user.OrganizationId);
             var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+
+            var organization = await _organizationContextManager.GetByIdAsync(user.OrganizationId);
 
             _logger.LogInformation("Token refreshed for user: {Email}", username);
 
@@ -97,7 +104,8 @@ namespace NatournaServer.Services.Api
             {
                 Token = token,
                 Username = user.Email,
-                ExpiresAt = expiresAt
+                ExpiresAt = expiresAt,
+                OrganizationName = organization?.Name ?? string.Empty
             };
         }
 

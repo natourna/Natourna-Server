@@ -1,3 +1,4 @@
+using NatournaServer.Authentication;
 using NatournaServer.Constants.Log;
 using NatournaServer.Interfaces.Context;
 using NatournaServer.Interfaces.Services;
@@ -40,14 +41,23 @@ namespace NatournaServer.Services.Audit
                     userId = parsedUserId;
                 }
 
+                // Best-effort tenant stamp - login audits run before authentication and stay null
+                int? organizationId = null;
+                var orgIdClaim = httpContext.User.FindFirst(CustomClaimTypes.OrganizationId)?.Value;
+                if (!string.IsNullOrEmpty(orgIdClaim) && int.TryParse(orgIdClaim, out var parsedOrganizationId))
+                {
+                    organizationId = parsedOrganizationId;
+                }
+
                 var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString();
                 var userAgent = httpContext.Request.Headers["User-Agent"].ToString();
 
                 var log = new AuditEntity(userEmail, action, entityType)
                 {
                     UserId = userId,
-                    OldValues = oldValues != null ? JsonSerializer.Serialize(oldValues) : null,
-                    NewValues = newValues != null ? JsonSerializer.Serialize(newValues) : null,
+                    OrganizationId = organizationId,
+                    OldValues = Truncate(oldValues != null ? JsonSerializer.Serialize(oldValues) : null, 500),
+                    NewValues = Truncate(newValues != null ? JsonSerializer.Serialize(newValues) : null, 500),
                     IpAddress = ipAddress,
                     UserAgent = userAgent,
                     EntityId = entityId
@@ -61,6 +71,17 @@ namespace NatournaServer.Services.Audit
             {
                 _logger.LogError(ex, "Failed to create audit log for action: {Action}, entity: {EntityType}", action, entityType);
             }
+        }
+
+        // Old/NewValues columns are capped at 500 chars; a lost tail beats a lost audit row
+        private static string? Truncate(string? value, int maxLength)
+        {
+            if (value == null || value.Length <= maxLength)
+            {
+                return value;
+            }
+
+            return value[..maxLength];
         }
     }
 }
