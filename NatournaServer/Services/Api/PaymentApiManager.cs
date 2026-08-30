@@ -43,9 +43,9 @@ namespace NatournaServer.Services.Api
             _logger = logger;
         }
 
-        public async Task<PagedResponse<PaymentResponse>> GetPagedPaymentsAsync(PagedQuery query, int? apartmentId = null, int? cycleId = null, bool? isPaid = null)
+        public async Task<PagedResponse<PaymentResponse>> GetPagedPaymentsAsync(PagedQuery query, int? apartmentId = null, int? cycleId = null, bool? isPaid = null, bool? overdue = null)
         {
-            var (items, totalCount) = await _paymentContextManager.GetPagedAsync(query.Page, query.PageSize, apartmentId, cycleId, isPaid);
+            var (items, totalCount) = await _paymentContextManager.GetPagedAsync(query.Page, query.PageSize, apartmentId, cycleId, isPaid, overdue);
 
             return new PagedResponse<PaymentResponse>
             {
@@ -356,6 +356,7 @@ namespace NatournaServer.Services.Api
                 DueDate = payment.DueDate,
                 IsPaid = payment.IsPaid,
                 ApartmentId = payment.ApartmentId,
+                ApartmentInfo = payment.Apartment?.ApartmentInfo,
                 ApartmentOwner = payment.Apartment?.Owner,
                 ApartmentTenant = payment.Apartment?.Tenant,
                 CycleId = payment.CycleId,

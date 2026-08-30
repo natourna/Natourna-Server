@@ -7,7 +7,7 @@ namespace NatournaServer.Interfaces.Api
 {
     public interface IPaymentApiManager
     {
-        Task<PagedResponse<PaymentResponse>> GetPagedPaymentsAsync(PagedQuery query, int? apartmentId = null, int? cycleId = null, bool? isPaid = null);
+        Task<PagedResponse<PaymentResponse>> GetPagedPaymentsAsync(PagedQuery query, int? apartmentId = null, int? cycleId = null, bool? isPaid = null, bool? overdue = null);
 
         Task<PaymentResponse?> GetPaymentByIdAsync(int id);
 
