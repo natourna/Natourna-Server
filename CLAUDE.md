@@ -190,7 +190,7 @@ Push to `develop` or `main` triggers `.github/workflows/deploy.yml`: builds `Nat
 
 ## Git rules
 
-- **Branches follow git flow**: new work happens on `feature/<topic>` branches cut from `develop` (e.g. `feature/ri-organizations`); releases via `release/x.y.z`, hotfixes via `hotfix/x.y.z` from `main`; features merge back into `develop`; `main` is production and only receives merges from release/hotfix branches.
+- **Branches follow git flow**: new work happens on `<initials>-<topic>` branches cut from `develop`, prefixed with the author's initials (`ii` = Issa Itani, `ri` = Rayan Itani), topic verbs in the present tense, bug-fix work named `<initials>-bug-fixes` (e.g. `ii-remove-rate-limiting`, `ri-bug-fixes`); releases via `release/x.y.z`, hotfixes via `hotfix/x.y.z` from `main`; features merge back into `develop`; `main` is production and only receives merges from release/hotfix branches.
 - **Claude must NOT commit until the user has reviewed and verified the changes** — leave work in the working tree and ask.
 - **Claude must NOT push** to any remote unless the user explicitly says so in that conversation. **Never push to `main` under any circumstances** — pushing to `develop`/`main` triggers the deploy workflow.
 - Commit subjects are lowercase past tense describing the effect, e.g. `paginated the bill list endpoint`.
